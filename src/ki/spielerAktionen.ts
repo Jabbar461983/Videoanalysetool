@@ -173,6 +173,8 @@ export async function klickAufSpieler(
       d.spielerObjekte.push(o);
     });
     sitzung = { objId: id, frame, crop, punkte };
+    // Abspielkopf sicher in das Standbild setzen (dessen Beginn liegt auf der Bildgrenze, ggf. nach der Klickposition)
+    usePlayer.getState().suche(span.start + 0.001);
     setze({ status: 'bereit', auswahlId: id });
     return span.neu ? 'standbildEingefuegt' : null;
   } catch (e) {

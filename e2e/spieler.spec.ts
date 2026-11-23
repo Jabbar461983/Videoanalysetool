@@ -99,7 +99,7 @@ test('Spieler freistellen, hervorheben, verschieben; Export deckt sich mit der V
 }) => {
   test.setTimeout(420_000);
   page.on('pageerror', (e) => console.log('PAGEERROR', e.message));
-  page.on('console', (m) => console.log('CONSOLE', m.type(), m.text()));
+  page.on('console', (m) => m.type() === 'error' && console.log('CONSOLE', m.text()));
   await projektMitClip(page);
   await springe(page, 0.5);
   await page.getByTestId('werkzeug-spieler').click();
@@ -130,9 +130,6 @@ test('Spieler freistellen, hervorheben, verschieben; Export deckt sich mit der V
   await zeiger(page, 'pointermove', 0.35, 0.49);
   await zeiger(page, 'pointermove', 0.2, 0.49);
   await zeiger(page, 'pointerup', 0.2, 0.49);
-  await page.waitForTimeout(1500);
-  await page.screenshot({ path: '/tmp/claude-0/sp-after.png' });
-  console.log('PIX', JSON.stringify([await pixel(page, 0.1, 0.1), await pixel(page, 0.2, 0.49), await pixel(page, 0.503, 0.49)]));
   await expect
     .poll(async () => (await pixel(page, 0.2, 0.49))[3], { timeout: 10_000 })
     .toBeGreaterThan(200);
