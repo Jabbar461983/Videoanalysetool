@@ -8,7 +8,7 @@ export interface Rahmen {
 }
 
 /**
- * Quadratischer Ausschnitt um den Klick `(cx, cy)` (Pixel). Kantenlänge = `anteil` der Bildbreite (mindestens 128,
+ * Quadratischer Ausschnitt um den Klick `(cx, cy)` (Pixel). Kantenlänge = `anteil` der Bildbreite (mindestens 256,
  * höchstens die kleinere Bildseite). Der Ausschnitt wird ins Bild geschoben, nie verkleinert.
  */
 export function ausschnittRahmen(
@@ -16,9 +16,9 @@ export function ausschnittRahmen(
   bildH: number,
   cx: number,
   cy: number,
-  anteil = 0.25,
+  anteil = 0.3,
 ): Rahmen {
-  const kante = Math.round(Math.min(Math.min(bildB, bildH), Math.max(128, bildB * anteil)));
+  const kante = Math.round(Math.min(Math.min(bildB, bildH), Math.max(256, bildB * anteil)));
   const x = Math.round(Math.min(Math.max(0, cx - kante / 2), bildB - kante));
   const y = Math.round(Math.min(Math.max(0, cy - kante / 2), bildH - kante));
   return { x, y, b: kante, h: kante };

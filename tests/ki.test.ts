@@ -9,11 +9,11 @@ import {
 import { holeModell, SAM_MODELLE, STANDARD_SAM } from '../src/ki/modelle';
 
 describe('Ausschnitt um den Klick', () => {
-  it('quadratisch, im Bild, Kantenlänge ein Viertel der Breite (mind. 128)', () => {
-    expect(ausschnittRahmen(1920, 1080, 960, 540)).toEqual({ x: 720, y: 300, b: 480, h: 480 });
+  it('quadratisch, im Bild, Kantenlänge 0.3 der Breite (mind. 256)', () => {
+    expect(ausschnittRahmen(1920, 1080, 960, 540)).toEqual({ x: 672, y: 252, b: 576, h: 576 });
     const rand = ausschnittRahmen(1920, 1080, 10, 1070);
-    expect(rand).toEqual({ x: 0, y: 600, b: 480, h: 480 });
-    expect(ausschnittRahmen(400, 300, 200, 150).b).toBe(128);
+    expect(rand).toEqual({ x: 0, y: 504, b: 576, h: 576 });
+    expect(ausschnittRahmen(400, 300, 200, 150).b).toBe(256);
     expect(ausschnittRahmen(100, 80, 50, 40).b).toBe(80); // nie grösser als das Bild
   });
 });

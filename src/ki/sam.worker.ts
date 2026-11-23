@@ -50,7 +50,16 @@ async function init(b: Extract<KiBefehl, { typ: 'init' }>) {
       ? Math.max(1, Math.min(4, Math.floor((navigator.hardwareConcurrency || 2) / 2)))
       : 1;
   }
-  const hatGpu = 'gpu' in navigator && b.geraet !== 'wasm';
+  let hatGpu = false;
+  if ('gpu' in navigator && b.geraet !== 'wasm') {
+    try {
+      hatGpu = !!(await (
+        navigator as unknown as { gpu: { requestAdapter(): Promise<unknown> } }
+      ).gpu.requestAdapter());
+    } catch {
+      hatGpu = false;
+    }
+  }
   const geraete: ('webgpu' | 'wasm')[] = hatGpu ? ['webgpu', 'wasm'] : ['wasm'];
   const progress_callback = (p: {
     status: string;
@@ -125,7 +134,25 @@ async function maske(id: number, punkte: { x: number; y: number; label: 0 | 1 }[
   const h = m.dims[2] as number;
   const w = m.dims[3] as number;
   let best = 0;
-  for (let i = 1; i < Math.min(n, scores.length); i++) if (scores[i]! > scores[best]!) best = i;
+  const k = Math.min(n, scores.length);
+  for (let i = 1; i < k; i++) if (scores[i]! > scores[best]!) best = i;
+  // Ein Klick ist mehrdeutig (Logo / Trikot / ganzer Spieler): die grösste Maske nehmen, die fast so gut bewertet ist.
+  const flaeche = (i: number) => {
+    let a = 0;
+    for (let j = i * h * w; j < (i + 1) * h * w; j++) if (m.data[j]) a++;
+    return a;
+  };
+  if (punkte.length === 1) {
+    let gross = best;
+    let gA = flaeche(best);
+    for (let i = 0; i < k; i++) {
+      if (scores[i]! >= scores[best]! * 0.8) {
+        const a = flaeche(i);
+        if (a > gA) ((gross = i), (gA = a));
+      }
+    }
+    best = gross;
+  }
   const ausschnitt = (m.data as Uint8Array).slice(best * h * w, (best + 1) * h * w);
   const maske = new Uint8Array(ausschnitt.length);
   for (let i = 0; i < ausschnitt.length; i++) maske[i] = ausschnitt[i] ? 255 : 0;
