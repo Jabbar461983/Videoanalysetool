@@ -4,9 +4,16 @@ import { blendeAlpha, findeSegmentIndex, type Zeitplan } from '../wiedergabe/zei
 import { zeichneTitelfolie } from './titelfolie';
 import { zeichneClipZeichnungen, zeichneZeichnung } from './zeichnungen';
 import type { Zeichnung } from '../model/typen';
+import { ausblendenVon, istAusgeblendet } from '../overlay/ausblenden';
+import { spielstand } from '../overlay/spielstand';
+import { clipZeitZuQuellZeit } from '../wiedergabe/zeitachse';
+import type { LogoBild } from './logo';
+import { zeichneLogo, zeichneScoreboard } from './overlays';
 
 export type RenderKontext =
-  { art: 'quelle' } | { art: 'clip'; clipId: string } | { art: 'playlist'; playlistId: string };
+  | { art: 'quelle'; quelleId?: string }
+  | { art: 'clip'; clipId: string }
+  | { art: 'playlist'; playlistId: string };
 
 /**
  * Ziel eines Render-Durchgangs. In der Vorschau ist es das Overlay-Canvas,
@@ -21,6 +28,8 @@ export interface RenderZiel {
   kontext?: RenderKontext;
   /** Nur Vorschau: Entwürfe/gerade verschobene Zeichnungen (Clip-Zeit = `t`). */
   zusatz?: Zeichnung[];
+  /** Logo-Bild (Vorschau: Lader; Export: Bitmap im Worker). Fehlt es, wird kein Logo gezeichnet. */
+  logo?: LogoBild | null;
   /** Nur Vorschau: Zeichnungen, die gerade durch `zusatz` ersetzt werden. */
   ausblenden?: ReadonlySet<string>;
 }
@@ -54,12 +63,32 @@ export function renderFrame(t: number, projekt: Projekt | null, ziel: RenderZiel
   const { ctx, breite, hoehe } = ziel;
   ctx.clearRect(0, 0, breite, hoehe);
   const k = ziel.kontext;
-  if (!projekt || !k || k.art === 'quelle') return;
+  if (!projekt || !k) return;
+  const einst = projekt.einstellungen;
+  const logoZeichnen = (logoHier: boolean) => {
+    if (logoHier && einst.logoAnzeigen && ziel.logo)
+      zeichneLogo(ctx, breite, ziel.logo, einst.logoGroesse);
+  };
+  const stand = (quelleId: string, quellZeit: number) => {
+    if (einst.scoreboardAnzeigen)
+      zeichneScoreboard(ctx, breite, projekt.teams, spielstand(projekt, quelleId, quellZeit));
+  };
+
+  // Quell-Ansicht: t = Quellzeit; nur die globalen Schalter gelten
+  if (k.art === 'quelle') {
+    if (k.quelleId) stand(k.quelleId, t);
+    logoZeichnen(true);
+    return;
+  }
+
   const plan = holePlan(projekt, k);
   if (!plan || plan.segmente.length === 0) return;
   const seg = plan.segmente[findeSegmentIndex(plan.segmente, t)];
-  if (seg?.art === 'titel' && seg.titel) zeichneTitelfolie(ctx, breite, hoehe, seg.titel);
-  // Zeichnungen des Clips (Clip-Zeit: im Clip-Editor = t, in der Playlist t − Start des Eintrags)
+  if (seg?.art === 'titel' && seg.titel) {
+    zeichneTitelfolie(ctx, breite, hoehe, seg.titel);
+    logoZeichnen(seg.titel.logo !== false); // Scoreboard bleibt auf Titelfolien aus
+  }
+  // Clip-Zeit: im Clip-Editor = t, in der Playlist t − Start des Eintrags
   if (seg && seg.art !== 'titel' && seg.clipId) {
     const eintrag = plan.eintraege.find((e) => e.index === seg.eintragIndex);
     const clipZeit = k.art === 'clip' ? t : t - (eintrag?.start ?? 0);
@@ -74,6 +103,13 @@ export function renderFrame(t: number, projekt: Projekt | null, ziel: RenderZiel
     );
     if (k.art === 'clip')
       for (const z of ziel.zusatz ?? []) zeichneZeichnung(ctx, z, breite, hoehe, clipZeit);
+    const clip = projekt.clips.find((c) => c.id === seg.clipId);
+    if (clip) {
+      const pos = clipZeitZuQuellZeit(clip, clipZeit);
+      if (!istAusgeblendet(ausblendenVon(clip, 'scoreboard'), clipZeit))
+        stand(pos.quelleId, pos.quellZeit);
+      logoZeichnen(!istAusgeblendet(ausblendenVon(clip, 'logo'), clipZeit));
+    }
   }
   const alpha = blendeAlpha(plan, t);
   if (alpha > 0) {

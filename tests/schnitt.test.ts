@@ -128,7 +128,7 @@ describe('Migration auf Version 3', () => {
       { typ: 'titel', text: 'Hallo', dauer: 4 },
     ];
     const m = migriere(p);
-    expect(m.version).toBe(4);
+    expect(m.version).toBe(5);
     expect(m.clips[0]!.zeitlupen).toEqual([]);
     expect(m.playlisten).toHaveLength(1);
     expect(m.aktivePlaylistId).toBe(m.playlisten[0]!.id);

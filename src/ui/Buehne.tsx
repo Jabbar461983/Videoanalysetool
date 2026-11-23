@@ -19,6 +19,8 @@ import {
 import { ProxyDialog } from './ProxyDialog';
 import { oeffneZeichnenFuerPosition } from '../schnitt/aktionen';
 import { Werkzeugleiste } from './Werkzeugleiste';
+import { beiLogoGeladen, holeLogo } from '../render/logo';
+import { schalteLogo, schalteScoreboard } from '../overlay/aktionen';
 import { ZeichenEbene } from './ZeichenEbene';
 import { useZeichnen } from '../store/zeichnen';
 import type { Zeichnung } from '../model/typen';
@@ -43,7 +45,8 @@ function kontextAus(): RenderKontext {
   const g = useProgramm.getState();
   if (g.art === 'clip' && g.clipId) return { art: 'clip', clipId: g.clipId };
   if (g.art === 'playlist' && g.playlistId) return { art: 'playlist', playlistId: g.playlistId };
-  return { art: 'quelle' };
+  const p = useProjekt.getState().projekt;
+  return { art: 'quelle', quelleId: p?.aktiveQuelleId ?? p?.quellen[0]?.id };
 }
 
 export function Buehne({ quelle }: { quelle: Quelle | undefined }) {
@@ -100,9 +103,13 @@ export function Buehne({ quelle }: { quelle: Quelle | undefined }) {
         hoehe: c.height,
         modus: 'vorschau',
         kontext: kontextAus(),
+        logo: holeLogo(),
         ...zeichenVorschau(),
       });
   };
+
+  // Logo wird asynchron geladen: danach neu zeichnen
+  useEffect(() => beiLogoGeladen(() => zeichne(usePlayer.getState().zeit)), []);
 
   // Quell-Modus: Video-Ereignisse → Player-Store, Render-Gerüst
   useEffect(() => {
@@ -359,6 +366,30 @@ export function Buehne({ quelle }: { quelle: Quelle | undefined }) {
             </select>
           </label>
         )}
+        <span className={s.gruppe}>
+          <button
+            aria-pressed={projekt?.einstellungen.logoAnzeigen ?? true}
+            data-testid="logo-schalter"
+            title={t.overlay.logoHinweis}
+            onClick={(e) => {
+              schalteLogo();
+              e.currentTarget.blur();
+            }}
+          >
+            {t.overlay.logo}
+          </button>
+          <button
+            aria-pressed={projekt?.einstellungen.scoreboardAnzeigen ?? true}
+            data-testid="scoreboard-schalter"
+            title={t.overlay.scoreboardHinweis}
+            onClick={(e) => {
+              schalteScoreboard();
+              e.currentTarget.blur();
+            }}
+          >
+            {t.overlay.scoreboard}
+          </button>
+        </span>
         <span className={s.zeit} data-testid="zeit">
           {formatZeit(zeit, fps)} / {formatZeit(dauer, fps)}
         </span>

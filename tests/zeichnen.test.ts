@@ -364,7 +364,7 @@ describe('Migration auf Version 4', () => {
     p.einstellungen = { trackingModus: 'auto', exportAufloesung: 1080 };
     p.zeichnungen = [{ id: 'x', quelleId: 'q', start: 0, ende: 1 }];
     const m = migriere(p);
-    expect(m.version).toBe(4);
+    expect(m.version).toBe(5);
     expect(m.einstellungen.zeichnenAnhalten).toBe(true);
     expect(m.zeichnungen).toEqual([]);
   });

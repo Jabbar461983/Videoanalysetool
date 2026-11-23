@@ -1,5 +1,5 @@
 /** Datenmodell nach CLAUDE.md Abschnitt 5. Zeiten in Sekunden der jeweiligen Quelle. */
-export const SCHEMA_VERSION = 4;
+export const SCHEMA_VERSION = 5;
 
 export interface Quelle {
   id: string;
@@ -67,6 +67,8 @@ export interface Clip {
   name: string;
   freezeFrames: FreezeFrame[];
   zeitlupen: Zeitlupe[];
+  /** Abschnitte (Clip-Zeit), in denen Logo bzw. Scoreboard ausgeblendet sind */
+  ausblenden?: { logo: Abschnitt[]; scoreboard: Abschnitt[] };
   /** Gesetzt, wenn der Clip automatisch aus einem Tag entstanden ist. */
   tagId?: string;
 }
@@ -81,12 +83,21 @@ export type PlaylistEintrag =
       titel: string;
       untertitel: string;
       dauer: number;
+      /** Logo auf der Titelfolie zeigen (Standard: ja) */
+      logo?: boolean;
       uebergang: Uebergang;
     };
 export interface Playlist {
   id: string;
   name: string;
   eintraege: PlaylistEintrag[];
+}
+/** Ab `zeit` in Quelle `quelleId` gilt der feste Stand `stand` (Team 1 : Team 2). */
+export interface ScoreKorrektur {
+  id: string;
+  quelleId: string;
+  zeit: number;
+  stand: [number, number];
 }
 export interface Abschnitt {
   start: number;
@@ -164,11 +175,7 @@ export interface Projekt {
   aktivePlaylistId?: string;
   zeichnungen: Zeichnung[];
   spielerObjekte: SpielerObjekt[];
-  overlays: {
-    logo: Abschnitt[];
-    scoreboard: Abschnitt[];
-    scoreKorrekturen: { zeit: number; stand: [number, number] }[];
-  };
+  overlays: { scoreKorrekturen: ScoreKorrektur[] };
   audioSpuren: AudioSpur[];
   taktik: {
     feld: Record<string, unknown>;
@@ -181,5 +188,11 @@ export interface Projekt {
     exportAufloesung: 1080 | 720;
     /** Wiedergabe beim Zeichnen automatisch anhalten (Standard: an) */
     zeichnenAnhalten: boolean;
+    logoAnzeigen: boolean;
+    /** Logobreite in % der Bildbreite */
+    logoGroesse: number;
+    scoreboardAnzeigen: boolean;
+    /** Startstand Team 1 : Team 2 */
+    startstand: [number, number];
   };
 }

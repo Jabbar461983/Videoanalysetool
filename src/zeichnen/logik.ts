@@ -147,31 +147,58 @@ export function dupliziereZeichnungen(p: Projekt, vonClipId: string, nachClipId:
  * Rechnet Start/Ende der Zeichnungen eines Clips von der alten auf die neue Zeitachse um,
  * sodass sie am selben Videobild (bzw. Standbild) bleiben. Zu kurz gewordene werden entfernt.
  */
-export function abgleichZeitachse(alt: Clip, neu: Clip, zeichnungen: Zeichnung[]): Zeichnung[] {
+export function zeitAbbildung(alt: Clip, neu: Clip): (t: number) => number {
   const altSegs = clipSegmente(alt);
   const neuSegs = clipSegmente(neu);
   const neuDauer = segmenteDauer(neuSegs);
-  const abbilden = (t: number): number => {
+  return (t: number): number => {
     const i = findeSegmentIndex(altSegs, t);
     const s = altSegs[i];
-    if (!s) return t;
-    if (s.art === 'freeze') {
-      const k = altSegs
-        .slice(0, i)
-        .filter((x) => x.art === 'freeze' && Math.abs(x.zeit! - s.zeit!) < 1e-6).length;
-      const kandidat = neuSegs.filter(
-        (x) => x.art === 'freeze' && Math.abs(x.zeit! - s.zeit!) < 1e-6,
-      )[k];
-      if (kandidat) return kandidat.start + Math.min(Math.max(0, t - s.start), kandidat.dauer);
-      return quellZeitZuClipZeit(neu, s.zeit!);
+    let r = t;
+    if (s) {
+      if (s.art === 'freeze') {
+        const k = altSegs
+          .slice(0, i)
+          .filter((x) => x.art === 'freeze' && Math.abs(x.zeit! - s.zeit!) < 1e-6).length;
+        const kandidat = neuSegs.filter(
+          (x) => x.art === 'freeze' && Math.abs(x.zeit! - s.zeit!) < 1e-6,
+        )[k];
+        r = kandidat
+          ? kandidat.start + Math.min(Math.max(0, t - s.start), kandidat.dauer)
+          : quellZeitZuClipZeit(neu, s.zeit!);
+      } else {
+        r = quellZeitZuClipZeit(neu, s.von! + Math.max(0, t - s.start) * s.tempo!);
+      }
     }
-    return quellZeitZuClipZeit(neu, s.von! + Math.max(0, t - s.start) * s.tempo!);
+    return Math.min(neuDauer, Math.max(0, r));
   };
+}
+
+/** Rechnet Zeitabschnitte von der alten auf die neue Clip-Zeitachse um; zu kurze entfallen. */
+export function bildeAbschnitteAb(
+  alt: Clip,
+  neu: Clip,
+  abschnitte: { start: number; ende: number }[],
+): { start: number; ende: number }[] {
+  const f = zeitAbbildung(alt, neu);
+  const out: { start: number; ende: number }[] = [];
+  for (const a of abschnitte) {
+    const start = f(a.start);
+    const ende = f(a.ende);
+    if (ende - start >= 0.05) out.push({ start: runde(start), ende: runde(ende) });
+  }
+  return out;
+}
+
+/**
+ * Rechnet Start/Ende der Zeichnungen eines Clips von der alten auf die neue Zeitachse um,
+ * sodass sie am selben Videobild (bzw. Standbild) bleiben. Zu kurz gewordene werden entfernt.
+ */
+export function abgleichZeitachse(alt: Clip, neu: Clip, zeichnungen: Zeichnung[]): Zeichnung[] {
   const ergebnis: Zeichnung[] = [];
   for (const z of zeichnungen) {
-    const start = Math.min(neuDauer, Math.max(0, abbilden(z.start)));
-    const ende = Math.min(neuDauer, Math.max(0, abbilden(z.ende)));
-    if (ende - start >= 0.05) ergebnis.push({ ...z, start: runde(start), ende: runde(ende) });
+    const [a] = bildeAbschnitteAb(alt, neu, [{ start: z.start, ende: z.ende }]);
+    if (a) ergebnis.push({ ...z, start: a.start, ende: a.ende });
   }
   return ergebnis;
 }
@@ -186,6 +213,12 @@ export function mitZeichnungsAbgleich<T>(
   if (!clip) return undefined;
   const alt: Clip = JSON.parse(JSON.stringify(clip));
   const r = fn(clip);
+  if (clip.ausblenden) {
+    clip.ausblenden = {
+      logo: bildeAbschnitteAb(alt, clip, clip.ausblenden.logo),
+      scoreboard: bildeAbschnitteAb(alt, clip, clip.ausblenden.scoreboard),
+    };
+  }
   const meine = p.zeichnungen.filter((z) => z.clipId === clipId);
   if (meine.length) {
     const neu = new Map(abgleichZeitachse(alt, clip, meine).map((z) => [z.id, z]));

@@ -17,6 +17,7 @@ import {
 } from '../wiedergabe/transport';
 import { setzeTag, zuordnungTaste } from '../tagging/aktionen';
 import { useTagging } from '../store/tagging';
+import { schalteLogo, schalteScoreboard } from '../overlay/aktionen';
 import { useProgramm } from '../store/programm';
 import { useZeichnen } from '../store/zeichnen';
 import {
@@ -59,6 +60,16 @@ export function useEditorTasten() {
       ) {
         if (zuordnungTaste(e.key)) {
           e.preventDefault();
+          return;
+        }
+      }
+      // Logo (L) und Spielstand (S) umschalten – in jeder Ansicht
+      if (!mod && !e.repeat && !e.shiftKey) {
+        const k = e.key.toLowerCase();
+        if (k === 'l' || k === 's') {
+          e.preventDefault();
+          if (k === 'l') schalteLogo();
+          else schalteScoreboard();
           return;
         }
       }

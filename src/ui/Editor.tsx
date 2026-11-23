@@ -82,7 +82,7 @@ export function Editor({ projektId }: { projektId: string }) {
       </header>
       <section className={s.buehne}>
         <Buehne quelle={q} />
-        <TagLeiste />
+        {art === 'quelle' && <TagLeiste />}
       </section>
       <aside className={s.seite} aria-label={t.editor.seitenleiste}>
         <Seitenleiste />

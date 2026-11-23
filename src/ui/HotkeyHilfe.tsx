@@ -46,6 +46,7 @@ export function HotkeyHilfe() {
           t.hotkeys.sprung,
           t.hotkeys.tempo,
           t.hotkeys.undo,
+          t.hotkeys.overlay,
           t.hotkeys.tagging,
           t.hotkeys.zeichnen,
         ].map((z) => (

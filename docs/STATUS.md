@@ -1,6 +1,26 @@
 # STATUS
 
-Stand: Ende Etappe 3 «Zeichnen auf dem Video» (Etappen 0–2 siehe unten, weiterhin gültig).
+Stand: Ende Etappe 4 «Logo & Scoreboard» (Etappen 0–3 siehe unten, weiterhin gültig).
+
+## Erledigt (Etappe 4)
+
+- **Logo oben rechts** aus `public/brand/logo-bulldozers.png`; fehlt die Datei, wird `logo-platzhalter.svg` verwendet (Hinweis im Setup). Breite in % der Bildbreite (Standard 10 %, Regler im Reiter «Setup»), Abstand 2.5 % der Bildbreite, Seitenverhältnis bleibt, keine Einfärbung.
+- **Scoreboard oben links:** `[Teamfarbe] KÜR 2 : 1 KÜR [Teamfarbe]`, Kürzel Arial Black weiss, Stand Gold, Hintergrund `#141414` leicht transparent.
+- **Spielstand automatisch** aus den Tor-Tags (Startstand + Tore je Team bis einschliesslich Zeitpunkt; Tore früherer Quellen/Halbzeiten zählen mit). Manuelle Korrekturen («ab hier gilt a : b», spätere Tore zählen weiter) und Startstand im Reiter «Setup». Hinweis, wenn Tore keinem Team zugeordnet sind.
+- **Schalter:** global per Hotkey `L` (Logo) und `S` (Spielstand) sowie Knöpfe im Player; zeitabhängig über **Ausblend-Abschnitte pro Clip** (Overlay-Spur in der Clip-Zeitleiste, ziehbar; Knöpfe «… ausblenden ab Position» im Clip-Editor). Titelfolien: Schalter «Logo auf der Titelfolie»; der Spielstand erscheint dort nie.
+- Im Clip und im Gesamtvideo zeigt das Scoreboard den Stand der **Quellzeit des gezeigten Bildes** (auch im Standbild und in der Zeitlupe); in der Quell-Ansicht den Stand der Abspielposition.
+- Alles in `renderFrame()`; Reihenfolge Titel/Zeichnungen → Logo/Scoreboard → Blende. Das Logo-Bild reicht der Aufrufer über `ziel.logo` herein (Export in Etappe 6 mit Bitmap im Worker).
+- Ausblend-Abschnitte folgen dem Clip bei Standbild/Zeitlupe/Trimmen (Zeitabgleich wie bei Zeichnungen).
+- Schema-Version 5. Tests: 77 Unit-Tests (Spielstand: Halbzeiten, Korrekturen, Gleichzeitigkeit; Ausblenden; Migration), 8 E2E-Tests (neu: Stand ändert sich nach Tor-Tags und folgt dem Clip, L/S-Hotkeys, Abschnitte, Titelfolie, Korrektur).
+
+## Etappe 4: Entscheide und Grenzen
+
+- **«Zeitabhängig» = Ausblend-Abschnitte** (Standard: immer sichtbar). **Bitte bestätigen**, sonst baue ich es als «nur in diesen Abschnitten sichtbar» um.
+- Das echte Vereinslogo fehlt noch (`public/brand/logo-bulldozers.png`); es läuft das Platzhalter-Logo.
+- In der Quell-Ansicht gelten nur die globalen Schalter, nicht die Clip-Abschnitte.
+- Tore ohne Teamzuordnung zählen nicht (Team im Reiter «Tags» setzen). Im Export-Hinweis später relevant.
+- Die Schrift «Arial Black» muss auf dem Gerät vorhanden sein (Windows/macOS: ja); sonst wird Arial fett verwendet.
+- Layout: Im Clip-Editor ist die Tag-Leiste ausgeblendet, damit das Video auf 720p-Bildschirmen Platz hat; auf kleinen Laptops bleibt die Videobühne dennoch klein (Werkzeugleiste und Zeitleiste belegen Platz).
 
 ## Erledigt (Etappe 3)
 

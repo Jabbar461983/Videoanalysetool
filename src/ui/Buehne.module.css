@@ -61,3 +61,12 @@
 .rahmen video {
   transition: none;
 }
+
+.gruppe button[aria-pressed='true'] {
+  border-color: var(--bd-gold);
+  color: var(--bd-gold);
+}
+.gruppe button[aria-pressed='false'] {
+  text-decoration: line-through;
+  opacity: 0.7;
+}

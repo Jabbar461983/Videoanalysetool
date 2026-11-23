@@ -22,10 +22,18 @@ export function neuesProjekt(name: string, jetzt = Date.now()): Projekt {
     playlisten: [],
     zeichnungen: [],
     spielerObjekte: [],
-    overlays: { logo: [], scoreboard: [], scoreKorrekturen: [] },
+    overlays: { scoreKorrekturen: [] },
     audioSpuren: [{ id: neueId(), typ: 'original', lautstaerke: 1, stumm: false, segmente: [] }],
     taktik: { feld: {}, kalibrierungen: [], situationen: [], anzeige: [] },
-    einstellungen: { trackingModus: 'auto', exportAufloesung: 1080, zeichnenAnhalten: true },
+    einstellungen: {
+      trackingModus: 'auto',
+      exportAufloesung: 1080,
+      zeichnenAnhalten: true,
+      logoAnzeigen: true,
+      logoGroesse: 10,
+      scoreboardAnzeigen: true,
+      startstand: [0, 0],
+    },
   };
 }
 
@@ -75,6 +83,18 @@ export const migrationen: Migration[] = [
     ...p,
     zeichnungen: [],
     einstellungen: { zeichnenAnhalten: true, ...(p.einstellungen as Record<string, unknown>) },
+  }),
+  // 4 → 5: Overlays – Logo/Scoreboard-Einstellungen, Score-Korrekturen mit Quelle
+  (p) => ({
+    ...p,
+    overlays: { scoreKorrekturen: [] },
+    einstellungen: {
+      logoAnzeigen: true,
+      logoGroesse: 10,
+      scoreboardAnzeigen: true,
+      startstand: [0, 0],
+      ...(p.einstellungen as Record<string, unknown>),
+    },
   }),
 ];
 

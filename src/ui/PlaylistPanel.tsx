@@ -260,6 +260,20 @@ export function PlaylistPanel() {
                               }
                             />
                           </label>
+                          <label style={{ flexDirection: 'row', alignItems: 'center' }}>
+                            <input
+                              type="checkbox"
+                              checked={e.logo !== false}
+                              data-testid="titel-logo"
+                              onChange={(ev) =>
+                                bearbeiteEintrag(
+                                  e.id,
+                                  (x) => x.typ === 'titel' && void (x.logo = ev.target.checked),
+                                )
+                              }
+                            />{' '}
+                            {t.overlay.titelfolieLogo}
+                          </label>
                           <label>
                             {t.playlist.dauerLabel}
                             <input

@@ -10,6 +10,8 @@ import {
   ZEITLUPE_TEMPI,
 } from '../schnitt/schnittLogik';
 import { ZeichnungenPanel } from './ZeichnungenPanel';
+import { fuegeAusblendenHinzu, ausblendenVon, type OverlayArt } from '../overlay/ausblenden';
+import { usePlayer } from '../store/player';
 import { mitZeichnungsAbgleich } from '../zeichnen/logik';
 import { nudgeClip } from '../schnitt/aktionen';
 import { clipDauer } from '../wiedergabe/zeitachse';
@@ -25,6 +27,7 @@ export function ClipEditor({ clipId }: { clipId: string }) {
   const [laenge, setLaenge] = useState('2');
   const [tempo, setTempo] = useState<number>(0.5);
   const [meldung, setMeldung] = useState<string | null>(null);
+  const [ausDauer, setAusDauer] = useState('3');
   if (!clip || !quelle) return null;
   const fps = quelle.fps;
   const zahl = (x: string) => Number(x.replace(',', '.'));
@@ -53,6 +56,15 @@ export function ClipEditor({ clipId }: { clipId: string }) {
     setMeldung(ok ? null : t.clipEditor.ueberlappt);
   };
 
+  const blendeAus = (art: OverlayArt) => {
+    const start = usePlayer.getState().zeit;
+    const d = zahl(ausDauer);
+    if (!(d > 0)) return;
+    const gesamt = clipDauer(clip);
+    aendere('Overlay ausblenden', (c) => {
+      fuegeAusblendenHinzu(c, art, start, Math.min(gesamt, start + d));
+    });
+  };
   const rel = (z: number) => `${t.clipEditor.nach} ${(z - clip.in).toFixed(2)} s`;
   const stepper = (seite: 'in' | 'out') => (
     <span className={s.reihe} style={{ margin: 0 }}>
@@ -208,6 +220,46 @@ export function ClipEditor({ clipId }: { clipId: string }) {
           {meldung}
         </p>
       )}
+      <p className="kicker">{t.overlay.clipTitel}</p>
+      <div className={s.reihe}>
+        <label className="hinweis">
+          {t.overlay.abschnittDauer}{' '}
+          <input
+            type="text"
+            inputMode="decimal"
+            value={ausDauer}
+            aria-label={t.overlay.abschnittDauer}
+            onChange={(e) => setAusDauer(e.target.value)}
+            style={{ width: 52 }}
+          />
+        </label>
+        <button className={s.mini} data-testid="logo-aus" onClick={() => blendeAus('logo')}>
+          {t.overlay.logoAus}
+        </button>
+        <button className={s.mini} data-testid="score-aus" onClick={() => blendeAus('scoreboard')}>
+          {t.overlay.scoreboardAus}
+        </button>
+      </div>
+      <ul style={{ listStyle: 'none', padding: 0, margin: 0 }} data-testid="ausblend-liste">
+        {(['logo', 'scoreboard'] as const).flatMap((art) =>
+          ausblendenVon(clip, art).map((ab, i) => (
+            <li key={`${art}${i}`} className={s.reihe} style={{ margin: 0 }}>
+              <span className="hinweis" style={{ flex: 1 }}>
+                {art === 'logo' ? t.overlay.spurLogo : t.overlay.spurScore}: {ab.start.toFixed(1)}–
+                {ab.ende.toFixed(1)} s
+              </span>
+              <button
+                className={s.mini}
+                onClick={() =>
+                  aendere('Overlay einblenden', (c) => void c.ausblenden?.[art].splice(i, 1))
+                }
+              >
+                {t.overlay.entfernen}
+              </button>
+            </li>
+          )),
+        )}
+      </ul>
       <ZeichnungenPanel clipId={clipId} />
     </section>
   );

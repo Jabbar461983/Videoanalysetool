@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useRef } from 'react';
 import { t } from '../i18n/de-CH';
 import { useProgramm } from '../store/programm';
 import { usePlayer } from '../store/player';
@@ -8,7 +8,8 @@ import { baueProgrammPlan } from '../wiedergabe/plan';
 import { aktuelleFps } from '../wiedergabe/transport';
 import { useZeichnen } from '../store/zeichnen';
 import { WERKZEUG_NAMEN } from '../zeichnen/geometrie';
-import type { Zeichnung } from '../model/typen';
+import { ausblendenVon } from '../overlay/ausblenden';
+import { ZeitBalken } from './ZeitBalken';
 import s from './ProgrammTimeline.module.css';
 
 /** Zeitleiste für den Clip-Editor (eine Clip-Zeitachse) und die Playlist (alle Einträge hintereinander). */
@@ -24,15 +25,24 @@ export function ProgrammTimeline() {
     [projekt, art, clipId, playlistId],
   );
   const auswahlId = useZeichnen((z) => z.auswahlId);
-  const [zieh, setZieh] = useState<{
-    id: string;
-    modus: 'bewegen' | 'links' | 'rechts';
-    x0: number;
-    start: number;
-    ende: number;
-    neuStart: number;
-    neuEnde: number;
-  } | null>(null);
+  const clip = projekt?.clips.find((c) => c.id === clipId);
+  const alleZeichnungen = projekt?.zeichnungen;
+  const zeichnungsListe = useMemo(
+    () => (alleZeichnungen ?? []).filter((z) => z.clipId === clipId),
+    [alleZeichnungen, clipId],
+  );
+  // Bahnen: erste freie Bahn, in der sich die Zeitspannen nicht überlappen
+  const bahnVon = useMemo(() => {
+    const bahnen: number[] = [];
+    const m = new Map<string, number>();
+    for (const z of [...zeichnungsListe].sort((x, y) => x.start - y.start)) {
+      let b = bahnen.findIndex((e) => e <= z.start + 1e-9);
+      if (b < 0) b = Math.min(bahnen.length, 3);
+      bahnen[b] = Math.max(bahnen[b] ?? 0, z.ende);
+      m.set(z.id, b);
+    }
+    return m;
+  }, [zeichnungsListe]);
   if (!plan) return null;
   const dauer = Math.max(plan.dauer, 0.001);
   const pct = (x: number) => `${(x / dauer) * 100}%`;
@@ -123,122 +133,69 @@ export function ProgrammTimeline() {
             )}
           </div>
         ))}
-        {art === 'clip' &&
-          clipId &&
-          (() => {
-            const liste = (projekt?.zeichnungen ?? []).filter((z) => z.clipId === clipId);
-            if (liste.length === 0) return null;
-            // Bahnen: erste freie Bahn, in der sich die Zeitspannen nicht überlappen
-            const bahnen: number[] = [];
-            const bahnVon = new Map<string, number>();
-            for (const z of [...liste].sort((a, b) => a.start - b.start)) {
-              let b = bahnen.findIndex((ende) => ende <= z.start + 1e-9);
-              if (b < 0) b = Math.min(bahnen.length, 3);
-              bahnen[b] = Math.max(bahnen[b] ?? 0, z.ende);
-              bahnVon.set(z.id, b);
-            }
-            const wert = (z: Zeichnung) =>
-              zieh && zieh.id === z.id
-                ? { start: zieh.neuStart, ende: zieh.neuEnde }
-                : { start: z.start, ende: z.ende };
-            const beginne = (
-              e: React.PointerEvent,
-              z: Zeichnung,
-              modus: 'bewegen' | 'links' | 'rechts',
-            ) => {
-              e.stopPropagation();
-              e.currentTarget.setPointerCapture(e.pointerId);
-              useZeichnen.getState().waehle(z.id);
-              setZieh({
-                id: z.id,
-                modus,
-                x0: e.clientX,
-                start: z.start,
-                ende: z.ende,
-                neuStart: z.start,
-                neuEnde: z.ende,
-              });
-            };
-            const bewege = (e: React.PointerEvent) => {
-              if (!zieh || !ref.current) return;
-              const dt =
-                ((e.clientX - zieh.x0) / ref.current.getBoundingClientRect().width) * plan.dauer;
-              let a = zieh.start;
-              let b = zieh.ende;
-              if (zieh.modus === 'bewegen') {
-                const l = b - a;
-                a = Math.min(Math.max(0, a + dt), plan.dauer - l);
-                b = a + l;
-              } else if (zieh.modus === 'links') a = Math.min(Math.max(0, a + dt), b - 0.2);
-              else b = Math.max(Math.min(plan.dauer, b + dt), a + 0.2);
-              setZieh({
-                ...zieh,
-                neuStart: Math.round(a * 100) / 100,
-                neuEnde: Math.round(b * 100) / 100,
-              });
-            };
-            const ende = () => {
-              if (zieh && (zieh.neuStart !== zieh.start || zieh.neuEnde !== zieh.ende)) {
-                const g = zieh;
-                useProjekt.getState().aendere('Zeitspanne ändern', (p) => {
-                  const z = p.zeichnungen.find((x) => x.id === g.id);
-                  if (z) {
-                    z.start = g.neuStart;
-                    z.ende = g.neuEnde;
+        {art === 'clip' && clipId && clip && (
+          <div data-testid="overlay-spur">
+            {(['logo', 'scoreboard'] as const).map((k, reihe) =>
+              ausblendenVon(clip, k).map((ab, i) => (
+                <ZeitBalken
+                  key={`${k}${i}`}
+                  start={ab.start}
+                  ende={ab.ende}
+                  dauer={plan.dauer}
+                  spurRef={ref}
+                  top={84 + reihe * 16}
+                  farbe="#8a2b2b"
+                  textfarbe="#fff"
+                  label={k === 'logo' ? t.overlay.spurLogo : t.overlay.spurScore}
+                  aria={k === 'logo' ? t.overlay.spurLogo : t.overlay.spurScore}
+                  testid={`overlay-balken-${k}`}
+                  kantenTestid={`overlay-${k}`}
+                  onCommit={(st, en) =>
+                    useProjekt.getState().aendere('Overlay-Abschnitt', (pr) => {
+                      const c = pr.clips.find((x) => x.id === clipId);
+                      const liste = c?.ausblenden?.[k];
+                      if (liste?.[i]) liste[i] = { start: st, ende: en };
+                    })
                   }
-                });
-              }
-              setZieh(null);
-            };
-            return (
-              <div data-testid="zeichnungs-spur">
-                <span className={s.zSpurLabel}>{t.zeichnen.spur}</span>
-                {liste.map((z) => {
-                  const w = wert(z);
-                  return (
-                    <div
-                      key={z.id}
-                      role="button"
-                      tabIndex={0}
-                      aria-pressed={auswahlId === z.id}
-                      aria-label={`${WERKZEUG_NAMEN[z.werkzeug]} ${w.start.toFixed(1)}–${w.ende.toFixed(1)} s`}
-                      data-testid="zeichnungs-balken"
-                      className={s.zBalken}
-                      style={{
-                        left: pct(w.start),
-                        width: pct(w.ende - w.start),
-                        top: 124 + (bahnVon.get(z.id) ?? 0) * 16,
-                        background: z.stil.farbe,
-                        color: ['#000000', '#007057'].includes(z.stil.farbe.toLowerCase())
-                          ? '#fff'
-                          : '#000',
-                      }}
-                      onPointerDown={(e) => beginne(e, z, 'bewegen')}
-                      onPointerMove={bewege}
-                      onPointerUp={ende}
-                      onPointerCancel={ende}
-                    >
-                      {WERKZEUG_NAMEN[z.werkzeug]}
-                      <span
-                        className={`${s.zKante} ${s.l}`}
-                        data-testid="zeit-links"
-                        onPointerDown={(e) => beginne(e, z, 'links')}
-                        onPointerMove={bewege}
-                        onPointerUp={ende}
-                      />
-                      <span
-                        className={`${s.zKante} ${s.r}`}
-                        data-testid="zeit-rechts"
-                        onPointerDown={(e) => beginne(e, z, 'rechts')}
-                        onPointerMove={bewege}
-                        onPointerUp={ende}
-                      />
-                    </div>
-                  );
-                })}
-              </div>
-            );
-          })()}
+                />
+              )),
+            )}
+          </div>
+        )}
+        {art === 'clip' && clipId && zeichnungsListe.length > 0 && (
+          <div data-testid="zeichnungs-spur">
+            <span className={s.zSpurLabel}>{t.zeichnen.spur}</span>
+            {zeichnungsListe.map((z) => (
+              <ZeitBalken
+                key={z.id}
+                start={z.start}
+                ende={z.ende}
+                dauer={plan.dauer}
+                spurRef={ref}
+                top={122 + (bahnVon.get(z.id) ?? 0) * 16}
+                farbe={z.stil.farbe}
+                textfarbe={
+                  ['#000000', '#007057'].includes(z.stil.farbe.toLowerCase()) ? '#fff' : '#000'
+                }
+                label={WERKZEUG_NAMEN[z.werkzeug]}
+                aria={WERKZEUG_NAMEN[z.werkzeug]}
+                ausgewaehlt={auswahlId === z.id}
+                testid="zeichnungs-balken"
+                kantenTestid="zeit"
+                onAuswahl={() => useZeichnen.getState().waehle(z.id)}
+                onCommit={(st, en) =>
+                  useProjekt.getState().aendere('Zeitspanne ändern', (pr) => {
+                    const zz = pr.zeichnungen.find((x) => x.id === z.id);
+                    if (zz) {
+                      zz.start = st;
+                      zz.ende = en;
+                    }
+                  })
+                }
+              />
+            ))}
+          </div>
+        )}
         <div
           className={s.kopf}
           style={{ left: pct(Math.min(zeit, plan.dauer)) }}
