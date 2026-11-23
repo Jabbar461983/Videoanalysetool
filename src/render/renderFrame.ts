@@ -95,6 +95,7 @@ export function renderFrame(t: number, projekt: Projekt | null, ziel: RenderZiel
   if (seg && seg.art !== 'titel' && seg.clipId) {
     const eintrag = plan.eintraege.find((e) => e.index === seg.eintragIndex);
     const clipZeit = k.art === 'clip' ? t : t - (eintrag?.start ?? 0);
+    const klipp = projekt.clips.find((c) => c.id === seg.clipId);
     zeichneSpielerObjekte(
       ctx,
       projekt.spielerObjekte,
@@ -102,6 +103,7 @@ export function renderFrame(t: number, projekt: Projekt | null, ziel: RenderZiel
       clipZeit,
       breite,
       hoehe,
+      klipp ? clipZeitZuQuellZeit(klipp, clipZeit).quellZeit : 0,
       ziel.bilder,
     );
     zeichneClipZeichnungen(

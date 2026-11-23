@@ -1,14 +1,15 @@
 import { t } from '../i18n/de-CH';
 import { entferneSpieler } from '../ki/spielerAktionen';
 import { istSpielerSichtbar, keyframeBei } from '../render/spieler';
-import { spielerBox } from '../render/perspektive';
+import { quellZeitFuer, spielerGeo } from '../render/perspektive';
 import { usePlayer } from '../store/player';
 import { useProjekt } from '../store/projektStore';
 import { useProgramm } from '../store/programm';
 
 /** Kleines ✕ am Kopf jedes sichtbaren, freigestellten Spielers: entfernt die Markierung. */
 export function SpielerKreuze() {
-  const objekte = useProjekt((x) => x.projekt?.spielerObjekte);
+  const projekt = useProjekt((x) => x.projekt);
+  const objekte = projekt?.spielerObjekte;
   const clipId = useProgramm((x) => (x.art === 'clip' ? x.clipId : undefined));
   const zeit = usePlayer((x) => x.zeit);
   if (!objekte || !clipId) return null;
@@ -23,7 +24,7 @@ export function SpielerKreuze() {
       {sichtbar.map((o) => {
         const kf = keyframeBei(o, zeit)?.kf;
         if (!kf) return null;
-        const bx = spielerBox(o, kf);
+        const bx = spielerGeo(o, kf, quellZeitFuer(projekt, o.clipId, zeit)).box;
         const x = (bx.x + bx.b) * 100;
         const y = bx.y * 100;
         return (

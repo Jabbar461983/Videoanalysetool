@@ -487,7 +487,7 @@ export const t = {
     modusPlus: 'Ergänzen',
     modusMinus: 'Entfernen',
     modell: 'KI-Modell',
-    freeze: 'Modus: Freeze-Frame (Tracking folgt in Etappe 8)',
+    freeze: 'Der Modus gilt für neue Spieler; pro Spieler im Panel änderbar.',
     nurCpu:
       'Dieser Browser hat kein WebGPU: Das Freistellen läuft auf dem Prozessor und dauert einige Sekunden pro Spieler.',
     ladeModell: (p: number) => `KI-Modell wird geladen … ${p} %`,
@@ -498,6 +498,26 @@ export const t = {
     fehlerModell:
       'Das KI-Modell konnte nicht geladen werden. Prüfen Sie die Internetverbindung (nur für den ersten Download nötig) und versuchen Sie es erneut.',
     technisch: 'Technische Meldung',
+    trackingKeinWebgpu:
+      'Automatisches Mitführen braucht WebGPU, das fehlt hier: Es wird der Freeze-Frame-Modus verwendet.',
+    trackingZuLangsam:
+      'Dieses Gerät erkennt Spieler zu langsam für das automatische Mitführen: Es wird der Freeze-Frame-Modus verwendet.',
+    trackingSchlecht:
+      'Der Spieler konnte nicht zuverlässig verfolgt werden: Es wird der Freeze-Frame-Modus verwendet.',
+    trackingAbgebrochen: 'Verfolgen abgebrochen: Es wird der Freeze-Frame-Modus verwendet.',
+    trackingFehler:
+      'Das automatische Mitführen ist fehlgeschlagen: Es wird der Freeze-Frame-Modus verwendet.',
+    trackingPruefung: 'Geschwindigkeit des Geräts wird geprüft (einmalig) …',
+    trackingModell: (p: number) => `Erkennungsmodell wird geladen … ${p} %`,
+    trackingLaeuft: (p: number) => `Spieler wird verfolgt … ${p} %`,
+    trackingAbbrechen: 'Abbrechen',
+    trackingModus: 'Mitführen',
+    modusAuto: 'Automatisch',
+    modusFreeze: 'Freeze-Frame',
+    trackingKorrektur:
+      'Verfolgung ungenau? Auf den Spieler klicken, wo er verloren ging: Das Verfolgen setzt dort neu an.',
+    nurFreeze: 'Kontur, Lupe und Verschieben gehen nur im Freeze-Frame.',
+    trackingStellen: 'Unsichere Stellen:',
     fehlerMaske: 'Hier wurde kein Spieler erkannt. Klicken Sie mitten auf den Spieler.',
     ausserhalb:
       'Der Klick liegt ausserhalb des Ausschnitts. Klicken Sie ohne Shift/Alt, um neu zu beginnen.',

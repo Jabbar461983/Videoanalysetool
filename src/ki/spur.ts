@@ -1,15 +1,7 @@
 import type { SpurPunkt } from './trackingTypen';
 
-/** Spurpunkt im Projekt: Quellzeit in Sekunden, Box normiert (0–1 des Videobilds). */
-export interface SpurN {
-  zeit: number;
-  cx: number;
-  cy: number;
-  b: number;
-  h: number;
-  konfidenz: number;
-  zustand: 'ok' | 'unsicher' | 'verloren';
-}
+import type { SpurN } from '../model/typen';
+export type { SpurN };
 
 export function normalisiere(punkte: SpurPunkt[], breite: number, hoehe: number): SpurN[] {
   return punkte.map((p) => ({

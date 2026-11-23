@@ -186,8 +186,25 @@ export function Werkzeugleiste() {
 
 function SpielerHinweise() {
   const klickArt = useSpielerKi((x) => x.klickArt);
+  const modus = useProjekt((x) => x.projekt?.einstellungen.trackingModus ?? 'auto');
   return (
     <>
+      <label className={s.regler}>
+        {t.spieler.trackingModus}
+        <select
+          value={modus}
+          aria-label={t.spieler.trackingModus}
+          data-testid="tracking-modus"
+          onChange={(e) =>
+            useProjekt.getState().aendereStill((p) => {
+              p.einstellungen.trackingModus = e.target.value as 'auto' | 'freeze';
+            })
+          }
+        >
+          <option value="auto">{t.spieler.modusAuto}</option>
+          <option value="freeze">{t.spieler.modusFreeze}</option>
+        </select>
+      </label>
       <span className={s.trenner} />
       {(['neu', 'plus', 'minus'] as const).map((a) => (
         <button

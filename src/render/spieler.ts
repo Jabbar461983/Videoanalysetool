@@ -1,5 +1,5 @@
 import type { MaskenKeyframe, NormRahmen, SpielerObjekt, Zeichnung } from '../model/typen';
-import { spielerBox } from './perspektive';
+import { spielerGeo } from './perspektive';
 import { zeichneZeichnung } from './zeichnungen';
 
 type Ctx = CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
@@ -59,6 +59,7 @@ export function zeichneSpielerObjekte(
   t: number,
   breite: number,
   hoehe: number,
+  quellZeit: number,
   bilder: BilderMap | undefined,
 ): void {
   for (const o of objekte) {
@@ -66,7 +67,7 @@ export function zeichneSpielerObjekte(
     const k = keyframeBei(o, t);
     if (!k || !bilder) continue;
     const alpha = 1;
-    zeichneEinen(ctx, o, k.kf, k.index, alpha, t, breite, hoehe, bilder);
+    zeichneEinen(ctx, o, k.kf, k.index, alpha, t, quellZeit, breite, hoehe, bilder);
   }
 }
 
@@ -77,14 +78,17 @@ function zeichneEinen(
   index: number,
   alpha: number,
   t: number,
+  quellZeit: number,
   breite: number,
   hoehe: number,
   bilder: BilderMap,
 ) {
   const bild = bilder.get(bildSchluessel(o.id, index, 'bild', kf.bild));
   const box = px(kf.box, breite, hoehe);
-  const verschoben = Math.abs(o.versatz.x) + Math.abs(o.versatz.y) > 1e-6;
-  const nb = px(spielerBox(o, kf), breite, hoehe);
+  const geo = spielerGeo(o, kf, quellZeit);
+  const auto = geo.auto;
+  const verschoben = !auto && Math.abs(o.versatz.x) + Math.abs(o.versatz.y) > 1e-6;
+  const nb = px(geo.box, breite, hoehe);
   const e = o.effekte;
   ctx.save();
   ctx.globalAlpha = alpha;
@@ -114,8 +118,8 @@ function zeichneEinen(
   }
 
   // 3. Ring am Boden
-  const fx = (kf.fuss.x + o.versatz.x) * breite;
-  const fy = (kf.fuss.y + o.versatz.y) * hoehe;
+  const fx = geo.fuss.x * breite;
+  const fy = geo.fuss.y * hoehe;
   if (e.ring) {
     const rx = Math.max(nb.b * 0.7, breite * 0.02);
     ctx.save();
@@ -132,7 +136,7 @@ function zeichneEinen(
   }
 
   // 4. Kontur (farbige Silhouette, mehrfach versetzt) – unter dem Spieler
-  if (e.kontur && bild) {
+  if (e.kontur && bild && !auto) {
     const sw = Math.max(1, Math.round(nb.b));
     const sh = Math.max(1, Math.round(nb.h));
     const sil =
@@ -152,7 +156,7 @@ function zeichneEinen(
   }
 
   // 5. Der Spieler selbst (am neuen Ort)
-  if (bild && (verschoben || e.kontur)) ctx.drawImage(bild, nb.x, nb.y, nb.b, nb.h);
+  if (bild && !auto && (verschoben || e.kontur)) ctx.drawImage(bild, nb.x, nb.y, nb.b, nb.h);
 
   // 6. Pfeil von alter zu neuer Position
   if (o.pfeil && verschoben) {
@@ -172,7 +176,7 @@ function zeichneEinen(
   }
 
   // 7. Lupe (Ausschnitt 2× vergrössert im Kreis neben dem Spieler)
-  if (e.lupe) {
+  if (e.lupe && !auto) {
     const ausschnitt = bilder.get(bildSchluessel(o.id, index, 'ausschnitt', kf.ausschnitt));
     if (ausschnitt) {
       const lb = px(kf.lupeBox, breite, hoehe);

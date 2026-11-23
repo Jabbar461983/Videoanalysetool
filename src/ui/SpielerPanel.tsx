@@ -11,6 +11,8 @@ import { useProjekt } from '../store/projektStore';
 import { useSpielerKi } from '../store/spielerKi';
 import { useZeichnen } from '../store/zeichnen';
 import { PALETTE } from '../zeichnen/geometrie';
+import { wechsleModus } from '../ki/trackingAktionen';
+import { unsichereStellen } from '../ki/spur';
 import { STANDARD_HORIZONT } from '../render/perspektive';
 import s from './Seitenleiste.module.css';
 
@@ -22,8 +24,10 @@ export function SpielerPanel({ clipId }: { clipId: string }) {
   const auswahlId = useSpielerKi((x) => x.auswahlId);
   const verschieben = useSpielerKi((x) => x.verschieben);
   const status = useSpielerKi((x) => x.status);
+  const tracking = useSpielerKi((x) => x.tracking);
   const meldung = useSpielerKi((x) => x.meldung);
   const o = liste.find((x) => x.id === auswahlId);
+  const auto = o?.trackingModus === 'auto';
   const verschoben = !!o && Math.abs(o.versatz.x) + Math.abs(o.versatz.y) > 1e-6;
 
   return (
@@ -84,6 +88,33 @@ export function SpielerPanel({ clipId }: { clipId: string }) {
           data-hintergrund={o.maskenKeyframes[0]?.hintergrund ? 'ja' : 'nein'}
           style={{ display: 'grid', gap: 6, marginTop: 8 }}
         >
+          <label>
+            {t.spieler.trackingModus}{' '}
+            <select
+              value={o.trackingModus}
+              data-testid="spieler-modus"
+              disabled={!!tracking}
+              onChange={(e) => {
+                const m = e.target.value as 'auto' | 'freeze';
+                if (m !== o.trackingModus) wechsleModus(o.id, m);
+              }}
+            >
+              <option value="auto">{t.spieler.modusAuto}</option>
+              <option value="freeze">{t.spieler.modusFreeze}</option>
+            </select>
+          </label>
+          {auto && <p className="hinweis">{t.spieler.nurFreeze}</p>}
+          {auto && o.spur && unsichereStellen(o.spur).length > 0 && (
+            <div data-testid="spur-stellen">
+              <p className="hinweis">
+                {t.spieler.trackingStellen}{' '}
+                {unsichereStellen(o.spur)
+                  .map((st) => `${st.von.toFixed(1)}–${st.bis.toFixed(1)} s`)
+                  .join(', ')}
+              </p>
+              <p className="hinweis">{t.spieler.trackingKorrektur}</p>
+            </div>
+          )}
           {(
             [
               ['spotlight', t.spieler.spotlight],
@@ -92,21 +123,23 @@ export function SpielerPanel({ clipId }: { clipId: string }) {
               ['lupe', t.spieler.lupe],
               ['label', t.spieler.label],
             ] as const
-          ).map(([k, name]) => (
-            <label key={k}>
-              <input
-                type="checkbox"
-                checked={o.effekte[k]}
-                data-testid={`effekt-${k}`}
-                onChange={(e) =>
-                  aendereSpieler('Spieler-Effekt', o.id, (z) => {
-                    z.effekte[k] = e.target.checked;
-                  })
-                }
-              />{' '}
-              {name}
-            </label>
-          ))}
+          )
+            .filter(([k]) => !(auto && (k === 'kontur' || k === 'lupe')))
+            .map(([k, name]) => (
+              <label key={k}>
+                <input
+                  type="checkbox"
+                  checked={o.effekte[k]}
+                  data-testid={`effekt-${k}`}
+                  onChange={(e) =>
+                    aendereSpieler('Spieler-Effekt', o.id, (z) => {
+                      z.effekte[k] = e.target.checked;
+                    })
+                  }
+                />{' '}
+                {name}
+              </label>
+            ))}
           {o.effekte.spotlight && (
             <label>
               {t.spieler.staerke}{' '}
@@ -182,95 +215,101 @@ export function SpielerPanel({ clipId }: { clipId: string }) {
               )),
             )}
           </select>
-          <label>
-            <input
-              type="checkbox"
-              checked={verschieben}
-              data-testid="spieler-verschieben"
-              disabled={status === 'fuellt'}
-              onChange={(e) => {
-                useSpielerKi.getState().setze({ verschieben: e.target.checked });
-                if (e.target.checked) {
-                  useZeichnen.getState().setzeWerkzeug('spieler');
-                  // In das Standbild des Spielers springen, sonst ist er nicht sichtbar/anklickbar
-                  const tt = usePlayer.getState().zeit;
-                  if (tt < o.start || tt >= o.ende) usePlayer.getState().suche(o.start + 0.001);
-                  void sichereHintergrund(o.id);
-                }
-              }}
-            />{' '}
-            {t.spieler.verschieben}
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              checked={o.perspektive?.an ?? true}
-              data-testid="spieler-perspektive"
-              onChange={(e) =>
-                aendereSpieler('Perspektive', o.id, (z) => {
-                  z.perspektive = {
-                    an: e.target.checked,
-                    horizont: z.perspektive?.horizont ?? STANDARD_HORIZONT,
-                  };
-                })
-              }
-            />{' '}
-            {t.spieler.perspektive}
-          </label>
-          {(o.perspektive?.an ?? true) && (
+          {!auto && (
             <label>
-              {t.spieler.horizont}{' '}
               <input
-                type="range"
-                min={0}
-                max={60}
-                value={Math.round((o.perspektive?.horizont ?? STANDARD_HORIZONT) * 100)}
-                aria-label={t.spieler.horizont}
-                onChange={(e) =>
-                  aendereSpieler('Horizont', o.id, (z) => {
-                    z.perspektive = { an: true, horizont: Number(e.target.value) / 100 };
-                  })
-                }
-              />
+                type="checkbox"
+                checked={verschieben}
+                data-testid="spieler-verschieben"
+                disabled={status === 'fuellt'}
+                onChange={(e) => {
+                  useSpielerKi.getState().setze({ verschieben: e.target.checked });
+                  if (e.target.checked) {
+                    useZeichnen.getState().setzeWerkzeug('spieler');
+                    // In das Standbild des Spielers springen, sonst ist er nicht sichtbar/anklickbar
+                    const tt = usePlayer.getState().zeit;
+                    if (tt < o.start || tt >= o.ende) usePlayer.getState().suche(o.start + 0.001);
+                    void sichereHintergrund(o.id);
+                  }
+                }}
+              />{' '}
+              {t.spieler.verschieben}
             </label>
           )}
-          <label>
-            {t.spieler.groesse}{' '}
-            <input
-              type="range"
-              min={50}
-              max={200}
-              value={Math.round((o.massstab ?? 1) * 100)}
-              aria-label={t.spieler.groesse}
-              onChange={(e) =>
-                aendereSpieler('Spielergrösse', o.id, (z) => {
-                  z.massstab = Number(e.target.value) / 100;
-                })
-              }
-            />
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              checked={o.pfeil}
-              onChange={(e) =>
-                aendereSpieler('Spielerpfeil', o.id, (z) => void (z.pfeil = e.target.checked))
-              }
-            />{' '}
-            {t.spieler.pfeil}
-          </label>
-          {verschoben && (
-            <button
-              onClick={() =>
-                aendereSpieler(
-                  'Spieler zurücksetzen',
-                  o.id,
-                  (z) => void (z.versatz = { x: 0, y: 0 }),
-                )
-              }
-            >
-              {t.spieler.zuruecksetzen}
-            </button>
+          {!auto && (
+            <>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={o.perspektive?.an ?? true}
+                  data-testid="spieler-perspektive"
+                  onChange={(e) =>
+                    aendereSpieler('Perspektive', o.id, (z) => {
+                      z.perspektive = {
+                        an: e.target.checked,
+                        horizont: z.perspektive?.horizont ?? STANDARD_HORIZONT,
+                      };
+                    })
+                  }
+                />{' '}
+                {t.spieler.perspektive}
+              </label>
+              {(o.perspektive?.an ?? true) && (
+                <label>
+                  {t.spieler.horizont}{' '}
+                  <input
+                    type="range"
+                    min={0}
+                    max={60}
+                    value={Math.round((o.perspektive?.horizont ?? STANDARD_HORIZONT) * 100)}
+                    aria-label={t.spieler.horizont}
+                    onChange={(e) =>
+                      aendereSpieler('Horizont', o.id, (z) => {
+                        z.perspektive = { an: true, horizont: Number(e.target.value) / 100 };
+                      })
+                    }
+                  />
+                </label>
+              )}
+              <label>
+                {t.spieler.groesse}{' '}
+                <input
+                  type="range"
+                  min={50}
+                  max={200}
+                  value={Math.round((o.massstab ?? 1) * 100)}
+                  aria-label={t.spieler.groesse}
+                  onChange={(e) =>
+                    aendereSpieler('Spielergrösse', o.id, (z) => {
+                      z.massstab = Number(e.target.value) / 100;
+                    })
+                  }
+                />
+              </label>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={o.pfeil}
+                  onChange={(e) =>
+                    aendereSpieler('Spielerpfeil', o.id, (z) => void (z.pfeil = e.target.checked))
+                  }
+                />{' '}
+                {t.spieler.pfeil}
+              </label>
+              {verschoben && (
+                <button
+                  onClick={() =>
+                    aendereSpieler(
+                      'Spieler zurücksetzen',
+                      o.id,
+                      (z) => void (z.versatz = { x: 0, y: 0 }),
+                    )
+                  }
+                >
+                  {t.spieler.zuruecksetzen}
+                </button>
+              )}
+            </>
           )}
           <button
             className="gefahr"

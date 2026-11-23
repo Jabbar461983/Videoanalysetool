@@ -9,6 +9,13 @@ interface SpielerKiState {
   meldung: string | null;
   /** Technische Fehlermeldung (für die Fehlersuche) */
   detail: string | null;
+  /** Läuft gerade ein Tracking? */
+  tracking: {
+    objId: string;
+    anteil: number;
+    phase: 'pruefung' | 'modell' | 'lauf';
+    prozent: number;
+  } | null;
   /** Verschieben-Modus: Ziehen im ausgewählten Spieler bewegt ihn */
   verschieben: boolean;
   /** Art des nächsten Klicks (für Touch ohne Shift/Alt) */
@@ -22,6 +29,7 @@ export const useSpielerKi = create<SpielerKiState>((set) => ({
   prozent: 0,
   meldung: null,
   detail: null,
+  tracking: null,
   verschieben: false,
   klickArt: 'neu',
   setze: (patch) => set(patch),

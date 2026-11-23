@@ -4,6 +4,8 @@ import { useProgramm } from '../store/programm';
 import { usePlayer } from '../store/player';
 import { useProjekt } from '../store/projektStore';
 import { formatKurz, formatZeit } from '../video/bildmathe';
+import { quellZeitZuClipZeit } from '../wiedergabe/zeitachse';
+import { unsichereStellen } from '../ki/spur';
 import { baueProgrammPlan } from '../wiedergabe/plan';
 import { aktuelleFps } from '../wiedergabe/transport';
 import { useZeichnen } from '../store/zeichnen';
@@ -47,6 +49,21 @@ export function ProgrammTimeline() {
     }
     return m;
   }, [zeichnungsListe]);
+  // Unsichere/verlorene Stellen der automatisch verfolgten Spieler (Clip-Zeit)
+  const alleSpieler = projekt?.spielerObjekte;
+  const marken = useMemo(() => {
+    if (!clip) return [];
+    return (alleSpieler ?? [])
+      .filter((o) => o.clipId === clip.id && o.trackingModus === 'auto' && o.spur)
+      .flatMap((o) =>
+        unsichereStellen(o.spur!).map((st) => ({
+          id: `${o.id}-${st.von}`,
+          von: quellZeitZuClipZeit(clip, st.von),
+          bis: quellZeitZuClipZeit(clip, st.bis),
+          verloren: st.verloren,
+        })),
+      );
+  }, [alleSpieler, clip]);
   if (!plan) return null;
   const dauer = Math.max(plan.dauer, 0.001);
   const pct = (x: number) => `${(x / dauer) * 100}%`;
@@ -215,6 +232,26 @@ export function ProgrammTimeline() {
                 ))}
               </div>
             ))}
+            {marken.length > 0 && (
+              <div className={s.reihe} style={{ height: 14 }} data-testid="tracking-marken">
+                <span className={s.reiheLabel}>{t.spieler.titel}</span>
+                {marken.map((m) => (
+                  <div
+                    key={m.id}
+                    data-testid="tracking-marke"
+                    title={m.verloren ? 'Spieler verloren' : 'Verfolgung unsicher'}
+                    style={{
+                      position: 'absolute',
+                      top: 2,
+                      height: 8,
+                      left: pct(m.von),
+                      width: `max(6px, ${((m.bis - m.von) / dauer) * 100}%)`,
+                      background: m.verloren ? '#E53935' : '#F2994A',
+                    }}
+                  />
+                ))}
+              </div>
+            )}
             <div
               className={s.reihe}
               style={{ height: zeichnungsListe.length ? 66 : 0 }}

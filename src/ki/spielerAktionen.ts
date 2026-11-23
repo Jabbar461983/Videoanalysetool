@@ -1,5 +1,6 @@
 import { neueId } from '../model/schema';
 import type { MaskenKeyframe, Projekt, SpielerObjekt } from '../model/typen';
+import { quellZeitFuer } from '../render/perspektive';
 import { standardEffekte } from '../render/spieler';
 import { fuegeStandbildHinzu, STANDARD_STANDBILD_DAUER } from '../schnitt/schnittLogik';
 import { usePlayer } from '../store/player';
@@ -11,6 +12,7 @@ import { clipPlan, findeSegmentIndex } from '../wiedergabe/zeitachse';
 import { ausschnittRahmen, bereinigeMaske, type Rahmen } from './ausschnitt';
 import { STANDARD_SAM } from './modelle';
 import { sam } from './sam';
+import { pruefeAutomatik, starteTracking } from './trackingAktionen';
 import type { KlickPunkt } from './typen';
 import {
   baueHintergrund,
@@ -64,17 +66,30 @@ async function stelleModellSicher(): Promise<void> {
  * Sorgt dafür, dass die Position in einem Standbild liegt: steht der Abspielkopf schon in einem, wird dieses
  * benutzt; sonst wird eines (3 s) an der aktuellen Bildposition eingefügt. Gibt die Clip-Zeit-Spanne zurück.
  */
-function sichereStandbild(clipId: string): { start: number; ende: number; neu: boolean } | null {
+export function sichereStandbild(
+  clipId: string,
+  vorgabeQuellZeit?: number,
+): { start: number; ende: number; neu: boolean } | null {
   const p = projektOderNull();
   const clip = p?.clips.find((c) => c.id === clipId);
   const q = p?.quellen.find((x) => x.id === clip?.quelleId);
   if (!p || !clip || !q) return null;
-  const t = usePlayer.getState().zeit;
   const plan = clipPlan(clip);
-  const seg = plan.segmente[findeSegmentIndex(plan.segmente, t)];
-  if (seg?.art === 'freeze') return { start: seg.start, ende: seg.start + seg.dauer, neu: false };
-  if (!seg || seg.art !== 'video' || seg.von === undefined) return null;
-  const quellZeit = seg.von + (t - seg.start) * (seg.tempo ?? 1);
+  let quellZeit: number;
+  if (vorgabeQuellZeit === undefined) {
+    const t = usePlayer.getState().zeit;
+    const seg = plan.segmente[findeSegmentIndex(plan.segmente, t)];
+    if (seg?.art === 'freeze') return { start: seg.start, ende: seg.start + seg.dauer, neu: false };
+    if (!seg || seg.art !== 'video' || seg.von === undefined) return null;
+    quellZeit = seg.von + (t - seg.start) * (seg.tempo ?? 1);
+  } else {
+    quellZeit = vorgabeQuellZeit;
+    const vorhanden = plan.segmente.find(
+      (s2) => s2.art === 'freeze' && Math.abs((s2.zeit ?? 0) - quellZeit) < 1 / q.fps,
+    );
+    if (vorhanden)
+      return { start: vorhanden.start, ende: vorhanden.start + vorhanden.dauer, neu: false };
+  }
   useProjekt.getState().aendere('Standbild für Spieler', (d) => {
     const c = d.clips.find((x) => x.id === clipId);
     if (c) fuegeStandbildHinzu(c, quellZeit, STANDARD_STANDBILD_DAUER, q.fps);
@@ -141,8 +156,21 @@ export async function klickAufSpieler(
     const video = spieler.aktivesElement;
     const frame = video ? frameVonVideo(video) : null;
     if (!frame) return 'kein';
+    // Automatisch mitführen (Standard) oder Freeze-Frame? Fällt die Automatik aus, gilt Freeze-Frame mit Meldung.
+    const klickZeit = quellZeitFuer(projektOderNull(), clipId, usePlayer.getState().zeit);
+    let auto = false;
+    let grund: string | null = null;
+    if (projektOderNull()?.einstellungen.trackingModus === 'auto') {
+      const pr = await pruefeAutomatik();
+      auto = pr.ok;
+      if (!pr.ok) grund = pr.grund === 'keinWebgpu' ? 'trackingKeinWebgpu' : 'trackingZuLangsam';
+    }
     await stelleModellSicher();
-    const span = sichereStandbild(clipId);
+    const clipDauer = (() => {
+      const c = projektOderNull()?.clips.find((x) => x.id === clipId);
+      return c ? clipPlan(c).dauer : 0;
+    })();
+    const span = auto ? { start: 0, ende: clipDauer, neu: false } : sichereStandbild(clipId);
     if (!span) return 'kein';
     setze({ status: 'rechnet', meldung: null });
     const cx = pos.x * frame.width;
@@ -167,7 +195,8 @@ export async function klickAufSpieler(
         quelleId: c?.quelleId ?? '',
         start: span.start,
         ende: span.ende,
-        trackingModus: 'freeze',
+        trackingModus: auto ? 'auto' : 'freeze',
+        klickZeit,
         farbe: '#BA990E',
         effekte: standardEffekte(),
         versatz: { x: 0, y: 0 },
@@ -178,8 +207,9 @@ export async function klickAufSpieler(
     });
     sitzung = { objId: id, frame, crop, punkte };
     // Abspielkopf sicher in das Standbild setzen (dessen Beginn liegt auf der Bildgrenze, ggf. nach der Klickposition)
-    usePlayer.getState().suche(span.start + 0.001);
-    setze({ status: 'bereit', auswahlId: id });
+    if (!auto) usePlayer.getState().suche(span.start + 0.001);
+    setze({ status: 'bereit', auswahlId: id, meldung: grund });
+    if (auto) void starteTracking(id);
     return span.neu ? 'standbildEingefuegt' : null;
   } catch (e) {
     console.error(e);

@@ -1,8 +1,9 @@
 import { useRef, useState } from 'react';
 import { t } from '../i18n/de-CH';
 import { klickAufSpieler, sichereHintergrund, waehleSpieler } from '../ki/spielerAktionen';
+import { abbrechenTracking, korrigiereTracking } from '../ki/trackingAktionen';
 import { keyframeBei, istSpielerSichtbar } from '../render/spieler';
-import { spielerBox } from '../render/perspektive';
+import { quellZeitFuer, spielerGeo } from '../render/perspektive';
 import { usePlayer } from '../store/player';
 import { useProjekt } from '../store/projektStore';
 import { useSpielerKi } from '../store/spielerKi';
@@ -23,6 +24,7 @@ export function SpielerEbene() {
   const prozent = useSpielerKi((x) => x.prozent);
   const meldung = useSpielerKi((x) => x.meldung);
   const detail = useSpielerKi((x) => x.detail);
+  const tracking = useSpielerKi((x) => x.tracking);
   const [hinweis, setHinweis] = useState<string | null>(null);
 
   const norm = (e: { clientX: number; clientY: number }) => {
@@ -43,7 +45,11 @@ export function SpielerEbene() {
     return [...liste].reverse().find((o) => {
       const k = keyframeBei(o, tt)?.kf;
       if (!k) return false;
-      const { x, y, b, h } = spielerBox(o, k);
+      const { x, y, b, h } = spielerGeo(
+        o,
+        k,
+        quellZeitFuer(useProjekt.getState().projekt, o.clipId, tt),
+      ).box;
       return pos.x >= x && pos.x <= x + b && pos.y >= y && pos.y <= y + h;
     });
   };
@@ -57,6 +63,7 @@ export function SpielerEbene() {
     }
     const pos = norm(e);
     const st = useSpielerKi.getState();
+    if (st.tracking) return;
     setHinweis(null);
     const art = e.shiftKey ? 'plus' : e.altKey ? 'minus' : st.klickArt;
 
@@ -77,6 +84,11 @@ export function SpielerEbene() {
     if (art === 'neu') {
       const th = treffer(pos);
       if (th) {
+        // Bereits gewählter, automatisch verfolgter Spieler: Klick setzt die Verfolgung hier neu an
+        if (th.id === st.auswahlId && th.trackingModus === 'auto' && th.spur) {
+          void korrigiereTracking(th.id, pos);
+          return;
+        }
         waehleSpieler(th.id);
         return;
       }
@@ -117,15 +129,25 @@ export function SpielerEbene() {
     });
   };
 
+  const trackingText = tracking
+    ? tracking.phase === 'pruefung'
+      ? t.spieler.trackingPruefung
+      : tracking.phase === 'modell'
+        ? t.spieler.trackingModell(tracking.prozent)
+        : t.spieler.trackingLaeuft(Math.round(tracking.anteil * 100))
+    : null;
   const text =
-    status === 'laedt'
+    trackingText ??
+    (status === 'laedt'
       ? t.spieler.ladeModell(prozent)
       : status === 'rechnet'
         ? t.spieler.rechnet
         : status === 'fuellt'
           ? t.spieler.fuellt
           : (hinweis ??
-            (meldung && meldung in t.spieler ? (t.spieler[meldung as Meldungen] as string) : null));
+            (meldung && meldung in t.spieler
+              ? (t.spieler[meldung as Meldungen] as string)
+              : null)));
 
   return (
     <div
@@ -154,6 +176,20 @@ export function SpielerEbene() {
           }}
         >
           {text}
+          {tracking && tracking.phase !== 'pruefung' && (
+            <button
+              type="button"
+              data-testid="tracking-abbrechen"
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation();
+                abbrechenTracking();
+              }}
+              style={{ marginLeft: 12, pointerEvents: 'auto' }}
+            >
+              {t.spieler.trackingAbbrechen}
+            </button>
+          )}
           {status === 'fehler' && detail && (
             <div data-testid="spieler-detail" style={{ marginTop: 4, fontSize: 11, opacity: 0.8 }}>
               {t.spieler.technisch}: {detail.slice(0, 300)}

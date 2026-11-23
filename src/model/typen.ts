@@ -176,6 +176,16 @@ export interface MaskenKeyframe {
   /** Fusspunkt (Mitte unten) normiert */
   fuss: { x: number; y: number };
 }
+/** Punkt der automatisch verfolgten Spur: Quellzeit in Sekunden, Box normiert (0–1 des Videobilds). */
+export interface SpurN {
+  zeit: number;
+  cx: number;
+  cy: number;
+  b: number;
+  h: number;
+  konfidenz: number;
+  zustand: 'ok' | 'unsicher' | 'verloren';
+}
 /** Markierter/verschobener Spieler auf einem Clip. `start`/`ende` in Clip-Zeit (wie Zeichnungen). */
 export interface SpielerObjekt {
   id: string;
@@ -194,6 +204,10 @@ export interface SpielerObjekt {
   perspektive?: { an: boolean; horizont: number };
   /** Zusätzlicher Grössenfaktor (Standard 1) */
   massstab?: number;
+  /** Automatisch verfolgte Spur (nur trackingModus «auto»), Quellzeit */
+  spur?: SpurN[];
+  /** Quellzeit des Klicks, auf den sich die Maske (maskenKeyframes[0]) bezieht */
+  klickZeit?: number;
   maskenKeyframes: MaskenKeyframe[];
 }
 /** Ein aufgenommenes Stück Kommentar. `start` in Clip-Zeit, `offset`/`dauer` in Sekunden des Blobs. */

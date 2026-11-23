@@ -110,6 +110,9 @@ test('Spieler freistellen, hervorheben, verschieben; Export deckt sich mit der V
   await zeiger(page, 'pointerup', 0.503, 0.49);
   await expect(page.getByTestId('spielerliste').locator('li')).toHaveCount(1, { timeout: 360_000 });
   await expect(page.getByTestId('spieler-status')).toContainText('Standbild von 3 s eingefügt');
+  // Ohne WebGPU (Testumgebung) fällt das automatische Mitführen auf Freeze-Frame zurück, mit Meldung
+  await expect(page.getByTestId('spieler-panel')).toContainText('braucht WebGPU');
+  await expect(page.getByTestId('spieler-modus')).toHaveValue('freeze');
 
   // Spotlight: Umgebung abgedunkelt, Spieler ausgespart
   const ecke = await pixel(page, 0.1, 0.1);
