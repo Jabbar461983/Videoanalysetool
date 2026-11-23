@@ -1,5 +1,5 @@
 /** Datenmodell nach CLAUDE.md Abschnitt 5. Zeiten in Sekunden der jeweiligen Quelle. */
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 export interface Quelle {
   id: string;
@@ -53,6 +53,12 @@ export interface FreezeFrame {
   zeit: number;
   dauer: number;
 }
+export interface Zeitlupe {
+  von: number;
+  bis: number;
+  /** 0.25 oder 0.5 (Quellzeit läuft mit diesem Tempo) */
+  tempo: number;
+}
 export interface Clip {
   id: string;
   quelleId: string;
@@ -60,11 +66,28 @@ export interface Clip {
   out: number;
   name: string;
   freezeFrames: FreezeFrame[];
+  zeitlupen: Zeitlupe[];
   /** Gesetzt, wenn der Clip automatisch aus einem Tag entstanden ist. */
   tagId?: string;
 }
+export type Uebergang = 'schnitt' | 'blende';
+/** `uebergang` gilt beim Wechsel vom vorherigen Eintrag in diesen. */
 export type PlaylistEintrag =
-  { typ: 'clip'; clipId: string } | { typ: 'titel'; text: string; dauer: number };
+  | { id: string; typ: 'clip'; clipId: string; uebergang: Uebergang }
+  | {
+      id: string;
+      typ: 'titel';
+      kicker: string;
+      titel: string;
+      untertitel: string;
+      dauer: number;
+      uebergang: Uebergang;
+    };
+export interface Playlist {
+  id: string;
+  name: string;
+  eintraege: PlaylistEintrag[];
+}
 export interface Abschnitt {
   start: number;
   ende: number;
@@ -107,7 +130,8 @@ export interface Projekt {
   tagDefinitionen: TagDef[];
   tags: Tag[];
   clips: Clip[];
-  playlist: PlaylistEintrag[];
+  playlisten: Playlist[];
+  aktivePlaylistId?: string;
   zeichnungen: Zeichnung[];
   spielerObjekte: SpielerObjekt[];
   overlays: {

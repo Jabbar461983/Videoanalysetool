@@ -51,3 +51,41 @@ export async function erzeugeVorschauen(
     fertig,
   };
 }
+
+let reihe: Promise<unknown> = Promise.resolve();
+
+/** Ein einzelnes Vorschaubild (z. B. Clip-Anfang), gecacht; Aufträge laufen nacheinander. */
+export function holeEinzelbild(
+  key: string,
+  datei: Blob,
+  zeit: number,
+  breite = THUMB_BREITE,
+): Promise<Blob | null> {
+  const lauf = async (): Promise<Blob | null> => {
+    const cacheKey = `${key}#c:${Math.round(zeit * 1000)}`;
+    const row = await db.thumbs.get(cacheKey);
+    if (row) return row.blob;
+    worker ??= new Worker(new URL('./thumbs.worker.ts', import.meta.url), { type: 'module' });
+    const w = worker;
+    const id = ++zaehler;
+    const blob = await new Promise<Blob | null>((resolve) => {
+      let bild: Blob | null = null;
+      const onMsg = (e: MessageEvent<ThumbAntwort>) => {
+        const a = e.data;
+        if (a.id !== id) return;
+        if (a.typ === 'bild') bild = a.blob;
+        else {
+          w.removeEventListener('message', onMsg);
+          resolve(bild);
+        }
+      };
+      w.addEventListener('message', onMsg);
+      w.postMessage({ id, datei, zeiten: [zeit], breite });
+    });
+    if (blob) await db.thumbs.put({ key: cacheKey, quelleKey: `${key}#clip`, zeit, blob });
+    return blob;
+  };
+  const ergebnis = reihe.then(lauf, lauf);
+  reihe = ergebnis.catch(() => null);
+  return ergebnis.catch(() => null);
+}

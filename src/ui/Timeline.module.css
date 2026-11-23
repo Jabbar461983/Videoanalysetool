@@ -1,7 +1,7 @@
 .wrap {
   display: flex;
   flex-direction: column;
-  height: 204px;
+  height: 244px;
 }
 .bar {
   display: flex;
@@ -20,7 +20,7 @@
 .spur {
   position: relative;
   height: 100%;
-  min-height: 136px;
+  min-height: 176px;
   cursor: ew-resize;
   user-select: none;
 }
@@ -120,4 +120,66 @@
   outline: 2px solid var(--bd-gold);
   outline-offset: 1px;
   z-index: 1;
+}
+
+.clipSpur {
+  position: absolute;
+  top: 148px;
+  left: 0;
+  right: 0;
+  height: 26px;
+  border-top: 1px solid var(--bd-rule);
+  background: var(--bd-surface);
+}
+.clip {
+  position: absolute;
+  top: 3px;
+  height: 20px;
+  min-height: 20px;
+  padding: 0;
+  border: 1px solid var(--bd-ink-subtle);
+  background: rgba(0, 112, 87, 0.55);
+}
+.clip[aria-current='true'] {
+  border-color: var(--bd-gold);
+  background: rgba(186, 153, 14, 0.45);
+}
+.griff {
+  position: absolute;
+  top: -2px;
+  width: 12px;
+  height: 26px;
+  min-width: 12px;
+  min-height: 26px;
+  padding: 0;
+  border: 0;
+  background: var(--bd-gold);
+  cursor: ew-resize;
+  z-index: 3;
+  touch-action: none;
+}
+.griff::after {
+  content: '';
+  position: absolute;
+  inset: -9px -14px;
+}
+.punkt {
+  position: absolute;
+  top: 24px;
+  bottom: 0;
+  width: 2px;
+  background: #fff;
+  pointer-events: none;
+  z-index: 2;
+}
+.punkt::after {
+  content: attr(data-label);
+  position: absolute;
+  top: 0;
+  left: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--bd-green);
+  padding: 0 3px;
 }

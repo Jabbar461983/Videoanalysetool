@@ -1,6 +1,32 @@
 # STATUS
 
-Stand: Ende Etappe 1 «Tagging & Kader» (Etappe 0 siehe unten, unverändert gültig).
+Stand: Ende Etappe 2 «Schneiden, Clips & Gesamtvideo» (Etappen 0 und 1 siehe unten, weiterhin gültig).
+
+## Erledigt (Etappe 2)
+
+- **Manuelle Clips:** `I` In, `O` Out, `Enter` speichert (Marken auf der Timeline, Panel «Neuer Clip»), `Esc` verwirft. Clip-Spur in der Timeline; der ausgewählte Clip hat Ziehgriffe an Anfang und Ende. Bildgenau per Tastatur: Bild anfahren, dann `Shift+I` / `Shift+O` setzt In/Out des ausgewählten Clips; im Clip-Editor zusätzlich ±1-Bild-Knöpfe.
+- **Clip-Bibliothek:** Vorschaubild (Worker, gecacht), Name (umbenennen), Dauer inkl. Standbildern/Zeitlupe, zugehöriger Tag/Team/Spieler, Duplizieren, Löschen (entfernt den Clip auch aus allen Playlists), «In Playlist».
+- **Clip-Editor** (Reiter «Clips» → «Bearbeiten»): eigene Zeitleiste nur für diesen Clip mit Video-, Standbild- und Zeitlupen-Abschnitten.
+- **Standbild (Freeze-Frame):** an der aktuellen Position für wählbare Dauer (Standard 3 s), Teil der Clip-Zeitachse; Originalton pausiert (Video steht).
+- **Zeitlupe** als Abschnitt (0.25× oder 0.5×); Abschnitte dürfen sich nicht überlappen.
+- **Playlists:** mehrere pro Projekt, Einträge per Drag & Drop oder ↑↓ ordnen, Clips und Titelfolien mischen, Duplizieren/Umbenennen/Löschen.
+- **Titelfolien:** Kicker, Titel, Untertitel, Dauer; Bulldozers-Stil (dunkler Grund, Doppelstreifen, Gold-Kicker, Arial Black), gezeichnet von `renderFrame()`. Vorschau im Player.
+- **Übergang je Eintrag:** harter Schnitt oder Blende (0.3 s).
+- **Playlist-Vorschau:** nahtlos über zwei Video-Elemente (Doppelpuffer, nächstes Segment wird vorbereitet), Standbilder und Titel auf virtueller Uhr.
+- **Zeitachse:** `src/wiedergabe/zeitachse.ts` mit `clipZeitZuQuellZeit`, `clipSegmente`, `playlistZeitplan`, `blendeAlpha` – rein und getestet; der Export in Etappe 6 nutzt dieselben Funktionen.
+- Schema-Version 3 (Playlisten, Zeitlupen), Migration übernimmt die Playlist aus Etappe 1.
+- Tests: 49 Unit-Tests, 4 E2E-Tests (neu: Schneiden → Trimmen per Taste und Ziehen → Standbild/Zeitlupe → Playlist mit Titelfolie und Blende abspielen → Neuladen).
+
+## Etappe 2: Entscheide und Grenzen
+
+- **Blende = Ab-/Aufblende über Schwarz** (je 0.15 s am Ende des vorherigen / Anfang des nächsten Eintrags), keine echte Überblendung. Die Gesamtdauer bleibt die Summe der Einträge. **Bitte bestätigen**, sonst baue ich später einen Crossfade.
+- Playlist-Einträge und Titelfolien: Datenmodell weicht vom Startpunkt in CLAUDE.md ab (`playlisten[]`, Titel mit Kicker/Titel/Untertitel); CLAUDE.md Abschnitt 5 ist dort nur «Startpunkt».
+- In Clip- und Playlist-Wiedergabe sind Tagging-Tasten und `I`/`O` bewusst aus; Tempo-Auswahl gilt nur für die Quelle.
+- Beim Clipwechsel auf eine andere Quelle wird die Quelle auf dem versteckten Element vorgeladen; Ruckelfreiheit wurde hier nur automatisch auf Durchlauf geprüft, nicht gemessen. Bitte mit einer echten Playlist (10 Clips) prüfen.
+- Standbild und Zeitlupe verschieben sich nicht mit, wenn der Clip nach dem Setzen getrimmt wird; Elemente ausserhalb werden entfernt/gekürzt.
+- Originalton in Zeitlupe läuft mit Browser-Tonhöhenkorrektur; Ton im Export folgt in Etappe 5/6.
+- Titelfolien-Schrift: «Arial Black» wird vom System gestellt; auf Geräten ohne diese Schrift fällt die Darstellung auf Arial zurück.
+- Kleine Lücke: Springen aus Tag-/Clip-Liste in eine andere Quelle schaltet nun die Quelle um, die Position wird dort erst nach dem Laden zuverlässig gesetzt.
 
 ## Erledigt (Etappe 1)
 

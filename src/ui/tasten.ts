@@ -1,9 +1,23 @@
 import { useEffect } from 'react';
 import { useProjekt } from '../store/projektStore';
 import { usePlayer } from '../store/player';
+import { useSchnitt } from '../store/schnitt';
+import {
+  hatPunkte,
+  setzeInPunkt,
+  setzeOutPunkt,
+  speichereClipAusPunkten,
+  trimmeAuswahlAufPosition,
+} from '../schnitt/aktionen';
+import {
+  bildSchritt,
+  istProgramm,
+  springeRelativ,
+  toggleWiedergabe,
+} from '../wiedergabe/transport';
 import { setzeTag, zuordnungTaste } from '../tagging/aktionen';
 import { useTagging } from '../store/tagging';
-import { begrenze, naechstesTempo, schritt } from '../video/bildmathe';
+import { naechstesTempo } from '../video/bildmathe';
 
 const istEingabe = (el: EventTarget | null) =>
   el instanceof HTMLElement &&
@@ -40,51 +54,57 @@ export function useEditorTasten() {
           return;
         }
       }
-      // Tag-Hotkeys
-      if (!mod && !e.repeat && e.key.length === 1) {
-        const def = st.projekt?.tagDefinitionen.find(
-          (d) => d.sichtbar && d.hotkey && d.hotkey.toUpperCase() === e.key.toUpperCase(),
-        );
-        if (def) {
+      const programm = istProgramm();
+      if (!programm) {
+        // Schneiden: I / O setzen Punkte, Shift+I / Shift+O trimmen den ausgewählten Clip, Enter speichert
+        const k = e.key.toLowerCase();
+        if (!mod && !e.repeat && (k === 'i' || k === 'o')) {
           e.preventDefault();
-          setzeTag(def.id);
+          if (e.shiftKey) trimmeAuswahlAufPosition(k === 'i' ? 'in' : 'out');
+          else if (k === 'i') setzeInPunkt();
+          else setzeOutPunkt();
           return;
+        }
+        if (e.key === 'Enter' && !mod && hatPunkte()) {
+          if (speichereClipAusPunkten()) e.preventDefault();
+          return;
+        }
+        if (e.key === 'Escape' && useSchnitt.getState().inPunkt !== null) {
+          useSchnitt.getState().loeschePunkte();
+          return;
+        }
+        // Tag-Hotkeys
+        if (!mod && !e.repeat && e.key.length === 1) {
+          const def = st.projekt?.tagDefinitionen.find(
+            (d) => d.sichtbar && d.hotkey && d.hotkey.toUpperCase() === e.key.toUpperCase(),
+          );
+          if (def) {
+            e.preventDefault();
+            setzeTag(def.id);
+            return;
+          }
         }
       }
       const p = usePlayer.getState();
-      const q =
-        st.projekt?.quellen.find((x) => x.id === st.projekt?.aktiveQuelleId) ??
-        st.projekt?.quellen[0];
-      if (!q) return;
-      const video = document.querySelector('video');
-      const fps = q.fps,
-        dauer = q.dauer;
-      const springe = (t: number) => p.suche(begrenze(t, dauer));
       switch (e.key) {
         case ' ':
           e.preventDefault();
-          if (video) {
-            if (video.paused) void video.play();
-            else video.pause();
-          }
+          toggleWiedergabe();
           break;
         case 'ArrowLeft':
         case 'ArrowRight': {
           e.preventDefault();
           const r = e.key === 'ArrowRight' ? 1 : -1;
-          if (mod) springe(p.zeit + r * 10);
-          else if (e.shiftKey) springe(p.zeit + r * 2);
-          else {
-            video?.pause();
-            p.suche(schritt(p.zeit, fps, r, dauer));
-          }
+          if (mod) springeRelativ(r * 10);
+          else if (e.shiftKey) springeRelativ(r * 2);
+          else bildSchritt(r);
           break;
         }
         case ',':
-          p.setTempo(naechstesTempo(p.tempo, -1));
+          if (!programm) p.setTempo(naechstesTempo(p.tempo, -1));
           break;
         case '.':
-          p.setTempo(naechstesTempo(p.tempo, 1));
+          if (!programm) p.setTempo(naechstesTempo(p.tempo, 1));
           break;
       }
     };

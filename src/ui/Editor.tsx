@@ -9,6 +9,8 @@ import { Buehne } from './Buehne';
 import { Timeline } from './Timeline';
 import { Seitenleiste } from './Seitenleiste';
 import { TagLeiste } from './TagLeiste';
+import { ProgrammTimeline } from './ProgrammTimeline';
+import { useProgramm } from '../store/programm';
 import { HotkeyHilfe } from './HotkeyHilfe';
 import { useEditorTasten } from './tasten';
 import s from './Editor.module.css';
@@ -16,6 +18,7 @@ import s from './Editor.module.css';
 export function Editor({ projektId }: { projektId: string }) {
   const projekt = useProjekt((x) => x.projekt);
   const status = useProjekt((x) => x.status);
+  const art = useProgramm((g) => g.art);
   const [fehlt, setFehlt] = useState(false);
 
   useEffect(() => {
@@ -85,7 +88,11 @@ export function Editor({ projektId }: { projektId: string }) {
         <Seitenleiste />
       </aside>
       <section className={s.zeit}>
-        <Timeline quelle={q} schluessel={q ? dateiKey(q) : ''} />
+        {art === 'quelle' ? (
+          <Timeline quelle={q} schluessel={q ? dateiKey(q) : ''} />
+        ) : (
+          <ProgrammTimeline />
+        )}
       </section>
       <HotkeyHilfe />
     </div>

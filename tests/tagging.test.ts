@@ -129,9 +129,9 @@ describe('Tags und Auto-Clips', () => {
     const def = p.tagDefinitionen[0]!;
     const id = fuegeTagHinzu(p, def, quelle, 10);
     uebernehmeInPlaylist(p, { defIds: [] });
-    expect(p.playlist).toHaveLength(1);
+    expect(p.playlisten[0]!.eintraege).toHaveLength(1);
     entferneTag(p, id);
-    expect([p.tags.length, p.clips.length, p.playlist.length]).toEqual([0, 0, 0]);
+    expect([p.tags.length, p.clips.length, p.playlisten[0]!.eintraege.length]).toEqual([0, 0, 0]);
   });
 });
 
@@ -157,7 +157,7 @@ describe('Filter und Playlist', () => {
     expect(filtereTags(p.tags, { defIds: [] })).toHaveLength(3);
 
     expect(uebernehmeInPlaylist(p, { defIds: [] })).toBe(3);
-    const reihenfolge = p.playlist.map((e) =>
+    const reihenfolge = p.playlisten[0]!.eintraege.map((e) =>
       e.typ === 'clip'
         ? p.tags.find((t) => t.id === p.clips.find((c) => c.id === e.clipId)!.tagId)!.zeit
         : -1,
@@ -179,7 +179,7 @@ describe('Migration auf Version 2', () => {
       ],
     };
     const m = migriere(mitEigenem);
-    expect(m.version).toBe(2);
+    expect(m.version).toBe(3);
     expect(m.tagDefinitionen[0]).toMatchObject({ sichtbar: true, fest: false });
   });
 });

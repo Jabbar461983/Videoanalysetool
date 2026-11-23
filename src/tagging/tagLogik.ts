@@ -1,5 +1,6 @@
 import type { Clip, Projekt, Quelle, Spieler, Tag, TagDef, Team } from '../model/typen';
 import { neueId } from '../model/schema';
+import { entferneClip, neuerClipEintrag, sichereAktivePlaylist } from '../schnitt/schnittLogik';
 import { formatZeit } from '../video/bildmathe';
 
 const runde = (x: number) => Math.round(x * 1000) / 1000;
@@ -12,6 +13,7 @@ export function clipFuerTag(tag: Tag, def: TagDef, quelle: Pick<Quelle, 'dauer' 
     out: runde(Math.min(quelle.dauer, tag.zeit + def.nachlauf)),
     name: `${def.name} ${formatZeit(tag.zeit, quelle.fps)}`,
     freezeFrames: [],
+    zeitlupen: [],
     tagId: tag.id,
   };
 }
@@ -34,8 +36,7 @@ export function entferneTag(p: Projekt, tagId: string): void {
   const clip = p.clips.find((c) => c.tagId === tagId);
   p.tags = p.tags.filter((t) => t.id !== tagId);
   if (clip) {
-    p.clips = p.clips.filter((c) => c.id !== clip.id);
-    p.playlist = p.playlist.filter((e) => !(e.typ === 'clip' && e.clipId === clip.id));
+    entferneClip(p, clip.id);
   }
 }
 
@@ -69,14 +70,15 @@ export const sortiereTags = (tags: Tag[], quellenReihenfolge: string[]): Tag[] =
       a.zeit - b.zeit,
   );
 
-/** Hängt die Auto-Clips der gefilterten Tags (chronologisch) an die Playlist; ohne Dubletten. Gibt die Anzahl neuer Einträge zurück. */
+/** Hängt die Auto-Clips der gefilterten Tags (chronologisch) an die aktive Playlist; ohne Dubletten. Gibt die Anzahl neuer Einträge zurück. */
 export function uebernehmeInPlaylist(p: Projekt, f: TagFilter): number {
   const reihenfolge = p.quellen.map((q) => q.id);
+  const pl = sichereAktivePlaylist(p);
   let n = 0;
   for (const tag of sortiereTags(filtereTags(p.tags, f), reihenfolge)) {
     const clip = p.clips.find((c) => c.tagId === tag.id);
-    if (!clip || p.playlist.some((e) => e.typ === 'clip' && e.clipId === clip.id)) continue;
-    p.playlist.push({ typ: 'clip', clipId: clip.id });
+    if (!clip || pl.eintraege.some((e) => e.typ === 'clip' && e.clipId === clip.id)) continue;
+    pl.eintraege.push(neuerClipEintrag(clip.id));
     n++;
   }
   return n;

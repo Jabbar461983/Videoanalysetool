@@ -3,26 +3,54 @@ import { t } from '../i18n/de-CH';
 import type { Quelle } from '../model/typen';
 import { useDateien } from '../store/dateien';
 import { usePlayer } from '../store/player';
+import { useProgramm } from '../store/programm';
 import { useProjekt } from '../store/projektStore';
-import { formatZeit, frameZuZeit, TEMPI, zeitZuFrame } from '../video/bildmathe';
-import { renderFrame } from '../render/renderFrame';
+import { formatZeit, TEMPI } from '../video/bildmathe';
+import { renderFrame, type RenderKontext } from '../render/renderFrame';
+import {
+  aktuelleDauer,
+  aktuelleFps,
+  aktuellerPlan,
+  bildSchritt,
+  springeRelativ,
+  spieler,
+  toggleWiedergabe,
+} from '../wiedergabe/transport';
 import { ProxyDialog } from './ProxyDialog';
 import s from './Buehne.module.css';
 
+function kontextAus(): RenderKontext {
+  const g = useProgramm.getState();
+  if (g.art === 'clip' && g.clipId) return { art: 'clip', clipId: g.clipId };
+  if (g.art === 'playlist' && g.playlistId) return { art: 'playlist', playlistId: g.playlistId };
+  return { art: 'quelle' };
+}
+
 export function Buehne({ quelle }: { quelle: Quelle | undefined }) {
+  const projekt = useProjekt((x) => x.projekt);
   const url = useDateien((d) => (quelle ? d.urls[quelle.id] : undefined));
+  const art = useProgramm((g) => g.art);
+  const clipId = useProgramm((g) => g.clipId);
+  const playlistId = useProgramm((g) => g.playlistId);
+  const anzeigeId = useProgramm((g) => g.anzeigeQuelleId);
+  const progFehler = useProgramm((g) => g.fehler);
   const hostRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const videoBRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [groesse, setGroesse] = useState({ w: 0, h: 0 });
   const [proxyOffen, setProxyOffen] = useState(false);
   const { zeit, spielt, tempo, fehler } = usePlayer();
 
+  // Quelle, nach der die Bühne dimensioniert wird (im Programm: die des aktuellen Segments)
+  const anzeige =
+    art !== 'quelle' ? (projekt?.quellen.find((q) => q.id === anzeigeId) ?? quelle) : quelle;
+
   // Grösse des Videorahmens (contain) bestimmen
   useEffect(() => {
     const host = hostRef.current;
-    if (!host || !quelle) return;
-    const ar = quelle.breite / quelle.hoehe;
+    if (!host || !anzeige) return;
+    const ar = anzeige.breite / anzeige.hoehe;
     const rechne = () => {
       const { clientWidth: cw, clientHeight: ch } = host;
       const w = Math.min(cw, ch * ar);
@@ -32,25 +60,58 @@ export function Buehne({ quelle }: { quelle: Quelle | undefined }) {
     const ro = new ResizeObserver(rechne);
     ro.observe(host);
     return () => ro.disconnect();
-  }, [quelle]);
+  }, [anzeige]);
 
-  // Video-Ereignisse → Player-Store, Render-Gerüst
+  // Beide Video-Elemente beim Programmspieler anmelden
+  useEffect(() => {
+    const a = videoRef.current;
+    const b = videoBRef.current;
+    if (a && b) spieler.attach(a, b);
+    return () => spieler.detach();
+  }, [!quelle]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const zeichne = (tt: number) => {
+    const c = canvasRef.current;
+    const ctx = c?.getContext('2d');
+    if (c && ctx)
+      renderFrame(tt, useProjekt.getState().projekt, {
+        ctx,
+        breite: c.width,
+        hoehe: c.height,
+        modus: 'vorschau',
+        kontext: kontextAus(),
+      });
+  };
+
+  // Quell-Modus: Video-Ereignisse → Player-Store, Render-Gerüst
   useEffect(() => {
     const v = videoRef.current;
-    const c = canvasRef.current;
-    if (!v || !c || !quelle) return;
-    const p = usePlayer.getState();
-    p.setFehler(null);
-    const zeichne = (t: number) => {
-      const ctx = c.getContext('2d');
-      if (ctx)
-        renderFrame(t, useProjekt.getState().projekt, {
-          ctx,
-          breite: c.width,
-          hoehe: c.height,
-          modus: 'vorschau',
-        });
+    const vb = videoBRef.current;
+    if (art !== 'quelle' || !v || !quelle) return;
+    usePlayer.getState().setFehler(null);
+    // Anzeige: Element A sichtbar, B versteckt
+    v.style.opacity = '1';
+    v.style.zIndex = '1';
+    if (vb) {
+      vb.pause();
+      vb.style.opacity = '0';
+      vb.style.zIndex = '0';
+    }
+    const merkePosition = () => {
+      const pos = useProjekt.getState().projekt?.positionen[quelle.id] ?? 0;
+      if (Number.isFinite(v.duration)) v.currentTime = Math.min(pos, Math.max(0, v.duration - 0.1));
     };
+    if (url) {
+      if (v.dataset.quelle !== quelle.id || v.dataset.url !== url) {
+        v.dataset.quelle = quelle.id;
+        v.dataset.url = url;
+        v.src = url;
+      } else merkePosition();
+    } else {
+      v.removeAttribute('src');
+      delete v.dataset.quelle;
+      delete v.dataset.url;
+    }
     let rvfc = 0;
     const schleife: VideoFrameRequestCallback = (_now, meta) => {
       usePlayer.getState().setZeit(meta.mediaTime);
@@ -65,19 +126,16 @@ export function Buehne({ quelle }: { quelle: Quelle | undefined }) {
     const onPlay = () => usePlayer.getState().setSpielt(true);
     const onPause = () => usePlayer.getState().setSpielt(false);
     const onErr = () => usePlayer.getState().setFehler(t.player.nichtAbspielbar);
-    const onMeta = () => {
-      const pos = useProjekt.getState().projekt?.positionen[quelle.id] ?? 0;
-      v.currentTime = Math.min(pos, Math.max(0, v.duration - 0.1));
-    };
     v.addEventListener('seeked', onSeek);
     v.addEventListener('play', onPlay);
     v.addEventListener('pause', onPause);
     v.addEventListener('error', onErr);
-    v.addEventListener('loadedmetadata', onMeta);
+    v.addEventListener('loadedmetadata', merkePosition);
     usePlayer.getState().registriereSuche((tt) => {
       v.currentTime = tt;
       usePlayer.getState().setZeit(tt);
     });
+    usePlayer.getState().setSpielt(!v.paused);
     // Position alle 2 s und beim Pausieren im Projekt merken (ohne Undo-Eintrag)
     const merke = () =>
       useProjekt.getState().aendereStill((pr) => {
@@ -87,21 +145,58 @@ export function Buehne({ quelle }: { quelle: Quelle | undefined }) {
       if (!v.paused) merke();
     }, 2000);
     v.addEventListener('pause', merke);
+    const unsub = useProjekt.subscribe(() => zeichne(v.currentTime));
     return () => {
       v.cancelVideoFrameCallback(rvfc);
       window.clearInterval(iv);
+      unsub();
       v.removeEventListener('seeked', onSeek);
       v.removeEventListener('play', onPlay);
       v.removeEventListener('pause', onPause);
       v.removeEventListener('pause', merke);
       v.removeEventListener('error', onErr);
-      v.removeEventListener('loadedmetadata', onMeta);
+      v.removeEventListener('loadedmetadata', merkePosition);
     };
-  }, [quelle, url]);
+  }, [art, quelle, url]);
+
+  // Programm-Modus (Clip-Editor, Playlist): Programmspieler steuert beide Elemente
+  useEffect(() => {
+    if (art === 'quelle') return;
+    const plan0 = aktuellerPlan();
+    if (!plan0) return;
+    let letzterPlan = JSON.stringify(plan0.segmente);
+    const g = useProgramm.getState();
+    const start = g.startZeit;
+    const autoplay = g.autoplay;
+    usePlayer.getState().registriereSuche((tt) => void spieler.springe(tt));
+    void (async () => {
+      await spieler.laden(plan0, start);
+      zeichne(usePlayer.getState().zeit);
+      if (autoplay) await spieler.abspielen();
+    })();
+    // Änderungen am Projekt (z. B. Freeze eingefügt) → Plan neu laden
+    const unsubProjekt = useProjekt.subscribe(() => {
+      const plan = aktuellerPlan();
+      if (!plan) return;
+      const j = JSON.stringify(plan.segmente);
+      if (j !== letzterPlan) {
+        letzterPlan = j;
+        void spieler.aktualisiere(plan).then(() => zeichne(usePlayer.getState().zeit));
+      } else zeichne(usePlayer.getState().zeit);
+    });
+    const unsubZeit = usePlayer.subscribe((st, prev) => {
+      if (st.zeit !== prev.zeit) zeichne(st.zeit);
+    });
+    return () => {
+      unsubProjekt();
+      unsubZeit();
+      spieler.pausiere();
+    };
+  }, [art, clipId, playlistId]);
 
   useEffect(() => {
-    if (videoRef.current) videoRef.current.playbackRate = tempo;
-  }, [tempo, url]);
+    if (videoRef.current && art === 'quelle') videoRef.current.playbackRate = tempo;
+  }, [tempo, url, art]);
 
   if (!quelle)
     return (
@@ -110,74 +205,74 @@ export function Buehne({ quelle }: { quelle: Quelle | undefined }) {
       </div>
     );
 
-  const fps = quelle.fps;
-  const suche = usePlayer.getState().suche;
-  const springe = (d: number) => suche(Math.min(Math.max(0, zeit + d), quelle.dauer));
-  const bild = (n: number) => {
-    videoRef.current?.pause();
-    suche(
-      frameZuZeit(
-        Math.min(Math.max(0, zeitZuFrame(zeit, fps) + n), Math.ceil(quelle.dauer * fps) - 1),
-        fps,
-      ),
-    );
-  };
-  const toggle = () => {
-    const v = videoRef.current;
-    if (v) {
-      if (v.paused) void v.play();
-      else v.pause();
-    }
-  };
+  const fps = art === 'quelle' ? quelle.fps : aktuelleFps();
+  const dauer = art === 'quelle' ? quelle.dauer : aktuelleDauer();
+  const programmName =
+    art === 'clip'
+      ? projekt?.clips.find((c) => c.id === clipId)?.name
+      : projekt?.playlisten.find((p) => p.id === playlistId)?.name;
+  const verknuepft = art !== 'quelle' || !!url;
 
   return (
     <>
+      {art !== 'quelle' && (
+        <div className={s.modus} data-testid="modus">
+          <span className="kicker">{art === 'clip' ? t.programm.clip : t.programm.playlist}</span>
+          <strong style={{ color: 'var(--bd-ink)' }}>{programmName}</strong>
+          <button onClick={() => useProgramm.getState().zurQuelle()}>{t.programm.zurQuelle}</button>
+        </div>
+      )}
       <div ref={hostRef} className={s.host}>
-        {!url ? (
+        {!verknuepft && (
           <p className={s.leer}>
             {t.import.fehlt}: {quelle.dateiname}
           </p>
-        ) : (
-          <div className={s.rahmen} style={{ width: groesse.w, height: groesse.h }}>
-            <video
-              ref={videoRef}
-              src={url}
-              playsInline
-              preload="auto"
-              muted={false}
-              data-testid="video"
-            />
+        )}
+        <div
+          className={s.rahmen}
+          style={{
+            width: groesse.w,
+            height: groesse.h,
+            visibility: verknuepft ? 'visible' : 'hidden',
+          }}
+        >
+          <video ref={videoRef} playsInline preload="auto" data-testid="video" />
+          <video ref={videoBRef} playsInline preload="auto" data-testid="video-b" />
+          {anzeige && (
             <canvas
               ref={canvasRef}
-              width={Math.min(1920, quelle.breite)}
-              height={Math.round((Math.min(1920, quelle.breite) * quelle.hoehe) / quelle.breite)}
+              width={Math.min(1920, anzeige.breite)}
+              height={Math.round((Math.min(1920, anzeige.breite) * anzeige.hoehe) / anzeige.breite)}
               data-testid="overlay"
+              style={{ zIndex: 5 }}
             />
-          </div>
-        )}
-        {fehler && (
+          )}
+        </div>
+        {(fehler || progFehler) && (
           <div
             role="alert"
             className={s.leer}
-            style={{ position: 'absolute', background: 'var(--bd-scrim)' }}
+            style={{ position: 'absolute', background: 'var(--bd-scrim)', zIndex: 6 }}
           >
-            <p>{fehler}</p>
-            <button className="primaer" onClick={() => setProxyOffen(true)}>
-              {t.proxy.titel}
-            </button>
+            <p>{progFehler ?? fehler}</p>
+            {!progFehler && (
+              <button className="primaer" onClick={() => setProxyOffen(true)}>
+                {t.proxy.titel}
+              </button>
+            )}
           </div>
         )}
       </div>
       <div className={s.leiste} role="toolbar">
         <span className={s.gruppe}>
-          <button onClick={() => springe(-10)} title={t.player.zurueck10}>
+          <button onClick={() => springeRelativ(-10)} title={t.player.zurueck10}>
             −10 s
           </button>
-          <button onClick={() => springe(-2)} title={t.player.zurueck2}>
+          <button onClick={() => springeRelativ(-2)} title={t.player.zurueck2}>
             −2 s
           </button>
           <button
-            onClick={() => bild(-1)}
+            onClick={() => bildSchritt(-1)}
             title={t.player.bildZurueck}
             aria-label={t.player.bildZurueck}
           >
@@ -185,38 +280,44 @@ export function Buehne({ quelle }: { quelle: Quelle | undefined }) {
           </button>
           <button
             className="primaer"
-            onClick={toggle}
+            onClick={toggleWiedergabe}
             aria-label={spielt ? t.player.pause : t.player.abspielen}
             data-testid="play"
           >
             {spielt ? '❚❚' : '▶'}
           </button>
-          <button onClick={() => bild(1)} title={t.player.bildVor} aria-label={t.player.bildVor}>
+          <button
+            onClick={() => bildSchritt(1)}
+            title={t.player.bildVor}
+            aria-label={t.player.bildVor}
+          >
             |▶
           </button>
-          <button onClick={() => springe(2)} title={t.player.vor2}>
+          <button onClick={() => springeRelativ(2)} title={t.player.vor2}>
             +2 s
           </button>
-          <button onClick={() => springe(10)} title={t.player.vor10}>
+          <button onClick={() => springeRelativ(10)} title={t.player.vor10}>
             +10 s
           </button>
         </span>
-        <label className="hinweis">
-          {t.player.tempo}{' '}
-          <select
-            value={tempo}
-            onChange={(e) => usePlayer.getState().setTempo(Number(e.target.value))}
-            aria-label={t.player.tempo}
-          >
-            {TEMPI.map((x) => (
-              <option key={x} value={x}>
-                {x}×
-              </option>
-            ))}
-          </select>
-        </label>
+        {art === 'quelle' && (
+          <label className="hinweis">
+            {t.player.tempo}{' '}
+            <select
+              value={tempo}
+              onChange={(e) => usePlayer.getState().setTempo(Number(e.target.value))}
+              aria-label={t.player.tempo}
+            >
+              {TEMPI.map((x) => (
+                <option key={x} value={x}>
+                  {x}×
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         <span className={s.zeit} data-testid="zeit">
-          {formatZeit(zeit, fps)} / {formatZeit(quelle.dauer, fps)}
+          {formatZeit(zeit, fps)} / {formatZeit(dauer, fps)}
         </span>
       </div>
       {proxyOffen && <ProxyDialog quelle={quelle} onZu={() => setProxyOffen(false)} />}

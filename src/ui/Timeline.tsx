@@ -5,6 +5,8 @@ import { useDateien } from '../store/dateien';
 import { usePlayer } from '../store/player';
 import { useProjekt } from '../store/projektStore';
 import { useTagging } from '../store/tagging';
+import { useSchnitt } from '../store/schnitt';
+import { trimmeClip } from '../schnitt/schnittLogik';
 import { erzeugeVorschauen } from '../video/thumbs';
 import { formatKurz, formatZeit, vorschauZeiten } from '../video/bildmathe';
 import s from './Timeline.module.css';
@@ -22,6 +24,12 @@ export function Timeline({
   const tags = useProjekt((x) => x.projekt?.tags);
   const defs = useProjekt((x) => x.projekt?.tagDefinitionen);
   const gewaehlt = useTagging((x) => x.ausgewaehltTagId);
+  const clips = useProjekt((x) => x.projekt?.clips);
+  const gewaehlterClip = useSchnitt((x) => x.gewaehlterClipId);
+  const inPunkt = useSchnitt((x) => x.inPunkt);
+  const outPunkt = useSchnitt((x) => x.outPunkt);
+  const punkteQuelle = useSchnitt((x) => x.quelleId);
+  const [zieh, setZieh] = useState<{ id: string; seite: 'in' | 'out'; zeit: number } | null>(null);
   const datei = useDateien((d) => (quelle ? d.dateien[quelle.id] : undefined));
   const scrollRef = useRef<HTMLDivElement>(null);
   const [breite, setBreite] = useState(800);
@@ -91,6 +99,19 @@ export function Timeline({
     const x = clientX - el.getBoundingClientRect().left + el.scrollLeft;
     usePlayer.getState().suche(Math.min(Math.max(0, x / pps), quelle.dauer));
   };
+  const zeitAus = (clientX: number): number => {
+    const el = scrollRef.current;
+    if (!el || !quelle) return 0;
+    const x = clientX - el.getBoundingClientRect().left + el.scrollLeft;
+    return Math.min(Math.max(0, x / pps), quelle.dauer);
+  };
+  const grenze = (c: { id: string; in: number; out: number }) =>
+    zieh && zieh.id === c.id
+      ? {
+          in: zieh.seite === 'in' ? zieh.zeit : c.in,
+          out: zieh.seite === 'out' ? zieh.zeit : c.out,
+        }
+      : { in: c.in, out: c.out };
   const zoomen = (f: number) => {
     const el = scrollRef.current;
     const mitteZeit = el ? (el.scrollLeft + el.clientWidth / 2) / pps : 0;
@@ -195,6 +216,83 @@ export function Timeline({
                   );
                 })}
           </div>
+          <div className={s.clipSpur} data-testid="clipspur">
+            <span className={s.tagSpurLabel}>{t.seite.clips}</span>
+            {quelle &&
+              clips
+                ?.filter((c) => c.quelleId === quelle.id)
+                .map((c) => {
+                  const g = grenze(c);
+                  const gew = gewaehlterClip === c.id;
+                  return (
+                    <div key={c.id}>
+                      <button
+                        className={s.clip}
+                        data-testid="clipbalken"
+                        aria-current={gew}
+                        aria-label={c.name}
+                        title={c.name}
+                        style={{ left: g.in * pps, width: Math.max(4, (g.out - g.in) * pps) }}
+                        onPointerDown={(e) => e.stopPropagation()}
+                        onClick={() => {
+                          useSchnitt.getState().waehleClip(c.id);
+                          usePlayer.getState().suche(c.in);
+                        }}
+                      />
+                      {gew &&
+                        (['in', 'out'] as const).map((seite) => (
+                          <button
+                            key={seite}
+                            className={s.griff}
+                            data-testid={`griff-${seite}`}
+                            aria-label={seite === 'in' ? t.clips.griffIn : t.clips.griffOut}
+                            style={{
+                              left:
+                                (seite === 'in' ? g.in : g.out) * pps - (seite === 'in' ? 0 : 12),
+                            }}
+                            onPointerDown={(e) => {
+                              e.stopPropagation();
+                              e.currentTarget.setPointerCapture(e.pointerId);
+                              setZieh({ id: c.id, seite, zeit: seite === 'in' ? c.in : c.out });
+                            }}
+                            onPointerMove={(e) => {
+                              if (!zieh || zieh.id !== c.id || zieh.seite !== seite) return;
+                              const zt = zeitAus(e.clientX);
+                              setZieh({ ...zieh, zeit: zt });
+                              usePlayer.getState().suche(zt);
+                            }}
+                            onPointerUp={() => {
+                              if (zieh && quelle) {
+                                const ziel = zieh;
+                                useProjekt.getState().aendere('Clip trimmen', (d) => {
+                                  const cc = d.clips.find((x) => x.id === ziel.id);
+                                  if (cc) trimmeClip(cc, ziel.seite, ziel.zeit, quelle);
+                                });
+                              }
+                              setZieh(null);
+                            }}
+                          />
+                        ))}
+                    </div>
+                  );
+                })}
+          </div>
+          {quelle && punkteQuelle === quelle.id && inPunkt !== null && (
+            <div
+              className={s.punkt}
+              data-label="I"
+              data-testid="in-marke"
+              style={{ left: inPunkt * pps }}
+            />
+          )}
+          {quelle && punkteQuelle === quelle.id && outPunkt !== null && (
+            <div
+              className={s.punkt}
+              data-label="O"
+              data-testid="out-marke"
+              style={{ left: outPunkt * pps }}
+            />
+          )}
           <div className={s.kopf} style={{ left: zeit * pps }} data-testid="playhead" />
         </div>
       </div>

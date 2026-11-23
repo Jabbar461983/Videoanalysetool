@@ -19,7 +19,7 @@ export function neuesProjekt(name: string, jetzt = Date.now()): Projekt {
     tagDefinitionen: neueStandardTags(),
     tags: [],
     clips: [],
-    playlist: [],
+    playlisten: [],
     zeichnungen: [],
     spielerObjekte: [],
     overlays: { logo: [], scoreboard: [], scoreKorrekturen: [] },
@@ -44,6 +44,31 @@ export const migrationen: Migration[] = [
       ? alt.map((d) => ({ sichtbar: true, fest: false, ...d }))
       : neueStandardTags();
     return { ...p, tagDefinitionen: defs };
+  },
+  // 2 → 3: Schneiden – Playlisten, Zeitlupen
+  (p) => {
+    const alt = (Array.isArray(p.playlist) ? p.playlist : []) as Record<string, unknown>[];
+    const eintraege = alt.map((e) =>
+      e.typ === 'titel'
+        ? {
+            id: neueId(),
+            typ: 'titel',
+            kicker: '',
+            titel: String(e.text ?? ''),
+            untertitel: '',
+            dauer: Number(e.dauer ?? 3),
+            uebergang: 'schnitt',
+          }
+        : { id: neueId(), typ: 'clip', clipId: e.clipId, uebergang: 'schnitt' },
+    );
+    const playlisten = eintraege.length ? [{ id: neueId(), name: 'Playlist 1', eintraege }] : [];
+    const clips = ((p.clips as Record<string, unknown>[]) ?? []).map((c) => ({
+      zeitlupen: [],
+      ...c,
+    }));
+    const rest = { ...p };
+    delete rest.playlist;
+    return { ...rest, clips, playlisten, aktivePlaylistId: playlisten[0]?.id };
   },
 ];
 
