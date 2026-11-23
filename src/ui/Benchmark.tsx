@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { t } from '../i18n/de-CH';
 import { SAM_MODELLE } from '../ki/modelle';
 import { SamClient } from '../ki/sam';
+import { TrackingLauf } from '../ki/tracking';
+import type { SpurPunkt } from '../ki/trackingTypen';
 import { ausschnittRahmen, bereinigeMaske, maskenFlaeche } from '../ki/ausschnitt';
 
 interface Zeile {
@@ -191,6 +193,7 @@ export function Benchmark() {
           />
         </>
       )}
+      <TrackingTest />
       {zeilen.length > 0 && (
         <table
           data-testid="bm-tabelle"
@@ -255,4 +258,97 @@ function MaskenVorschau(p: {
     img.src = p.maskeUrl;
   }, [p.bild, p.rahmen, p.maskeUrl]);
   return <canvas ref={ref} style={{ width: 120, height: 120 }} />;
+}
+
+/** Tracking-Test: Videodatei, Startposition (Pixel) und Dauer – zeigt Spur und Zeiten. */
+export function TrackingTest() {
+  const [datei, setDatei] = useState<File | null>(null);
+  const [f, setF] = useState({ zeit: 0, cx: 640, cy: 360, b: 50, h: 130, dauer: 4 });
+  const [laeuft, setLaeuft] = useState(false);
+  const [text, setText] = useState('');
+  const [punkte, setPunkte] = useState<SpurPunkt[]>([]);
+  const zahl = (k: keyof typeof f) => (
+    <label style={{ marginRight: 8 }}>
+      {k}{' '}
+      <input
+        type="number"
+        value={f[k]}
+        style={{ width: 70 }}
+        data-testid={`bm-t-${k}`}
+        onChange={(e) => setF({ ...f, [k]: Number(e.target.value) })}
+      />
+    </label>
+  );
+  const start = async () => {
+    if (!datei) return;
+    setLaeuft(true);
+    setText('Läuft …');
+    setPunkte([]);
+    const lauf = new TrackingLauf({
+      beiFortschritt: (p) => setText(`Modell lädt … ${p} %`),
+      beiLauf: (a) => setText(`Verfolgt … ${Math.round(a * 100)} %`),
+    });
+    try {
+      const t0 = performance.now();
+      const r = await lauf.verfolge({
+        datei,
+        startZeit: f.zeit,
+        startBox: { cx: f.cx, cy: f.cy, b: f.b, h: f.h },
+        von: Math.max(0, f.zeit - f.dauer / 2),
+        bis: f.zeit + f.dauer,
+      });
+      setPunkte(r.punkte);
+      const verloren = r.punkte.filter((p) => p.zustand === 'verloren').length;
+      setText(
+        `Fertig: ${r.punkte.length} Punkte, ${verloren} verloren, Erkennung ${Math.round(r.medianMs)} ms/Bild, gesamt ${((performance.now() - t0) / 1000).toFixed(1)} s`,
+      );
+    } catch (e) {
+      setText(`Fehler: ${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setLaeuft(false);
+    }
+  };
+  return (
+    <section style={{ marginTop: 32 }} data-testid="bm-tracking">
+      <h2>Tracking-Test</h2>
+      <p>Videodatei wählen, Position des Spielers in Pixeln des Videobilds angeben und starten.</p>
+      <input
+        type="file"
+        accept="video/*"
+        data-testid="bm-t-datei"
+        onChange={(e) => setDatei(e.target.files?.[0] ?? null)}
+      />
+      <div style={{ margin: '8px 0' }}>
+        {zahl('zeit')}
+        {zahl('cx')}
+        {zahl('cy')}
+        {zahl('b')}
+        {zahl('h')}
+        {zahl('dauer')}
+        <button
+          className="primaer"
+          disabled={!datei || laeuft}
+          onClick={() => void start()}
+          data-testid="bm-t-start"
+        >
+          Verfolgen
+        </button>
+      </div>
+      <p aria-live="polite" data-testid="bm-t-status">
+        {text}
+      </p>
+      <pre data-testid="bm-t-json" style={{ maxHeight: 240, overflow: 'auto', fontSize: 11 }}>
+        {punkte.length
+          ? JSON.stringify(
+              punkte.map((p) => [
+                Number(p.zeit.toFixed(2)),
+                Math.round(p.box.cx),
+                Math.round(p.box.cy),
+                p.zustand,
+              ]),
+            )
+          : ''}
+      </pre>
+    </section>
+  );
 }
