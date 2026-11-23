@@ -58,6 +58,9 @@ test('Projektdatei: exportieren, importieren, fehlendes Video wird angefordert u
     'Spiel U12 gegen Horgenberg (importiert)',
   );
 
+  // Neue Sitzung: Videodateien liegen nur im Arbeitsspeicher und gehen beim Neuladen verloren
+  await page.reload();
+
   // Tag und Clip sind da, das Video fehlt → Banner
   await expect(page.getByTestId('tagmarke')).toHaveCount(1);
   await expect(page.getByTestId('quellen-banner')).toContainText('Eine Videodatei fehlt');

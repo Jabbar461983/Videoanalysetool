@@ -87,7 +87,6 @@ export function LiveStift() {
       onPointerDown={(e) => {
         vermerkeStift(e, palm.current, performance.now());
         const erlaubt = e.pointerType === 'pen' || useUi.getState().liveStift;
-        console.log('[live] down', e.pointerType, erlaubt, ignoriereBeginn(e, palm.current, performance.now()), e.button);
         if (!erlaubt || ignoriereBeginn(e, palm.current, performance.now())) return;
         if (e.pointerType === 'mouse' && e.button !== 0) return;
         nimmAn(e, palm.current);
