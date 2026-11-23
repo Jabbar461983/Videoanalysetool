@@ -1,0 +1,80 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  height: 168px;
+}
+.bar {
+  display: flex;
+  align-items: center;
+  gap: var(--bd-space-2);
+  padding: var(--bd-space-1) var(--bd-space-3);
+  border-bottom: 1px solid var(--bd-rule);
+}
+.scroll {
+  flex: 1;
+  overflow-x: auto;
+  overflow-y: hidden;
+  position: relative;
+  touch-action: pan-x;
+}
+.spur {
+  position: relative;
+  height: 100%;
+  min-height: 100px;
+  cursor: ew-resize;
+  user-select: none;
+}
+.lineal {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 22px;
+  border-bottom: 1px solid var(--bd-rule);
+}
+.tick {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  border-left: 1px solid var(--bd-rule);
+  padding-left: 4px;
+  font-size: 11px;
+  color: var(--bd-ink-subtle);
+}
+.bilder {
+  position: absolute;
+  top: 24px;
+  left: 0;
+  height: 90px;
+  display: flex;
+  background: var(--bd-surface);
+}
+.bilder img {
+  height: 90px;
+  object-fit: cover;
+  flex: none;
+  pointer-events: none;
+}
+.kopf {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--bd-gold);
+  pointer-events: none;
+}
+.kopf::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -5px;
+  border: 6px solid transparent;
+  border-top-color: var(--bd-gold);
+}
+.hinweis {
+  position: absolute;
+  left: 8px;
+  top: 40px;
+  color: var(--bd-ink-subtle);
+  font-size: 12px;
+}

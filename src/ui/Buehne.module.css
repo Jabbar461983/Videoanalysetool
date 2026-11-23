@@ -1,0 +1,48 @@
+.host {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  display: grid;
+  place-items: center;
+  background: var(--bd-black);
+  overflow: hidden;
+}
+.rahmen {
+  position: relative;
+}
+.rahmen video,
+.rahmen canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.rahmen canvas {
+  pointer-events: none;
+}
+.leer {
+  color: var(--bd-ink-subtle);
+  padding: var(--bd-space-4);
+  text-align: center;
+  max-width: 420px;
+}
+.leiste {
+  display: flex;
+  align-items: center;
+  gap: var(--bd-space-2);
+  padding: var(--bd-space-2) var(--bd-space-3);
+  background: var(--bd-surface);
+  border-top: 1px solid var(--bd-rule);
+  flex-wrap: wrap;
+}
+.zeit {
+  font-family: var(--bd-font-display);
+  color: var(--bd-gold);
+  font-variant-numeric: tabular-nums;
+  margin-left: auto;
+  font-size: 15px;
+}
+.gruppe {
+  display: inline-flex;
+  gap: 2px;
+}

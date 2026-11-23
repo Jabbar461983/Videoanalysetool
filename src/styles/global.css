@@ -1,0 +1,89 @@
+@import './tokens.css';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  border-radius: 0;
+}
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+body {
+  background: var(--bd-surface);
+  color: var(--bd-ink-muted);
+  font: 14px/1.45 var(--bd-font-body);
+  color-scheme: dark;
+  overflow: hidden;
+}
+h1,
+h2,
+h3 {
+  font-family: var(--bd-font-display);
+  color: var(--bd-ink);
+  margin: 0;
+  font-weight: 900;
+}
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
+}
+button {
+  min-height: var(--bd-touch);
+  min-width: var(--bd-touch);
+  padding: 0 var(--bd-space-3);
+  background: var(--bd-surface-raised);
+  border: 1px solid var(--bd-rule);
+  cursor: pointer;
+}
+button:hover:not(:disabled) {
+  border-color: var(--bd-gold);
+}
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+button.primaer {
+  background: var(--bd-green);
+  border-color: var(--bd-green);
+  color: #fff;
+  font-weight: 700;
+}
+button.gefahr {
+  border-color: #b3261e;
+}
+input[type='text'],
+input[type='search'],
+select {
+  min-height: var(--bd-touch);
+  background: var(--bd-surface);
+  border: 1px solid var(--bd-rule);
+  padding: 0 var(--bd-space-2);
+}
+:focus-visible {
+  outline: var(--bd-focus);
+  outline-offset: 1px;
+}
+.kicker {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--bd-gold);
+}
+.hinweis {
+  color: var(--bd-ink-subtle);
+  font-size: 13px;
+}
+.nur-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}

@@ -1,0 +1,8 @@
+dist
+node_modules
+playwright-report
+test-results
+tests/fixtures/*.mp4
+tests/fixtures/*.webm
+tests/fixtures/*.mov
+*.tsbuildinfo

@@ -1,0 +1,25 @@
+:root {
+  --bd-gold: #ba990e;
+  --bd-green: #007057;
+  --bd-black: #000000;
+  --bd-surface: #141414;
+  --bd-surface-raised: #262626;
+  --bd-ink: #ffffff;
+  --bd-ink-muted: #dcdcdc;
+  --bd-ink-subtle: #bdbdbd;
+  --bd-rule: #4a4a4a;
+  --bd-scrim: rgba(20, 20, 20, 0.85);
+
+  --bd-font-display: 'Arial Black', Arial, sans-serif;
+  --bd-font-body: Arial, Helvetica, sans-serif;
+
+  --bd-space-1: 4px;
+  --bd-space-2: 8px;
+  --bd-space-3: 12px;
+  --bd-space-4: 24px;
+
+  --bd-radius: 0;
+  --bd-radius-chip: 999px;
+  --bd-touch: 44px;
+  --bd-focus: 2px solid var(--bd-gold);
+}

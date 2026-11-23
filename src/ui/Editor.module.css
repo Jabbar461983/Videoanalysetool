@@ -1,0 +1,66 @@
+.app {
+  height: 100%;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  grid-template-columns: 1fr 320px;
+  grid-template-areas: 'kopf kopf' 'buehne seite' 'zeit zeit';
+  min-height: 0;
+}
+.kopf {
+  grid-area: kopf;
+  display: flex;
+  align-items: center;
+  gap: var(--bd-space-3);
+  padding: 0 var(--bd-space-3);
+  border-bottom: 1px solid var(--bd-rule);
+  background: var(--bd-surface);
+  min-height: 52px;
+}
+.kopf input {
+  flex: 1;
+  max-width: 360px;
+  font-weight: 700;
+  color: var(--bd-ink);
+}
+.status {
+  margin-left: auto;
+  font-size: 13px;
+  color: var(--bd-ink-subtle);
+}
+.buehne {
+  grid-area: buehne;
+  background: var(--bd-black);
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.seite {
+  grid-area: seite;
+  background: var(--bd-surface-raised);
+  border-left: 1px solid var(--bd-rule);
+  overflow: auto;
+  padding: var(--bd-space-3);
+  min-height: 0;
+}
+.zeit {
+  grid-area: zeit;
+  background: var(--bd-surface-raised);
+  border-top: 1px solid var(--bd-rule);
+}
+@media (max-width: 900px) {
+  .app {
+    grid-template-columns: 1fr 240px;
+  }
+}
+@media (max-width: 720px) {
+  .app {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0, 1fr) auto auto;
+    grid-template-areas: 'kopf' 'buehne' 'zeit' 'seite';
+  }
+  .seite {
+    max-height: 30vh;
+    border-left: 0;
+    border-top: 1px solid var(--bd-rule);
+  }
+}
