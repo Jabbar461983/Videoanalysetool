@@ -478,6 +478,20 @@ export const t = {
     vorlageGespeichert: 'Vorlage gespeichert.',
     team1Standard: 'Team 1 als «BUL – SHC Bulldozers» speichern',
   },
+  benchmark: {
+    kicker: 'KI-Benchmark',
+    titel: 'Spieler freistellen – Modellvergleich',
+    hinweis:
+      'Wählen Sie ein Standbild (am besten aus Ihrem Spiel) und klicken Sie auf einen Spieler. Jedes Modell wird geladen und gemessen. Das Bild verlässt das Gerät nicht; nur die Modelldateien kommen einmalig von Hugging Face.',
+    bildWaehlen: 'Standbild wählen',
+    klickHinweis: 'Klicken Sie im Bild auf einen Spieler.',
+    modell: 'Modell',
+    geraet: 'Rechner',
+    starten: 'Messung starten',
+    laeuft: 'Läuft …',
+    spalten: ['Modell', 'Grösse', 'Laden', 'Bild einbetten', 'Maske', 'Fläche', 'Gerät'],
+    zurueck: 'Zurück',
+  },
   fehler: {
     allgemein: 'Es ist ein Fehler aufgetreten.',
     db: 'Der lokale Speicher ist nicht verfügbar.',
