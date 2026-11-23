@@ -43,13 +43,17 @@ async function stelleModellSicher(): Promise<void> {
   const p = projektOderNull();
   const id = p?.einstellungen.samModell ?? STANDARD_SAM;
   if (sam.stand.status === 'bereit' && sam.stand.modell?.id === id) return;
-  setze({ status: 'laedt', prozent: 0, meldung: null });
+  setze({ status: 'laedt', prozent: 0, meldung: null, detail: null });
   const ab = sam.beiStand((s) => setze({ prozent: s.prozent }));
   try {
     const st = await sam.lade(id);
     setze({ geraet: st.geraet });
   } catch (e) {
-    setze({ status: 'fehler', meldung: 'fehlerModell' });
+    setze({
+      status: 'fehler',
+      meldung: 'fehlerModell',
+      detail: e instanceof Error ? e.message : String(e),
+    });
     throw e;
   } finally {
     ab();

@@ -497,6 +497,7 @@ export const t = {
     fuellt: 'Alte Stelle wird mit Hintergrund gefüllt …',
     fehlerModell:
       'Das KI-Modell konnte nicht geladen werden. Prüfen Sie die Internetverbindung (nur für den ersten Download nötig) und versuchen Sie es erneut.',
+    technisch: 'Technische Meldung',
     fehlerMaske: 'Hier wurde kein Spieler erkannt. Klicken Sie mitten auf den Spieler.',
     ausserhalb:
       'Der Klick liegt ausserhalb des Ausschnitts. Klicken Sie ohne Shift/Alt, um neu zu beginnen.',

@@ -7,6 +7,8 @@ interface SpielerKiState {
   prozent: number;
   geraet?: 'webgpu' | 'wasm';
   meldung: string | null;
+  /** Technische Fehlermeldung (für die Fehlersuche) */
+  detail: string | null;
   /** Verschieben-Modus: Ziehen im ausgewählten Spieler bewegt ihn */
   verschieben: boolean;
   /** Art des nächsten Klicks (für Touch ohne Shift/Alt) */
@@ -19,6 +21,7 @@ export const useSpielerKi = create<SpielerKiState>((set) => ({
   status: 'bereit',
   prozent: 0,
   meldung: null,
+  detail: null,
   verschieben: false,
   klickArt: 'neu',
   setze: (patch) => set(patch),

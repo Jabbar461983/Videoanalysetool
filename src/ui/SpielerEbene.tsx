@@ -21,6 +21,7 @@ export function SpielerEbene() {
   const status = useSpielerKi((x) => x.status);
   const prozent = useSpielerKi((x) => x.prozent);
   const meldung = useSpielerKi((x) => x.meldung);
+  const detail = useSpielerKi((x) => x.detail);
   const [hinweis, setHinweis] = useState<string | null>(null);
 
   const norm = (e: { clientX: number; clientY: number }) => {
@@ -153,6 +154,11 @@ export function SpielerEbene() {
           }}
         >
           {text}
+          {status === 'fehler' && detail && (
+            <div data-testid="spieler-detail" style={{ marginTop: 4, fontSize: 11, opacity: 0.8 }}>
+              {t.spieler.technisch}: {detail.slice(0, 300)}
+            </div>
+          )}
         </div>
       )}
     </div>

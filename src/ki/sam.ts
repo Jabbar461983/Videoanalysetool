@@ -92,6 +92,26 @@ export class SamClient {
     modellId: string = STANDARD_SAM,
     geraet: 'auto' | 'wasm' | 'webgpu' = 'auto',
   ): Promise<Ladestand> {
+    try {
+      return await this.ladeEinmal(modellId, geraet);
+    } catch (e) {
+      if (geraet === 'wasm') throw e;
+      // Scheitert WebGPU, bleibt die Laufzeit im Worker oft in einem kaputten Zustand: sauber neu starten, nur CPU.
+      const erster = e instanceof Error ? e.message : String(e);
+      this.beende();
+      try {
+        return await this.ladeEinmal(modellId, 'wasm');
+      } catch (e2) {
+        const zweiter = e2 instanceof Error ? e2.message : String(e2);
+        throw new Error(`WebGPU: ${erster} | CPU: ${zweiter}`, { cause: e2 });
+      }
+    }
+  }
+
+  private async ladeEinmal(
+    modellId: string,
+    geraet: 'auto' | 'wasm' | 'webgpu',
+  ): Promise<Ladestand> {
     const modell = holeModell(modellId);
     if (this.stand.status === 'bereit' && this.stand.modell?.id === modell.id) return this.stand;
     if (this.stand.status === 'laedt') throw new Error('Das Modell lädt bereits.');
@@ -136,6 +156,9 @@ export class SamClient {
   beende(): void {
     this.worker?.terminate();
     this.worker = null;
+    this.initWarten = null;
+    this.wartend.clear();
+    this.dateiProzent.clear();
     this.setze({ status: 'leer', prozent: 0, modell: undefined });
   }
 }
