@@ -141,6 +141,7 @@ export async function exportiereVideo(
       restSek: phase === 'video' ? restzeit(gesamt ? bild / gesamt : 0, verstrichen) : null,
     });
   };
+  console.log('[export] start');
   meldung('vorbereitung');
   const v = await pruefeExport(opt.ziel, opt.aufloesung);
   const projekt = useProjekt.getState().projekt;
@@ -155,6 +156,7 @@ export async function exportiereVideo(
       'Dieser Browser kann kein Video kodieren (WebCodecs). Verwende Chrome oder Edge.',
     );
   const dateien = useDateien.getState().dateien;
+  console.log('[export] geprueft');
 
   // Ton auf dem Hauptthread mischen (Web Audio gibt es im Worker nicht)
   let audio: ExportAuftrag['audio'] = null;
@@ -175,6 +177,7 @@ export async function exportiereVideo(
       ),
     };
   }
+  console.log('[export] ton fertig');
   if (opt.signal?.aborted) throw new ExportFehler('abgebrochen');
 
   const bild = await ladeLogo();
@@ -213,6 +216,7 @@ export async function exportiereVideo(
   audio?.kanaele.forEach((k) => transfer.push(k.buffer));
   if (schreiber) transfer.push(schreiber as unknown as Transferable);
 
+  console.log('[export] worker starten');
   const worker = new Worker(new URL('./exportWorker.ts', import.meta.url), { type: 'module' });
   try {
     const ergebnis = await new Promise<{ buffer: ArrayBuffer | null }>((resolve, reject) => {
@@ -220,6 +224,7 @@ export async function exportiereVideo(
       opt.signal?.addEventListener('abort', abbruch);
       worker.onmessage = (e: MessageEvent<WorkerNachricht>) => {
         const n = e.data;
+        console.log('[export] worker', n.typ);
         if (n.typ === 'fortschritt') meldung('video', n.bild, n.gesamt);
         else if (n.typ === 'fertig') resolve({ buffer: n.buffer });
         else if (n.typ === 'abgebrochen') reject(new ExportFehler('abgebrochen'));
