@@ -9,6 +9,7 @@ import {
 import { usePlayer } from '../store/player';
 import { useProjekt } from '../store/projektStore';
 import { useSpielerKi } from '../store/spielerKi';
+import { useZeichnen } from '../store/zeichnen';
 import { PALETTE } from '../zeichnen/geometrie';
 import s from './Seitenleiste.module.css';
 
@@ -29,6 +30,7 @@ export function SpielerPanel({ clipId }: { clipId: string }) {
         {t.spieler.titel} · <span className="hinweis">{liste.length}</span>
       </p>
       {liste.length === 0 && <p className="hinweis">{t.spieler.leer}</p>}
+      {liste.length > 0 && <p className="hinweis">{t.spieler.verschiebenHilfe}</p>}
       <ul style={{ listStyle: 'none', padding: 0, margin: 0 }} data-testid="spielerliste">
         {liste.map((x, i) => (
           <li key={x.id} className={`${s.zeile} ${x.id === auswahlId ? s.aktiv : ''}`}>
@@ -165,7 +167,10 @@ export function SpielerPanel({ clipId }: { clipId: string }) {
               disabled={status === 'fuellt'}
               onChange={(e) => {
                 useSpielerKi.getState().setze({ verschieben: e.target.checked });
-                if (e.target.checked) void sichereHintergrund(o.id);
+                if (e.target.checked) {
+                  useZeichnen.getState().setzeWerkzeug('spieler');
+                  void sichereHintergrund(o.id);
+                }
               }}
             />{' '}
             {t.spieler.verschieben}

@@ -507,6 +507,8 @@ export const t = {
     zumStandbild: 'Springen Sie zuerst in das Standbild dieses Spielers.',
     titel: 'Spieler',
     leer: 'Noch keine Spieler markiert.',
+    verschiebenHilfe:
+      'Zum Verschieben: Spieler wählen, «Verschieben» anhaken, dann im Bild ziehen.',
     objekt: (n: number) => `Spieler ${n}`,
     effekte: 'Effekte',
     spotlight: 'Spotlight',

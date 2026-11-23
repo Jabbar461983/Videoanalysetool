@@ -141,9 +141,9 @@ export async function klickAufSpieler(
     const video = spieler.aktivesElement;
     const frame = video ? frameVonVideo(video) : null;
     if (!frame) return 'kein';
+    await stelleModellSicher();
     const span = sichereStandbild(clipId);
     if (!span) return 'kein';
-    await stelleModellSicher();
     setze({ status: 'rechnet', meldung: null });
     const cx = pos.x * frame.width;
     const cy = pos.y * frame.height;
