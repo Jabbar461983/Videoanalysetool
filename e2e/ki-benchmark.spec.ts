@@ -4,10 +4,10 @@ import { expect, test } from '@playwright/test';
  * Modellvergleich (lädt die KI-Modelle aus dem Netz, daher nur mit gesetzter Umgebungsvariablen):
  *   BM_BILD=/pfad/standbild.jpg BM_X=510 BM_Y=220 npx playwright test e2e/ki-benchmark.spec.ts
  */
-test.skip(!process.env.BM_BILD, 'BM_BILD nicht gesetzt');
 test.setTimeout(900_000);
 
 test('Benchmark: alle Modelle liefern eine Maske', async ({ page }) => {
+  test.skip(!process.env.BM_BILD, 'BM_BILD nicht gesetzt');
   await page.goto('#/benchmark');
   await page.getByTestId('bm-bild').setInputFiles(process.env.BM_BILD!);
   const c = page.getByTestId('bm-canvas');
