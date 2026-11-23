@@ -11,6 +11,7 @@ import { useProjekt } from '../store/projektStore';
 import { useSpielerKi } from '../store/spielerKi';
 import { useZeichnen } from '../store/zeichnen';
 import { PALETTE } from '../zeichnen/geometrie';
+import { STANDARD_HORIZONT } from '../render/perspektive';
 import s from './Seitenleiste.module.css';
 
 /** Markierte Spieler des Clips: Liste, Effekte, Farbe, Beschriftung, Verschieben. */
@@ -199,6 +200,54 @@ export function SpielerPanel({ clipId }: { clipId: string }) {
               }}
             />{' '}
             {t.spieler.verschieben}
+          </label>
+          <label>
+            <input
+              type="checkbox"
+              checked={o.perspektive?.an ?? true}
+              data-testid="spieler-perspektive"
+              onChange={(e) =>
+                aendereSpieler('Perspektive', o.id, (z) => {
+                  z.perspektive = {
+                    an: e.target.checked,
+                    horizont: z.perspektive?.horizont ?? STANDARD_HORIZONT,
+                  };
+                })
+              }
+            />{' '}
+            {t.spieler.perspektive}
+          </label>
+          {(o.perspektive?.an ?? true) && (
+            <label>
+              {t.spieler.horizont}{' '}
+              <input
+                type="range"
+                min={0}
+                max={60}
+                value={Math.round((o.perspektive?.horizont ?? STANDARD_HORIZONT) * 100)}
+                aria-label={t.spieler.horizont}
+                onChange={(e) =>
+                  aendereSpieler('Horizont', o.id, (z) => {
+                    z.perspektive = { an: true, horizont: Number(e.target.value) / 100 };
+                  })
+                }
+              />
+            </label>
+          )}
+          <label>
+            {t.spieler.groesse}{' '}
+            <input
+              type="range"
+              min={50}
+              max={200}
+              value={Math.round((o.massstab ?? 1) * 100)}
+              aria-label={t.spieler.groesse}
+              onChange={(e) =>
+                aendereSpieler('Spielergrösse', o.id, (z) => {
+                  z.massstab = Number(e.target.value) / 100;
+                })
+              }
+            />
           </label>
           <label>
             <input

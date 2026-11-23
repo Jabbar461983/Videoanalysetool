@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { t } from '../i18n/de-CH';
 import { klickAufSpieler, sichereHintergrund, waehleSpieler } from '../ki/spielerAktionen';
 import { keyframeBei, istSpielerSichtbar } from '../render/spieler';
+import { spielerBox } from '../render/perspektive';
 import { usePlayer } from '../store/player';
 import { useProjekt } from '../store/projektStore';
 import { useSpielerKi } from '../store/spielerKi';
@@ -42,9 +43,8 @@ export function SpielerEbene() {
     return [...liste].reverse().find((o) => {
       const k = keyframeBei(o, tt)?.kf;
       if (!k) return false;
-      const x = k.box.x + o.versatz.x;
-      const y = k.box.y + o.versatz.y;
-      return pos.x >= x && pos.x <= x + k.box.b && pos.y >= y && pos.y <= y + k.box.h;
+      const { x, y, b, h } = spielerBox(o, k);
+      return pos.x >= x && pos.x <= x + b && pos.y >= y && pos.y <= y + h;
     });
   };
 

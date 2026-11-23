@@ -190,6 +190,10 @@ export interface SpielerObjekt {
   versatz: { x: number; y: number };
   /** Gestrichelter Pfeil von alter zu neuer Position */
   pfeil: boolean;
+  /** Perspektive beim Verschieben: weiter oben im Bild = kleiner (Standard: an, Horizont 0.25) */
+  perspektive?: { an: boolean; horizont: number };
+  /** Zusätzlicher Grössenfaktor (Standard 1) */
+  massstab?: number;
   maskenKeyframes: MaskenKeyframe[];
 }
 /** Ein aufgenommenes Stück Kommentar. `start` in Clip-Zeit, `offset`/`dauer` in Sekunden des Blobs. */

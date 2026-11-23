@@ -77,3 +77,51 @@ describe('Migration auf Version 7', () => {
     expect(m.einstellungen.zeichnenAnhalten).toBe(false);
   });
 });
+
+describe('Perspektive beim Verschieben', () => {
+  const kf = {
+    zeit: 0,
+    box: { x: 0.4, y: 0.5, b: 0.1, h: 0.3 },
+    bild: '',
+    ausschnitt: '',
+    lupeBox: { x: 0, y: 0, b: 1, h: 1 },
+    fuss: { x: 0.45, y: 0.8 },
+  };
+  const obj = (vx: number, vy: number, extra: object = {}) =>
+    ({
+      id: 'a',
+      clipId: 'c',
+      quelleId: 'q',
+      start: 0,
+      ende: 1,
+      trackingModus: 'freeze',
+      farbe: '#fff',
+      effekte: {},
+      versatz: { x: vx, y: vy },
+      pfeil: true,
+      maskenKeyframes: [kf],
+      ...extra,
+    }) as never;
+  it('ohne Verschiebung bleibt die Grösse', async () => {
+    const { spielerMassstab } = await import('../src/render/perspektive');
+    expect(spielerMassstab(obj(0, 0), kf)).toBeCloseTo(1);
+  });
+  it('weiter oben im Bild wird der Spieler kleiner, weiter unten grösser', async () => {
+    const { spielerMassstab, spielerBox } = await import('../src/render/perspektive');
+    // Horizont 0.25: Fuss 0.8 → 0.5: (0.5-0.25)/(0.8-0.25) ≈ 0.4545
+    expect(spielerMassstab(obj(0, -0.3), kf)).toBeCloseTo(0.4545, 3);
+    expect(spielerMassstab(obj(0, 0.1), kf)).toBeGreaterThan(1);
+    const b = spielerBox(obj(0, -0.3), kf);
+    expect(b.h).toBeCloseTo(0.3 * 0.4545, 3);
+    // Fusspunkt (Mitte unten) liegt auf der neuen Position
+    expect(b.y + b.h).toBeCloseTo(0.5, 3);
+    expect(b.x + b.b / 2).toBeCloseTo(0.45, 3);
+  });
+  it('Perspektive aus: nur Verschiebung; Grösse manuell', async () => {
+    const { spielerMassstab } = await import('../src/render/perspektive');
+    expect(spielerMassstab(obj(0, -0.3, { perspektive: { an: false, horizont: 0.25 } }), kf)).toBe(
+      1,
+    );
+    expect(spielerMassstab(obj(0, 0, { massstab: 1.5 }), kf)).toBeCloseTo(1.5);
+  });
+});

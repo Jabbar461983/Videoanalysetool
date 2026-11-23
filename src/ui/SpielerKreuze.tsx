@@ -1,6 +1,7 @@
 import { t } from '../i18n/de-CH';
 import { entferneSpieler } from '../ki/spielerAktionen';
 import { istSpielerSichtbar, keyframeBei } from '../render/spieler';
+import { spielerBox } from '../render/perspektive';
 import { usePlayer } from '../store/player';
 import { useProjekt } from '../store/projektStore';
 import { useProgramm } from '../store/programm';
@@ -22,8 +23,9 @@ export function SpielerKreuze() {
       {sichtbar.map((o) => {
         const kf = keyframeBei(o, zeit)?.kf;
         if (!kf) return null;
-        const x = (kf.box.x + kf.box.b + o.versatz.x) * 100;
-        const y = (kf.box.y + o.versatz.y) * 100;
+        const bx = spielerBox(o, kf);
+        const x = (bx.x + bx.b) * 100;
+        const y = bx.y * 100;
         return (
           <button
             key={o.id}

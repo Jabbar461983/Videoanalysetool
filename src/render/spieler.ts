@@ -1,4 +1,5 @@
 import type { MaskenKeyframe, NormRahmen, SpielerObjekt, Zeichnung } from '../model/typen';
+import { spielerBox } from './perspektive';
 import { zeichneZeichnung } from './zeichnungen';
 
 type Ctx = CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
@@ -83,8 +84,7 @@ function zeichneEinen(
   const bild = bilder.get(bildSchluessel(o.id, index, 'bild', kf.bild));
   const box = px(kf.box, breite, hoehe);
   const verschoben = Math.abs(o.versatz.x) + Math.abs(o.versatz.y) > 1e-6;
-  const dx = o.versatz.x * breite;
-  const dy = o.versatz.y * hoehe;
+  const nb = px(spielerBox(o, kf), breite, hoehe);
   const e = o.effekte;
   ctx.save();
   ctx.globalAlpha = alpha;
@@ -106,8 +106,8 @@ function zeichneEinen(
     c.globalCompositeOperation = 'destination-out';
     c.shadowColor = '#000000';
     c.shadowBlur = Math.max(2, breite * 0.006);
-    c.drawImage(bild, box.x + dx, box.y + dy, box.b, box.h);
-    c.drawImage(bild, box.x + dx, box.y + dy, box.b, box.h);
+    c.drawImage(bild, nb.x, nb.y, nb.b, nb.h);
+    c.drawImage(bild, nb.x, nb.y, nb.b, nb.h);
     c.shadowBlur = 0;
     c.globalCompositeOperation = 'source-over';
     ctx.drawImage(tc, 0, 0);
@@ -117,7 +117,7 @@ function zeichneEinen(
   const fx = (kf.fuss.x + o.versatz.x) * breite;
   const fy = (kf.fuss.y + o.versatz.y) * hoehe;
   if (e.ring) {
-    const rx = Math.max(box.b * 0.7, breite * 0.02);
+    const rx = Math.max(nb.b * 0.7, breite * 0.02);
     ctx.save();
     ctx.beginPath();
     ctx.ellipse(fx, fy, rx, rx * 0.3, 0, 0, Math.PI * 2);
@@ -133,8 +133,8 @@ function zeichneEinen(
 
   // 4. Kontur (farbige Silhouette, mehrfach versetzt) – unter dem Spieler
   if (e.kontur && bild) {
-    const sw = Math.max(1, Math.round(box.b));
-    const sh = Math.max(1, Math.round(box.h));
+    const sw = Math.max(1, Math.round(nb.b));
+    const sh = Math.max(1, Math.round(nb.h));
     const sil =
       typeof OffscreenCanvas !== 'undefined'
         ? new OffscreenCanvas(sw, sh)
@@ -147,12 +147,12 @@ function zeichneEinen(
     const r = Math.max(2, breite * 0.003);
     for (let i = 0; i < 16; i++) {
       const w = (i / 16) * Math.PI * 2;
-      ctx.drawImage(sil, box.x + dx + Math.cos(w) * r, box.y + dy + Math.sin(w) * r, box.b, box.h);
+      ctx.drawImage(sil, nb.x + Math.cos(w) * r, nb.y + Math.sin(w) * r, nb.b, nb.h);
     }
   }
 
   // 5. Der Spieler selbst (am neuen Ort)
-  if (bild && (verschoben || e.kontur)) ctx.drawImage(bild, box.x + dx, box.y + dy, box.b, box.h);
+  if (bild && (verschoben || e.kontur)) ctx.drawImage(bild, nb.x, nb.y, nb.b, nb.h);
 
   // 6. Pfeil von alter zu neuer Position
   if (o.pfeil && verschoben) {
@@ -177,9 +177,9 @@ function zeichneEinen(
     if (ausschnitt) {
       const lb = px(kf.lupeBox, breite, hoehe);
       const r = Math.max(breite * 0.07, 40);
-      const rechts = box.x + dx + box.b + r * 1.4 < breite;
-      const cx = rechts ? box.x + dx + box.b + r * 0.9 : box.x + dx - r * 0.9;
-      const cy = Math.max(r + 4, Math.min(hoehe - r - 4, box.y + dy + box.h * 0.35));
+      const rechts = nb.x + nb.b + r * 1.4 < breite;
+      const cx = rechts ? nb.x + nb.b + r * 0.9 : nb.x - r * 0.9;
+      const cy = Math.max(r + 4, Math.min(hoehe - r - 4, nb.y + nb.h * 0.35));
       const zoom = Math.max(1.5, (r * 2) / Math.max(lb.b, lb.h));
       ctx.save();
       ctx.beginPath();
@@ -210,8 +210,8 @@ function zeichneEinen(
     ctx.textBaseline = 'middle';
     const w = ctx.measureText(e.text).width + gr * 1.2;
     const h = gr * 1.7;
-    const x = Math.max(4, Math.min(breite - w - 4, box.x + dx + box.b / 2 - w / 2));
-    const y = Math.max(4, box.y + dy - h - gr * 0.4);
+    const x = Math.max(4, Math.min(breite - w - 4, nb.x + nb.b / 2 - w / 2));
+    const y = Math.max(4, nb.y - h - gr * 0.4);
     ctx.fillStyle = 'rgba(20,20,20,0.85)';
     ctx.fillRect(x, y, w, h);
     ctx.fillStyle = o.farbe;
