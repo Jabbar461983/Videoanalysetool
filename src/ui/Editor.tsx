@@ -15,11 +15,22 @@ import { HotkeyHilfe } from './HotkeyHilfe';
 import { useEditorTasten } from './tasten';
 import s from './Editor.module.css';
 
+const ZEIT_KEY = 'bdva-zeit-hoehe';
+const ladeHoehe = (): number | null => {
+  try {
+    const v = Number(localStorage.getItem(ZEIT_KEY));
+    return v >= 100 ? v : null;
+  } catch {
+    return null;
+  }
+};
+
 export function Editor({ projektId }: { projektId: string }) {
   const projekt = useProjekt((x) => x.projekt);
   const status = useProjekt((x) => x.status);
   const art = useProgramm((g) => g.art);
   const [fehlt, setFehlt] = useState(false);
+  const [zeitHoehe, setZeitHoehe] = useState<number | null>(ladeHoehe);
 
   useEffect(() => {
     let aktiv = true;
@@ -87,7 +98,11 @@ export function Editor({ projektId }: { projektId: string }) {
       <aside className={s.seite} aria-label={t.editor.seitenleiste}>
         <Seitenleiste />
       </aside>
-      <section className={s.zeit}>
+      <section
+        className={`${s.zeit} ${zeitHoehe ? s.zeitFix : ''}`}
+        style={zeitHoehe ? { height: zeitHoehe } : undefined}
+      >
+        <Teiler hoehe={zeitHoehe} setze={setZeitHoehe} />
         {art === 'quelle' ? (
           <Timeline quelle={q} schluessel={q ? dateiKey(q) : ''} />
         ) : (
@@ -110,5 +125,56 @@ function UndoRedo() {
         {t.editor.redo}
       </button>
     </>
+  );
+}
+
+/** Griff zum Verändern der Zeitleistenhöhe (Ziehen oder Pfeil hoch/runter; Doppelklick = automatisch). */
+function Teiler({ hoehe, setze }: { hoehe: number | null; setze: (h: number | null) => void }) {
+  const speichere = (h: number | null) => {
+    setze(h);
+    try {
+      if (h) localStorage.setItem(ZEIT_KEY, String(Math.round(h)));
+      else localStorage.removeItem(ZEIT_KEY);
+    } catch {
+      /* egal */
+    }
+  };
+  const begrenze = (h: number) => Math.round(Math.min(window.innerHeight * 0.7, Math.max(110, h)));
+  return (
+    <div
+      className={s.teiler}
+      role="separator"
+      aria-orientation="horizontal"
+      aria-label={t.editor.zeitHoehe}
+      title={t.editor.zeitHoeheHinweis}
+      tabIndex={0}
+      data-testid="zeit-teiler"
+      onPointerDown={(e) => {
+        const start = e.currentTarget.parentElement!.getBoundingClientRect().height;
+        const y0 = e.clientY;
+        const el = e.currentTarget;
+        el.setPointerCapture(e.pointerId);
+        const move = (ev: PointerEvent) => speichere(begrenze(start + (y0 - ev.clientY)));
+        const ende = () => {
+          el.removeEventListener('pointermove', move);
+          el.removeEventListener('pointerup', ende);
+        };
+        el.addEventListener('pointermove', move);
+        el.addEventListener('pointerup', ende);
+      }}
+      onDoubleClick={() => speichere(null)}
+      onKeyDown={(e) => {
+        const aktuell = hoehe ?? e.currentTarget.parentElement!.getBoundingClientRect().height;
+        if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          e.stopPropagation();
+          speichere(begrenze(aktuell + 24));
+        } else if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          e.stopPropagation();
+          speichere(begrenze(aktuell - 24));
+        } else if (e.key === 'Home') speichere(null);
+      }}
+    />
   );
 }

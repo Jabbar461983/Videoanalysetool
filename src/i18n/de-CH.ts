@@ -32,6 +32,8 @@ export const t = {
     undo: 'Rückgängig',
     redo: 'Wiederholen',
     seitenleiste: 'Seitenleiste',
+    zeitHoehe: 'Höhe der Zeitleiste',
+    zeitHoeheHinweis: 'Ziehen verändert die Höhe der Zeitleiste, Doppelklick stellt sie zurück',
     seitenleisteLeer: 'Hier erscheinen später Tags, Clips und Werkzeuge.',
     nichtGefunden: 'Projekt nicht gefunden.',
     projektName: 'Projektname',

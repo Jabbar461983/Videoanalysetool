@@ -95,7 +95,7 @@ export function ProgrammTimeline() {
             </span>
           ))}
         </div>
-        <div className={s.reihe} style={{ height: art === 'playlist' ? 62 : 46 }}>
+        <div className={s.reihe} style={{ height: art === 'playlist' ? 56 : 38 }}>
           {plan.segmente.map((seg, i) => {
             const klasse =
               seg.art === 'titel'
@@ -145,7 +145,17 @@ export function ProgrammTimeline() {
         </div>
         {art === 'clip' && clipId && clip && (
           <>
-            <div className={s.reihe} style={{ height: 32 }} data-testid="overlay-spur">
+            <div
+              className={s.reihe}
+              style={{
+                height:
+                  (clip.ausblenden?.logo.length ?? 0) + (clip.ausblenden?.scoreboard.length ?? 0) >
+                  0
+                    ? 32
+                    : 0,
+              }}
+              data-testid="overlay-spur"
+            >
               {(['logo', 'scoreboard'] as const).map((k, reihe) =>
                 ausblendenVon(clip, k).map((ab, i) => (
                   <ZeitBalken

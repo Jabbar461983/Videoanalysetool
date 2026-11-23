@@ -20,6 +20,12 @@
 
   --bd-radius: 0;
   --bd-radius-chip: 999px;
-  --bd-touch: 44px;
+  --bd-touch: 44px; /* Touch/Stift: mind. 44 px */
   --bd-focus: 2px solid var(--bd-gold);
+}
+
+@media (pointer: fine) {
+  :root {
+    --bd-touch: 36px; /* Maus: kompaktere Bedienelemente, mehr Platz fürs Video */
+  }
 }

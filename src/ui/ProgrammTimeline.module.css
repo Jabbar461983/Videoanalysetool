@@ -1,7 +1,7 @@
 .wrap {
   display: flex;
   flex-direction: column;
-  max-height: 42vh;
+  max-height: 36vh;
   overflow-y: auto;
 }
 .bar {

@@ -110,7 +110,7 @@ export function AufnahmeLeiste({ clipId }: { clipId: string }) {
           </button>
         </>
       )}
-      <span className="hinweis">{t.ton.kopfhoerer}</span>
+      {aufn.phase === 'aus' && <span className="hinweis">{t.ton.kopfhoerer}</span>}
       {aufn.fehler && (
         <span role="alert" style={{ color: '#ff8a80' }}>
           {aufn.fehler}

@@ -1,7 +1,7 @@
 .wrap {
   display: flex;
   flex-direction: column;
-  height: 244px;
+  height: 214px;
 }
 .bar {
   display: flex;
@@ -20,7 +20,7 @@
 .spur {
   position: relative;
   height: 100%;
-  min-height: 176px;
+  min-height: 150px;
   cursor: ew-resize;
   user-select: none;
 }
@@ -45,12 +45,12 @@
   position: absolute;
   top: 24px;
   left: 0;
-  height: 90px;
+  height: 64px;
   display: flex;
   background: var(--bd-surface);
 }
 .bilder img {
-  height: 90px;
+  height: 64px;
   object-fit: cover;
   flex: none;
   pointer-events: none;
@@ -81,10 +81,10 @@
 
 .tagSpur {
   position: absolute;
-  top: 118px;
+  top: 92px;
   left: 0;
   right: 0;
-  height: 28px;
+  height: 26px;
   border-top: 1px solid var(--bd-rule);
   background: var(--bd-surface);
 }
@@ -124,7 +124,7 @@
 
 .clipSpur {
   position: absolute;
-  top: 148px;
+  top: 120px;
   left: 0;
   right: 0;
   height: 26px;

@@ -2,6 +2,14 @@
 
 Stand: Ende Etappe 5 «Audio & Vertonung» (Etappen 0–4 siehe unten, weiterhin gültig).
 
+## Layout-Verbesserung (nach Etappe 5)
+
+- Bedienelemente sind mit Maus kompakter (36 px), mit Touch/Stift weiter 44 px hoch (`@media (pointer: fine)`).
+- Quell-Zeitleiste niedriger (Vorschaubilder 64 px); Video-, Tag- und Clip-Spur sind vollständig sichtbar. Tag-Leiste kompakter, Kopfzeile schmaler → grössere Videobühne (bei 1900×950 etwa +40 %).
+- **Höhe der Zeitleiste verstellbar:** Griff am oberen Rand der Zeitleiste (Ziehen, Pfeil hoch/runter, Doppelklick = automatisch); wird gemerkt.
+- Clip-Zeitleiste: Overlay-Spur nur, wenn Abschnitte existieren; schmalere Videospur. Aufnahme-Tipp nur vor dem Aktivieren des Mikrofons.
+- Auf 720p-Bildschirmen bleibt die Bühne im Clip-Editor mit etwa 250 px Höhe klein (Werkzeug- und Aufnahmeleiste); Zeitleiste dort bei Bedarf kleiner ziehen.
+
 ## Erledigt (Etappe 5)
 
 - **Tonspuren pro Clip:** Originalton + beliebig viele Kommentarspuren, je Spur Lautstärke, Stumm, Solo. Im Clip-Editor (Abschnitt «Ton») und als Spuren mit **Wellenform** in der Clip-Zeitleiste (Original: Spitzen aus der Quelldatei nur für den Clipbereich; Kommentare: gespeicherte Spitzen).
