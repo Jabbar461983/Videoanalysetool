@@ -2,6 +2,25 @@
 
 Stand: Ende Etappe 6 «Export, Projektdatei & Präsentationsmodus» (Etappen 0–5 siehe unten, weiterhin gültig). **Ab hier ist das Tool im Verein einsetzbar.**
 
+## Erledigt (Etappe 8)
+
+- **Automatisches Mitführen** (Standard): Klick auf einen Spieler im Clip, das Tool verfolgt ihn vorwärts und rückwärts über den ganzen Clip (ca. 12 Bilder/s, dazwischen interpoliert). Spotlight, Ring und Beschriftung folgen ihm; Fortschritt mit «Abbrechen».
+- **Technik:** Personendetektor RT-DETR v2 (Apache-2.0, ca. 21 MB) auf einem Ausschnitt um die vorhergesagte Position (so werden auch kleine Spieler erkannt) + ByteTrack-artiger Tracker (Kalman-Prinzip, Zuordnung per Überlappung in zwei Stufen), Decodieren der Clipspanne mit Mediabunny, alles im Worker.
+- **Korrektur:** Unsichere/verlorene Stellen erscheinen als orange/rote Marken in der Timeline und im Panel. Klick auf den (gewählten) Spieler an der Stelle setzt die Verfolgung dort neu an.
+- **Umschalter «Mitführen: Automatisch / Freeze-Frame»** in der Werkzeugleiste (für neue Spieler), im Reiter Setup und pro Spieler im Panel. Beim Wechsel auf Freeze-Frame wird ein Standbild an der Klickstelle verwendet (bei Bedarf eingefügt).
+- **Automatischer Rückfall auf Freeze-Frame mit Meldung:** kein WebGPU; einmaliger Schnelltest auf dem Gerät zu langsam (mehr als 600 ms je Erkennung, Ergebnis wird gemerkt); mehr als 30 % der Spur «verloren»; Abbruch oder Fehler.
+- Vorschau, PNG und MP4-Export zeichnen über dieselbe `renderFrame()`-Funktion.
+- Messung (Cloud, nur CPU): Spur auf Testvideo mit bekannter Bewegung 0.5–1.1 px mittlere Abweichung, keine Verluste; Erkennung dort 1.6 s je Bild (deshalb braucht die Automatik WebGPU).
+
+## Etappe 8: Entscheide und Grenzen
+
+- **WebGPU-Tempo nicht gemessen:** In der Cloud gibt es keine GPU. Ob der Schnelltest auf dem Ziel-Laptop besteht und ein 8-s-Clip in 1080p in vertretbarer Zeit verfolgt wird, ist **noch zu prüfen** (Testanleitung). Schwelle: 600 ms je Erkennung.
+- Im Automatik-Modus gehen nur Spotlight, Ring und Beschriftung (Entscheid mit Auftraggeber). **Kontur, Lupe und Umplatzieren nur im Freeze-Frame.** Die Maske vom Klick wird skaliert mitgeführt, sie ist also keine echte Silhouette pro Bild.
+- **Streethockey-Eignung nicht geprüft:** Das Erkennungsmodell ist auf COCO-«Person» trainiert; Torhüter mit Ausrüstung, Spieler im Gedränge oder sehr kleine Spieler (< ca. 15 px) können verloren gehen. Dann: Korrekturklick oder Freeze-Frame.
+- **Nicht umgesetzt:** «Alle Spieler pro Bild erkennen und Teams per Trikotfarbe zuordnen» (Punkt 7 der Vorgabe) kommt mit der Taktiktafel in Etappe 9. Keine manuell verschiebbaren Keyframes und kein Glätten-Regler (die Spur wird fest geglättet, Korrektur per Klick).
+- Der Export einer automatisch verfolgten Szene nutzt dieselbe Zeichenfunktion, wurde aber nur im Freeze-Frame-Fall automatisiert gegen die Vorschau geprüft.
+- E2E-Test für den Automatik-Pfad (`e2e/tracking-auto.spec.ts`) läuft nur lokal (lädt Modelle, braucht ein Testvideo mit einer Person).
+
 ## Erledigt (Etappe 7)
 
 - **KI-Modell:** SlimSAM-77 (Apache-2.0, ca. 14 MB) als Standard, Vergleich mit SlimSAM-50 und SAM 2.1 tiny in `docs/LIZENZEN.md`. Läuft in einem Web Worker (onnxruntime-web, WebGPU wenn ein Adapter da ist, sonst WASM), wird erst beim ersten Klick geladen (Fortschritt sichtbar) und danach im Browser-Cache gehalten. Die Laufzeitdateien kommen mit der App; nur die Modellgewichte kommen einmalig von Hugging Face.

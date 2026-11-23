@@ -28,3 +28,9 @@ Ziel: Ein Klick auf einen Spieler im laufenden Clip; Spotlight/Ring/Label folgen
 | Verwechslung bei Gedränge | Korrekturklick, Marke bei tiefer Konfidenz |
 | Torhüter/Helme/Ausrüstung werden schlechter erkannt (COCO) | Ausschnitt + tiefe Schwelle, manuelle Korrektur; ggf. später Feintuning |
 | Decodierung grosser Clips | nur Clipspanne, Schrittweite, Abbruch |
+
+## Ergebnis (Umsetzung)
+- Umgesetzt wie geplant; **Entscheide mit Auftraggeber:** Auto-Modus = Spotlight, Ring, Beschriftung; Kontur, Lupe und Verschieben nur im Freeze-Frame; «alle Spieler pro Bild erkennen / Teamfarben» folgt in Etappe 9.
+- Die Maske vom Klick (SAM) wird auf die Spur skaliert und mitgeführt (kein SAM pro Bild).
+- Der Startrahmen rastet auf die Personenerkennung am Klickpunkt ein (die Maske kann bei grossen Spielern abgeschnitten sein).
+- Schema unverändert bei Version 7 (neue Felder `spur`, `klickZeit` sind optional).

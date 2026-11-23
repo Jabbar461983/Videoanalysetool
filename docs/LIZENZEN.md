@@ -23,3 +23,15 @@ Begründung: SlimSAM-77 ist am kleinsten und schnellsten bei gleicher Qualität.
 ## Bibliotheken
 
 - `@huggingface/transformers` (Apache-2.0), `onnxruntime-web` (MIT): Laufzeit der Modelle, mit der App ausgeliefert (kein CDN).
+
+## Personenerkennung für das Tracking (Etappe 8)
+
+| Modell | Quelle | Lizenz | Grösse | Entscheid |
+|---|---|---|---|---|
+| **RT-DETR v2 (r18vd), q8** | `onnx-community/rtdetr_v2_r18vd-ONNX` (Basis `PekingU/rtdetr_v2_r18vd`) | Apache-2.0 | ≈ 21 MB | **gewählt** |
+
+Nicht verwendet: YOLOv5/v8/v11 (AGPL-3.0, laut Projektregel ausgeschlossen), DETR-ResNet-50 (zu gross), YOLOX (kein geprüftes Browser-ONNX mit eindeutiger Lizenzangabe auf dem Hub).
+
+Messung (Chromium headless, nur CPU/WASM, 1 Thread, 640×640-Ausschnitt): ca. **1.6 s pro Erkennung**. Das ist für die Automatik zu langsam (Schwelle 600 ms), deshalb gilt: ohne WebGPU oder bei langsamem Schnelltest fällt die App auf Freeze-Frame zurück. Genauigkeit der Spur auf einem Panorama-Testvideo (Fussballfoto, bekannte Geschwindigkeit, 4 s): mittlere Abweichung 1.1 px (Spieler 215×430 px) bzw. 0.5 px (halbe Grösse), 0 Verluste.
+
+Weitere Bibliotheken: `@techstark/opencv-js` (Apache-2.0, Inpainting, Etappe 7), `mediabunny` (MPL-2.0, Decodieren der Clipspanne im Worker).
