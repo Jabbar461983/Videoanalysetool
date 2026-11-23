@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { t } from '../i18n/de-CH';
+import { useProjekt } from '../store/projektStore';
 
 export function HotkeyHilfe() {
+  const defs = useProjekt((x) => x.projekt?.tagDefinitionen ?? []);
   const [offen, setOffen] = useState(false);
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
@@ -44,9 +46,16 @@ export function HotkeyHilfe() {
           t.hotkeys.sprung,
           t.hotkeys.tempo,
           t.hotkeys.undo,
+          t.hotkeys.tagging,
         ].map((z) => (
           <p key={z}>{z}</p>
         ))}
+        <p className="hinweis">
+          {defs
+            .filter((d) => d.hotkey)
+            .map((d) => `${d.hotkey} ${d.name}`)
+            .join(' · ')}
+        </p>
       </div>
     </div>
   );

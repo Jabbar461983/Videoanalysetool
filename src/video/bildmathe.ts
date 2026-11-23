@@ -39,3 +39,12 @@ export function vorschauZeiten(dauer: number, max = 200, minAbstand = 5): number
   const schritt = dauer / n;
   return Array.from({ length: n }, (_, i) => Math.min(dauer - 0.01, i * schritt + schritt / 2));
 }
+
+/** Kurze Zeitangabe ohne Frames (für Lineal): m:ss bzw. h:mm:ss. */
+export function formatKurz(t: number): string {
+  const ganz = Math.floor(Math.max(0, t));
+  const h = Math.floor(ganz / 3600);
+  const m = Math.floor((ganz % 3600) / 60);
+  const sek = String(ganz % 60).padStart(2, '0');
+  return h > 0 ? `${h}:${String(m).padStart(2, '0')}:${sek}` : `${m}:${sek}`;
+}

@@ -20,6 +20,14 @@ export interface WiederherstellungRow {
   zeitpunkt: number;
   projekt: Projekt;
 }
+export type VorlageTyp = 'team' | 'kader' | 'tagset';
+export interface VorlageRow {
+  id: string;
+  typ: VorlageTyp;
+  name: string;
+  daten: unknown;
+  standard: boolean;
+}
 export interface MetaRow {
   key: string;
   value: unknown;
@@ -32,6 +40,7 @@ export class BdvaDb extends Dexie {
   proxys!: Table<ProxyRow, string>;
   wiederherstellung!: Table<WiederherstellungRow, string>;
   meta!: Table<MetaRow, string>;
+  vorlagen!: Table<VorlageRow, string>;
 
   constructor(name = 'bulldozers-videoanalyse') {
     super(name);
@@ -43,6 +52,7 @@ export class BdvaDb extends Dexie {
       wiederherstellung: 'projektId',
       meta: 'key',
     });
+    this.version(2).stores({ vorlagen: 'id, typ' });
   }
 }
 

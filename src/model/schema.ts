@@ -1,4 +1,5 @@
 import { SCHEMA_VERSION, type Projekt } from './typen';
+import { neueStandardTags } from '../tagging/standardTags';
 
 export const neueId = (): string => crypto.randomUUID();
 
@@ -15,7 +16,7 @@ export function neuesProjekt(name: string, jetzt = Date.now()): Projekt {
       { id: neueId(), kuerzel: 'BUL', name: 'SHC Bulldozers', farbe: '#007057', kader: [] },
       { id: neueId(), kuerzel: 'GEG', name: 'Gegner', farbe: '#BA990E', kader: [] },
     ],
-    tagDefinitionen: [],
+    tagDefinitionen: neueStandardTags(),
     tags: [],
     clips: [],
     playlist: [],
@@ -30,7 +31,21 @@ export function neuesProjekt(name: string, jetzt = Date.now()): Projekt {
 
 type Migration = (p: Record<string, unknown>) => Record<string, unknown>;
 /** Migrationen: Index n wandelt Version n in n+1 um. */
-export const migrationen: Migration[] = [];
+export const migrationen: Migration[] = [
+  // 0 → 1: Vorversion ohne Schema-Nummer, strukturell gleich
+  (p) => p,
+  // 1 → 2: Tagging – Standard-Tags, Felder sichtbar/fest, Clips mit tagId (optional)
+  (p) => {
+    const alt = (Array.isArray(p.tagDefinitionen) ? p.tagDefinitionen : []) as Record<
+      string,
+      unknown
+    >[];
+    const defs = alt.length
+      ? alt.map((d) => ({ sichtbar: true, fest: false, ...d }))
+      : neueStandardTags();
+    return { ...p, tagDefinitionen: defs };
+  },
+];
 
 export function migriere(roh: unknown): Projekt {
   if (typeof roh !== 'object' || roh === null) throw new Error('Ungültiges Projekt');

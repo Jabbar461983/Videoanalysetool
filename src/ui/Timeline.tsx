@@ -3,8 +3,10 @@ import { t } from '../i18n/de-CH';
 import type { Quelle } from '../model/typen';
 import { useDateien } from '../store/dateien';
 import { usePlayer } from '../store/player';
+import { useProjekt } from '../store/projektStore';
+import { useTagging } from '../store/tagging';
 import { erzeugeVorschauen } from '../video/thumbs';
-import { formatZeit, vorschauZeiten } from '../video/bildmathe';
+import { formatKurz, formatZeit, vorschauZeiten } from '../video/bildmathe';
 import s from './Timeline.module.css';
 
 const ZOOM_MAX = 64;
@@ -17,6 +19,9 @@ export function Timeline({
   schluessel: string;
 }) {
   const zeit = usePlayer((p) => p.zeit);
+  const tags = useProjekt((x) => x.projekt?.tags);
+  const defs = useProjekt((x) => x.projekt?.tagDefinitionen);
+  const gewaehlt = useTagging((x) => x.ausgewaehltTagId);
   const datei = useDateien((d) => (quelle ? d.dateien[quelle.id] : undefined));
   const scrollRef = useRef<HTMLDivElement>(null);
   const [breite, setBreite] = useState(800);
@@ -150,7 +155,7 @@ export function Timeline({
           <div className={s.lineal}>
             {ticks.map((x) => (
               <span key={x} className={s.tick} style={{ left: x * pps }}>
-                {formatZeit(x, 1)}
+                {formatKurz(x)}
               </span>
             ))}
           </div>
@@ -164,6 +169,31 @@ export function Timeline({
                 <span key={z} style={{ width: w, flex: 'none' }} />
               );
             })}
+          </div>
+          <div className={s.tagSpur} data-testid="tagspur">
+            <span className={s.tagSpurLabel}>{t.seite.tags}</span>
+            {quelle &&
+              tags
+                ?.filter((tg) => tg.quelleId === quelle.id)
+                .map((tg) => {
+                  const d = defs?.find((x) => x.id === tg.defId);
+                  return (
+                    <button
+                      key={tg.id}
+                      className={s.marke}
+                      data-testid="tagmarke"
+                      aria-current={gewaehlt === tg.id}
+                      aria-label={`${d?.name ?? ''} ${formatZeit(tg.zeit, quelle.fps)}`}
+                      title={`${d?.name ?? ''} ${formatZeit(tg.zeit, quelle.fps)}`}
+                      style={{ left: tg.zeit * pps, background: d?.farbe }}
+                      onPointerDown={(e) => e.stopPropagation()}
+                      onClick={() => {
+                        useTagging.getState().waehleTag(tg.id);
+                        usePlayer.getState().suche(tg.zeit);
+                      }}
+                    />
+                  );
+                })}
           </div>
           <div className={s.kopf} style={{ left: zeit * pps }} data-testid="playhead" />
         </div>

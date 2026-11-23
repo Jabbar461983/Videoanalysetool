@@ -1,5 +1,5 @@
 /** Datenmodell nach CLAUDE.md Abschnitt 5. Zeiten in Sekunden der jeweiligen Quelle. */
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 export interface Quelle {
   id: string;
@@ -36,6 +36,9 @@ export interface TagDef {
   vorlauf: number;
   nachlauf: number;
   istTor: boolean;
+  /** In der Tag-Leiste sichtbar (feste Tags lassen sich nur ausblenden, nicht löschen). */
+  sichtbar: boolean;
+  fest: boolean;
 }
 export interface Tag {
   id: string;
@@ -57,6 +60,8 @@ export interface Clip {
   out: number;
   name: string;
   freezeFrames: FreezeFrame[];
+  /** Gesetzt, wenn der Clip automatisch aus einem Tag entstanden ist. */
+  tagId?: string;
 }
 export type PlaylistEintrag =
   { typ: 'clip'; clipId: string } | { typ: 'titel'; text: string; dauer: number };

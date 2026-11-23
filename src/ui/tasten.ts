@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 import { useProjekt } from '../store/projektStore';
 import { usePlayer } from '../store/player';
+import { setzeTag, zuordnungTaste } from '../tagging/aktionen';
+import { useTagging } from '../store/tagging';
 import { begrenze, naechstesTempo, schritt } from '../video/bildmathe';
 
 const istEingabe = (el: EventTarget | null) =>
@@ -27,6 +29,28 @@ export function useEditorTasten() {
         }
       }
       if (istEingabe(e.target) || e.altKey) return;
+      // Zuordnung nach dem Taggen (Team 1/2, Nummer, Enter) – Wiedergabe läuft weiter
+      if (
+        useTagging.getState().zuordnung &&
+        !mod &&
+        /^(\d|Enter|Tab|Escape|Backspace)$/.test(e.key)
+      ) {
+        if (zuordnungTaste(e.key)) {
+          e.preventDefault();
+          return;
+        }
+      }
+      // Tag-Hotkeys
+      if (!mod && !e.repeat && e.key.length === 1) {
+        const def = st.projekt?.tagDefinitionen.find(
+          (d) => d.sichtbar && d.hotkey && d.hotkey.toUpperCase() === e.key.toUpperCase(),
+        );
+        if (def) {
+          e.preventDefault();
+          setzeTag(def.id);
+          return;
+        }
+      }
       const p = usePlayer.getState();
       const q =
         st.projekt?.quellen.find((x) => x.id === st.projekt?.aktiveQuelleId) ??

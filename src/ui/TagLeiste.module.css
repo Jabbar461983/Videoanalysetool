@@ -1,0 +1,41 @@
+.wrap {
+  background: var(--bd-surface);
+  border-top: 1px solid var(--bd-rule);
+}
+.leiste {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--bd-space-1);
+  padding: var(--bd-space-2) var(--bd-space-3);
+}
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--bd-space-2);
+  border-left: 4px solid var(--bd-gold);
+  font-size: 13px;
+}
+.kbd {
+  font-family: var(--bd-font-display);
+  font-size: 11px;
+  color: var(--bd-gold);
+  border: 1px solid var(--bd-rule);
+  padding: 0 6px;
+  min-width: 18px;
+  text-align: center;
+}
+.zuordnung {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--bd-space-3);
+  align-items: center;
+  padding: var(--bd-space-2) var(--bd-space-3);
+  border-top: 1px solid var(--bd-gold);
+}
+.teamBtn {
+  margin-left: 4px;
+}
+.teamBtn[aria-pressed='true'] {
+  border-color: var(--bd-gold);
+  color: var(--bd-gold);
+}

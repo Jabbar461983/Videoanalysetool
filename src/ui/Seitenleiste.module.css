@@ -1,0 +1,84 @@
+.tabs {
+  display: flex;
+  border-bottom: 1px solid var(--bd-rule);
+  margin: calc(var(--bd-space-3) * -1) calc(var(--bd-space-3) * -1) var(--bd-space-3);
+  position: sticky;
+  top: calc(var(--bd-space-3) * -1);
+  background: var(--bd-surface-raised);
+  z-index: 2;
+}
+.tab {
+  flex: 1;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: none;
+  padding: 0 var(--bd-space-1);
+  font-weight: 700;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.tab[aria-selected='true'] {
+  color: var(--bd-gold);
+  border-bottom-color: var(--bd-gold);
+}
+.zeile {
+  border-top: 1px solid var(--bd-rule);
+  padding: var(--bd-space-2) 0;
+}
+.zeile.aktiv {
+  border-left: 3px solid var(--bd-gold);
+  padding-left: var(--bd-space-2);
+}
+.klick {
+  background: none;
+  border: 0;
+  text-align: left;
+  padding: 0;
+  min-height: 32px;
+  width: 100%;
+  display: flex;
+  gap: var(--bd-space-2);
+  align-items: center;
+}
+.punkt {
+  width: 10px;
+  height: 10px;
+  flex: none;
+}
+.raster {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--bd-space-2);
+  margin: var(--bd-space-2) 0;
+}
+.raster label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12px;
+  color: var(--bd-ink-subtle);
+}
+.raster input,
+.raster select {
+  width: 100%;
+}
+.fehler {
+  color: #ff8a80;
+  font-size: 12px;
+}
+.reihe {
+  display: flex;
+  gap: var(--bd-space-1);
+  flex-wrap: wrap;
+  align-items: center;
+  margin: var(--bd-space-2) 0;
+}
+.mini {
+  min-height: 32px;
+  min-width: 32px;
+  padding: 0 var(--bd-space-2);
+}
+.abschnitt {
+  margin-top: var(--bd-space-4);
+}

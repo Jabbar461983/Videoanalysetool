@@ -1,7 +1,7 @@
 .wrap {
   display: flex;
   flex-direction: column;
-  height: 168px;
+  height: 204px;
 }
 .bar {
   display: flex;
@@ -20,7 +20,7 @@
 .spur {
   position: relative;
   height: 100%;
-  min-height: 100px;
+  min-height: 136px;
   cursor: ew-resize;
   user-select: none;
 }
@@ -77,4 +77,47 @@
   top: 40px;
   color: var(--bd-ink-subtle);
   font-size: 12px;
+}
+
+.tagSpur {
+  position: absolute;
+  top: 118px;
+  left: 0;
+  right: 0;
+  height: 28px;
+  border-top: 1px solid var(--bd-rule);
+  background: var(--bd-surface);
+}
+.tagSpurLabel {
+  position: absolute;
+  left: 4px;
+  top: 2px;
+  font-size: 10px;
+  color: var(--bd-ink-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  pointer-events: none;
+}
+.marke {
+  position: absolute;
+  top: 2px;
+  height: 24px;
+  width: 8px;
+  margin-left: -4px;
+  min-width: 8px;
+  min-height: 24px;
+  padding: 0;
+  border: 0;
+  border-bottom: 3px solid #fff;
+  cursor: pointer;
+}
+.marke::after {
+  content: '';
+  position: absolute;
+  inset: -10px -8px;
+}
+.marke[aria-current='true'] {
+  outline: 2px solid var(--bd-gold);
+  outline-offset: 1px;
+  z-index: 1;
 }

@@ -1,5 +1,6 @@
 import { db } from './db';
-import { migriere, neueId, neuesProjekt } from '../model/schema';
+import { migriere, neueId } from '../model/schema';
+import { neuesProjektMitVorlagen } from './vorlagen';
 import type { Projekt, Quelle } from '../model/typen';
 
 /** Stabiler Schlüssel für Handles/Vorschaubilder: gleiche Datei = gleicher Schlüssel, auch in Kopien. */
@@ -18,7 +19,7 @@ export async function speichereProjekt(p: Projekt): Promise<void> {
   await db.projekte.put(p);
 }
 export async function erstelleProjekt(name: string): Promise<Projekt> {
-  const p = neuesProjekt(name);
+  const p = await neuesProjektMitVorlagen(name);
   await db.projekte.put(p);
   return p;
 }

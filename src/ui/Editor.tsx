@@ -7,7 +7,8 @@ import { useDateien } from '../store/dateien';
 import { Streifen } from './Streifen';
 import { Buehne } from './Buehne';
 import { Timeline } from './Timeline';
-import { Quellenpanel } from './Quellenpanel';
+import { Seitenleiste } from './Seitenleiste';
+import { TagLeiste } from './TagLeiste';
 import { HotkeyHilfe } from './HotkeyHilfe';
 import { useEditorTasten } from './tasten';
 import s from './Editor.module.css';
@@ -78,12 +79,10 @@ export function Editor({ projektId }: { projektId: string }) {
       </header>
       <section className={s.buehne}>
         <Buehne quelle={q} />
+        <TagLeiste />
       </section>
       <aside className={s.seite} aria-label={t.editor.seitenleiste}>
-        <Quellenpanel />
-        <p className="hinweis" style={{ marginTop: 24 }}>
-          {t.editor.seitenleisteLeer}
-        </p>
+        <Seitenleiste />
       </aside>
       <section className={s.zeit}>
         <Timeline quelle={q} schluessel={q ? dateiKey(q) : ''} />
