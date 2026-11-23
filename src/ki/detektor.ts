@@ -13,9 +13,10 @@ export function ausschnittFuerBox(
   bildB: number,
   bildH: number,
   box: Box,
+  seiteVorgabe?: number,
 ): { x: number; y: number; seite: number } {
   const maxSeite = Math.min(bildB, bildH);
-  const seite = Math.round(Math.min(maxSeite, Math.max(256, box.h * 4, box.b * 6)));
+  const seite = Math.round(Math.min(maxSeite, seiteVorgabe ?? Math.max(320, box.h * 4, box.b * 6)));
   const x = Math.round(Math.min(Math.max(0, box.cx - seite / 2), bildB - seite));
   const y = Math.round(Math.min(Math.max(0, box.cy - seite / 2), bildH - seite));
   return { x, y, seite };

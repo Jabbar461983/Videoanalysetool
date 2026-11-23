@@ -113,8 +113,9 @@ const mitte = (liste: number[]) =>
 async function erkenneImBild(
   canvas: OffscreenCanvas,
   vorhersage: Box,
+  seiteVorgabe?: number,
 ): Promise<{ dets: Erkennung[]; ms: number }> {
-  const a = ausschnittFuerBox(canvas.width, canvas.height, vorhersage);
+  const a = ausschnittFuerBox(canvas.width, canvas.height, vorhersage, seiteVorgabe);
   const tmp = new OffscreenCanvas(SEITE, SEITE);
   const ctx = tmp.getContext('2d', { willReadFrequently: true })!;
   ctx.drawImage(canvas, a.x, a.y, a.seite, a.seite, 0, 0, SEITE, SEITE);
@@ -132,6 +133,33 @@ async function erkenneImBild(
   };
 }
 
+/**
+ * Rastet die Startbox (z. B. aus einer abgeschnittenen Maske) auf die Personenerkennung am Klickpunkt ein:
+ * Erkennung mit dem Punkt im Rahmen, höchstem Score (bei Gleichstand die kleinere). Ohne Treffer bleibt die Startbox.
+ */
+async function rasteEin(canvas: OffscreenCanvas, start: Box): Promise<Box> {
+  const seiten = [undefined, Math.min(canvas.width, canvas.height)];
+  const treffer: Erkennung[] = [];
+  for (const seite of seiten) {
+    const { dets } = await erkenneImBild(canvas, start, seite);
+    for (const d of dets) {
+      const x0 = d.box.cx - d.box.b / 2;
+      const y0 = d.box.cy - d.box.h / 2;
+      if (
+        d.score >= 0.3 &&
+        start.cx >= x0 &&
+        start.cx <= x0 + d.box.b &&
+        start.cy >= y0 &&
+        start.cy <= y0 + d.box.h
+      )
+        treffer.push(d);
+    }
+    if (treffer.length) break;
+  }
+  treffer.sort((p, q) => q.score - p.score || p.box.b * p.box.h - q.box.b * q.box.h);
+  return treffer[0]?.box ?? start;
+}
+
 async function lauf(b: Extract<TrackingBefehl, { typ: 'start' }>) {
   abbruch = false;
   await ladeDetektor(b.geraet);
@@ -141,6 +169,9 @@ async function lauf(b: Extract<TrackingBefehl, { typ: 'start' }>) {
     if (!spur || !(await spur.canDecode()))
       throw new Error('Das Video kann nicht decodiert werden.');
     const sink = new CanvasSink(spur);
+    let startBox = b.startBox;
+    const w0 = await sink.getCanvas(b.startZeit);
+    if (w0) startBox = await rasteEin(w0.canvas as OffscreenCanvas, b.startBox);
     const vorwaerts: number[] = [];
     for (let t = b.startZeit + b.schritt; t <= b.bis + 1e-6; t += b.schritt) vorwaerts.push(t);
     const rueckwaerts: number[] = [];
@@ -149,11 +180,11 @@ async function lauf(b: Extract<TrackingBefehl, { typ: 'start' }>) {
     let fertig = 0;
     const msListe: number[] = [];
     const ergebnis: SpurPunkt[] = [
-      { zeit: b.startZeit, box: b.startBox, konfidenz: 1, zustand: 'ok' },
+      { zeit: b.startZeit, box: startBox, konfidenz: 1, zustand: 'ok' },
     ];
 
     const richtung = async (zeiten: number[], dt: number) => {
-      const verfolger = new ZielVerfolger(b.startBox);
+      const verfolger = new ZielVerfolger(startBox);
       let i = 0;
       for await (const w of sink.canvasesAtTimestamps(zeiten)) {
         if (abbruch) return;
