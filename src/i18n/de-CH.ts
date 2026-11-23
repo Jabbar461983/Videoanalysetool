@@ -184,6 +184,10 @@ export const t = {
     startLabel: 'Start (s)',
     laengeLabel: 'Länge (s)',
     aufnahme: 'Aufnahme',
+    vertonen: 'Vertonen',
+    vertonenHinweis:
+      'Öffnet den Clip-Editor mit der Mikrofon-Aufnahme (legt bei Bedarf einen Clip um die Position an)',
+    aufnahmeHinweis: 'Mikrofon und Aufnahme findest du direkt unter dem Video («Aufnahme»).',
     mikroAktivieren: 'Mikrofon aktivieren',
     mikroSchliessen: 'Mikrofon schliessen',
     mikrofon: 'Mikrofon',

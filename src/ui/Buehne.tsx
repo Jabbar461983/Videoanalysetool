@@ -20,6 +20,7 @@ import {
 import { ProxyDialog } from './ProxyDialog';
 import { oeffneZeichnenFuerPosition } from '../schnitt/aktionen';
 import { Werkzeugleiste } from './Werkzeugleiste';
+import { AufnahmeLeiste } from './AufnahmeLeiste';
 import { useAufnahme } from '../store/aufnahme';
 import { beiLogoGeladen, holeLogo } from '../render/logo';
 import { schalteLogo, schalteScoreboard } from '../overlay/aktionen';
@@ -375,6 +376,19 @@ export function Buehne({ quelle }: { quelle: Quelle | undefined }) {
           </button>
         )}
         {art === 'quelle' && (
+          <button
+            className="primaer"
+            data-testid="vertonen-starten"
+            title={t.ton.vertonenHinweis}
+            onClick={(e) => {
+              oeffneZeichnenFuerPosition();
+              e.currentTarget.blur();
+            }}
+          >
+            🎙 {t.ton.vertonen}
+          </button>
+        )}
+        {art === 'quelle' && (
           <label className="hinweis">
             {t.player.tempo}{' '}
             <select
@@ -418,6 +432,7 @@ export function Buehne({ quelle }: { quelle: Quelle | undefined }) {
           {formatZeit(zeit, fps)} / {formatZeit(dauer, fps)}
         </span>
       </div>
+      {art === 'clip' && clipId && <AufnahmeLeiste clipId={clipId} />}
       {proxyOffen && <ProxyDialog quelle={quelle} onZu={() => setProxyOffen(false)} />}
     </>
   );

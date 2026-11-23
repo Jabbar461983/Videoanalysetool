@@ -1,0 +1,26 @@
+.leiste {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--bd-space-2);
+  align-items: center;
+  padding: var(--bd-space-1) var(--bd-space-3);
+  background: var(--bd-surface);
+  border-top: 1px solid var(--bd-rule);
+}
+.pegel {
+  width: 110px;
+  height: 12px;
+  background: var(--bd-surface-raised);
+  border: 1px solid var(--bd-rule);
+}
+.pegel > div {
+  height: 100%;
+}
+.leiste button,
+.leiste select {
+  min-height: 36px;
+}
+.rec {
+  color: #ff8a80;
+  font-weight: 700;
+}

@@ -2,8 +2,8 @@
 
 Voraussetzung: Etappe 4 läuft. **Kopfhörer aufsetzen** (sonst nimmt das Mikrofon den Videoton mit auf). Chrome oder Edge; beim ersten Mal fragt der Browser nach dem Mikrofon.
 
-1. **Clip öffnen:** Clip wählen → «Zeichnen» (oder im Player auf «Zeichnen») → rechts im Clip-Editor weiter unten **«Ton»**.
-2. **Mikrofon:** «Mikrofon aktivieren» → Browser erlauben. Mikrofon in der Liste wählen, in den Pegel sprechen: der Balken soll ausschlagen (grün, bei Übersteuerung rot).
+1. **Clip öffnen:** Im Player auf **«🎙 Vertonen»** klicken (öffnet den Clip an der Position, legt bei Bedarf einen an) – oder Clip wählen → «Zeichnen». Direkt **unter dem Video** erscheint die Leiste **«Aufnahme»**; Lautstärke, Ducking, Spuren und Aufnahmen stehen rechts im Abschnitt «Ton».
+2. **Mikrofon:** in der Leiste «Aufnahme» auf «Mikrofon aktivieren» → Browser erlauben. Mikrofon in der Liste wählen, in den Pegel sprechen: der Balken soll ausschlagen (grün, bei Übersteuerung rot).
 3. **Aufnehmen:** An die gewünschte Stelle der Clip-Zeitleiste klicken (z. B. Anfang oder ein Standbild), dann «Aufnehmen ab Position». Es erscheint **3-2-1** (das Bild steht), danach läuft das Video und die Aufnahme («● REC»). Sprich deinen Kommentar. «Stopp» oder Pause/Ende des Clips beendet. Die Aufnahme steht als blaue Spur mit Wellenform in der Zeitleiste und ist sofort gesichert.
 4. **Anhören:** Zeitleiste auf den Anfang, abspielen: Der **Originalton wird leiser**, solange du sprichst, danach wieder lauter. Unter «Ton» lassen sich Absenkung (dB) und Ducking ein-/ausschalten, Lautstärke, **Stumm** und **Solo** je Spur und für den Originalton einstellen.
 5. **Standbild:** Füge ein Standbild ein (Reiter Standbild) und nimm einen Kommentar auf, der über das Standbild läuft: Der Originalton schweigt dort (Video steht), dein Kommentar läuft durch.

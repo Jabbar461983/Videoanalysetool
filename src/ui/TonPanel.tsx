@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { t } from '../i18n/de-CH';
 import { holeAudio } from '../audio/modell';
 import {
@@ -8,12 +7,7 @@ import {
   spurHinzufuegen,
   spurLoeschen,
 } from '../audio/aktionen';
-import {
-  oeffneMikrofon,
-  schliesseMikrofon,
-  starteAufnahme,
-  stoppeAufnahme,
-} from '../audio/aufnahmeSteuerung';
+import { starteAufnahme } from '../audio/aufnahmeSteuerung';
 import { useAufnahme } from '../store/aufnahme';
 import { useProjekt } from '../store/projektStore';
 import s from './Seitenleiste.module.css';
@@ -24,15 +18,9 @@ const zahl = (x: string) => Number(x.replace(',', '.'));
 export function TonPanel({ clipId }: { clipId: string }) {
   const clip = useProjekt((x) => x.projekt?.clips.find((c) => c.id === clipId));
   const aufn = useAufnahme();
-  const [ausgewaehlteSpur, setSpur] = useState<string | undefined>(undefined);
-  useEffect(() => () => schliesseMikrofon(), []);
-  useEffect(() => {
-    useAufnahme.getState().setze({ spurId: ausgewaehlteSpur });
-  }, [ausgewaehlteSpur]);
   if (!clip) return null;
   const a = holeAudio(clip);
   const bereit = aufn.phase === 'bereit';
-  const laeuft = aufn.phase === 'laeuft';
 
   return (
     <section aria-label={t.ton.titel} data-testid="ton-panel">
@@ -251,118 +239,17 @@ export function TonPanel({ clipId }: { clipId: string }) {
         </div>
       ))}
       <div className={s.reihe}>
-        <button className={s.mini} onClick={() => setSpur(spurHinzufuegen(clipId))}>
+        <button
+          className={s.mini}
+          onClick={() => useAufnahme.getState().setze({ spurId: spurHinzufuegen(clipId) })}
+        >
           {t.ton.neueSpur}
         </button>
       </div>
 
-      <p className="kicker" style={{ marginTop: 12 }}>
-        {t.ton.aufnahme}
+      <p className="hinweis" style={{ marginTop: 12 }}>
+        {t.ton.aufnahmeHinweis}
       </p>
-      {aufn.phase === 'aus' ? (
-        <button className="primaer" data-testid="mikro-an" onClick={() => void oeffneMikrofon()}>
-          {t.ton.mikroAktivieren}
-        </button>
-      ) : (
-        <div>
-          <div className={s.reihe}>
-            <label className="hinweis">
-              {t.ton.mikrofon}{' '}
-              <select
-                value={aufn.geraetId ?? ''}
-                aria-label={t.ton.mikrofon}
-                disabled={!bereit}
-                onChange={(e) => void oeffneMikrofon(e.target.value)}
-              >
-                {aufn.geraete.map((g) => (
-                  <option key={g.id} value={g.id}>
-                    {g.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <button className={s.mini} disabled={!bereit} onClick={schliesseMikrofon}>
-              {t.ton.mikroSchliessen}
-            </button>
-          </div>
-          <div
-            role="meter"
-            aria-label={t.ton.pegel}
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-valuenow={Math.round(aufn.pegel * 100)}
-            data-testid="pegel"
-            style={{
-              height: 10,
-              background: 'var(--bd-surface)',
-              border: '1px solid var(--bd-rule)',
-              margin: '4px 0',
-            }}
-          >
-            <div
-              style={{
-                width: `${Math.round(aufn.pegel * 100)}%`,
-                height: '100%',
-                background: aufn.pegel > 0.9 ? '#e53935' : 'var(--bd-green)',
-              }}
-            />
-          </div>
-          <div className={s.reihe}>
-            <label className="hinweis">
-              {t.ton.zielSpur}{' '}
-              <select
-                value={ausgewaehlteSpur ?? ''}
-                aria-label={t.ton.zielSpur}
-                onChange={(e) => setSpur(e.target.value || undefined)}
-              >
-                <option value="">{t.ton.zielAuto}</option>
-                {a.spuren.map((sp) => (
-                  <option key={sp.id} value={sp.id}>
-                    {sp.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-          <div className={s.reihe}>
-            {laeuft || aufn.phase === 'countdown' ? (
-              <button
-                className="gefahr"
-                data-testid="aufnahme-stopp"
-                onClick={() => void stoppeAufnahme()}
-              >
-                ■ {t.ton.stopp}
-              </button>
-            ) : (
-              <button
-                className="primaer"
-                data-testid="aufnahme-start"
-                disabled={!bereit}
-                onClick={() => void starteAufnahme()}
-              >
-                ● {t.ton.aufnehmen}
-              </button>
-            )}
-            {aufn.phase === 'countdown' && (
-              <strong role="status" data-testid="countdown">
-                {t.ton.countdown(aufn.countdown)}
-              </strong>
-            )}
-            {laeuft && (
-              <strong role="status" style={{ color: '#ff8a80' }}>
-                {t.ton.laeuft}
-              </strong>
-            )}
-            {aufn.phase === 'speichern' && <span role="status">{t.ton.speichert}</span>}
-          </div>
-          <p className="hinweis">{t.ton.kopfhoerer}</p>
-        </div>
-      )}
-      {aufn.fehler && (
-        <p className={s.fehler} role="alert">
-          {aufn.fehler}
-        </p>
-      )}
     </section>
   );
 }
