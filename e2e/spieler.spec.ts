@@ -180,4 +180,10 @@ test('Spieler freistellen, hervorheben, verschieben; Export deckt sich mit der V
     exportiert,
   ]);
   expect(psnrDb(exportiert, erwartet)).toBeGreaterThan(24);
+
+  // ✕ am Spieler entfernt die Markierung
+  await page.getByRole('tab', { name: 'Clips' }).click();
+  await expect(page.getByTestId('spieler-kreuz')).toHaveCount(1);
+  await page.getByTestId('spieler-kreuz').click();
+  await expect(page.getByTestId('spielerliste').locator('li')).toHaveCount(0);
 });

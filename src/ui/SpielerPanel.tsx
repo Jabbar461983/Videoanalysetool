@@ -21,6 +21,7 @@ export function SpielerPanel({ clipId }: { clipId: string }) {
   const auswahlId = useSpielerKi((x) => x.auswahlId);
   const verschieben = useSpielerKi((x) => x.verschieben);
   const status = useSpielerKi((x) => x.status);
+  const meldung = useSpielerKi((x) => x.meldung);
   const o = liste.find((x) => x.id === auswahlId);
   const verschoben = !!o && Math.abs(o.versatz.x) + Math.abs(o.versatz.y) > 1e-6;
 
@@ -31,9 +32,20 @@ export function SpielerPanel({ clipId }: { clipId: string }) {
       </p>
       {liste.length === 0 && <p className="hinweis">{t.spieler.leer}</p>}
       {liste.length > 0 && <p className="hinweis">{t.spieler.verschiebenHilfe}</p>}
+      {meldung &&
+        meldung in t.spieler &&
+        typeof t.spieler[meldung as keyof typeof t.spieler] === 'string' && (
+          <p role="status" className="hinweis" style={{ color: 'var(--bd-gold)' }}>
+            {t.spieler[meldung as keyof typeof t.spieler] as string}
+          </p>
+        )}
       <ul style={{ listStyle: 'none', padding: 0, margin: 0 }} data-testid="spielerliste">
         {liste.map((x, i) => (
-          <li key={x.id} className={`${s.zeile} ${x.id === auswahlId ? s.aktiv : ''}`}>
+          <li
+            key={x.id}
+            className={`${s.zeile} ${x.id === auswahlId ? s.aktiv : ''}`}
+            style={{ display: 'flex', alignItems: 'center', gap: 4 }}
+          >
             <button
               className={s.klick}
               onClick={() => {
@@ -51,6 +63,16 @@ export function SpielerPanel({ clipId }: { clipId: string }) {
               <span className="hinweis">
                 {x.start.toFixed(1)}–{x.ende.toFixed(1)} s
               </span>
+            </button>
+            <button
+              type="button"
+              aria-label={t.spieler.loeschen}
+              title={t.spieler.loeschen}
+              data-testid="spieler-zeile-kreuz"
+              onClick={() => entferneSpieler(x.id)}
+              style={{ minWidth: 32, padding: '0 8px' }}
+            >
+              ×
             </button>
           </li>
         ))}
@@ -169,6 +191,9 @@ export function SpielerPanel({ clipId }: { clipId: string }) {
                 useSpielerKi.getState().setze({ verschieben: e.target.checked });
                 if (e.target.checked) {
                   useZeichnen.getState().setzeWerkzeug('spieler');
+                  // In das Standbild des Spielers springen, sonst ist er nicht sichtbar/anklickbar
+                  const tt = usePlayer.getState().zeit;
+                  if (tt < o.start || tt >= o.ende) usePlayer.getState().suche(o.start + 0.001);
                   void sichereHintergrund(o.id);
                 }
               }}
