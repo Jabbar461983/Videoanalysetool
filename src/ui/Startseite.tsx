@@ -18,6 +18,9 @@ import {
 import { raeumeAudioAuf } from '../audio/speicher';
 import { warSauberBeendet } from '../store/autosave';
 import type { Projekt } from '../model/typen';
+import { BdvaFehler, exportiereBdva, importiereBdva } from '../projektdatei/bdva';
+import { ladeHerunter } from '../export/exportieren';
+import { dateiName } from '../export/format';
 import { Streifen } from './Streifen';
 import s from './Startseite.module.css';
 
@@ -30,6 +33,7 @@ export function Startseite() {
   const [rettung, setRettung] = useState<Projekt[]>([]);
   const [sp, setSp] = useState<SpeicherInfo | null>(null);
   const [fehler, setFehler] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
 
   const lade = useCallback(async () => {
     try {
@@ -79,6 +83,20 @@ export function Startseite() {
       await lade();
     }
   };
+  const importiere = async (datei: File) => {
+    setFehler(null);
+    setInfo(null);
+    try {
+      const p = await importiereBdva(datei);
+      await lade();
+      setInfo(t.projekte.importiert(p.name));
+    } catch (e) {
+      setFehler(e instanceof BdvaFehler ? e.message : t.projekte.importFehler);
+    }
+  };
+  const exportiere = async (p: Projekt) => {
+    ladeHerunter(await exportiereBdva(p), `${dateiName(p.name)}.bdva`);
+  };
   const stelleWiederHer = async (p: Projekt) => {
     await speichereProjekt(p);
     setRettung((r) => r.filter((x) => x.id !== p.id));
@@ -96,6 +114,11 @@ export function Startseite() {
       </p>
       <h1 className={s.titel}>{t.start.titel}</h1>
       {fehler && <p role="alert">{fehler}</p>}
+      {info && (
+        <p role="status" data-testid="import-info">
+          {info}
+        </p>
+      )}
       {rettung.length > 0 && (
         <section className={s.box}>
           <p>{t.start.wiederherstellenHinweis}</p>
@@ -110,6 +133,24 @@ export function Startseite() {
         <button className="primaer" onClick={() => void neu()}>
           {t.start.neu}
         </button>
+        <button
+          data-testid="bdva-import"
+          onClick={() => document.getElementById('bdva-datei')?.click()}
+        >
+          {t.projekte.importieren}
+        </button>
+        <input
+          id="bdva-datei"
+          type="file"
+          accept=".bdva,application/zip"
+          hidden
+          data-testid="bdva-import-input"
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) void importiere(f);
+            e.target.value = '';
+          }}
+        />
       </div>
       {liste && liste.length === 0 && <p className="hinweis">{t.start.leer}</p>}
       <ul className={s.liste}>
@@ -124,6 +165,7 @@ export function Startseite() {
             <button onClick={() => oeffneProjekt(p.id)}>{t.start.oeffnen}</button>
             <button onClick={() => void umbenennen(p)}>{t.start.umbenennen}</button>
             <button onClick={() => void duplizieren(p)}>{t.start.duplizieren}</button>
+            <button onClick={() => void exportiere(p)}>{t.projekte.exportieren}</button>
             <button className="gefahr" onClick={() => void loeschen(p)}>
               {t.start.loeschen}
             </button>

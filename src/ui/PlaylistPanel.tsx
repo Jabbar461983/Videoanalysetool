@@ -11,6 +11,7 @@ import {
   sichereAktivePlaylist,
   verschiebeEintrag,
 } from '../schnitt/schnittLogik';
+import { startepraesentation } from '../praesentation/aktionen';
 import { playlistZeitplan } from '../wiedergabe/zeitachse';
 import { formatZeit } from '../video/bildmathe';
 import s from './Seitenleiste.module.css';
@@ -124,6 +125,13 @@ export function PlaylistPanel() {
               onClick={() => spieleAb(0, true)}
             >
               {t.playlist.abspielen}
+            </button>
+            <button
+              data-testid="praesentation-start"
+              disabled={!plan || plan.dauer === 0}
+              onClick={() => void startepraesentation(pl.id)}
+            >
+              {t.praesentation.starten}
             </button>
             {programm.art === 'playlist' && (
               <button onClick={() => programm.zurQuelle()}>{t.playlist.stopp}</button>

@@ -49,6 +49,7 @@ export function HotkeyHilfe() {
           t.hotkeys.overlay,
           t.hotkeys.tagging,
           t.hotkeys.zeichnen,
+          t.hotkeys.praesentation,
         ].map((z) => (
           <p key={z}>{z}</p>
         ))}

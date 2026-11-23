@@ -56,7 +56,10 @@ test('Projekt anlegen, Video importieren, abspielen, neu laden', async ({ page }
   await page.reload();
   await expect(page.getByLabel('Projektname')).toHaveValue('Spiel gegen Test');
   // Quelle ist noch im Projekt; Datei muss (ohne Handle in Playwright) neu verknüpft werden
-  await expect(page.getByText('test-vp9.webm', { exact: true })).toBeVisible();
+  await expect(page.getByTestId('quellen-banner')).toContainText('test-vp9.webm');
+  await expect(
+    page.getByRole('region', { name: 'Quellen' }).getByText('test-vp9.webm', { exact: true }),
+  ).toBeVisible();
   await expect(page.getByRole('button', { name: 'Datei erneut auswählen' })).toBeVisible();
 });
 

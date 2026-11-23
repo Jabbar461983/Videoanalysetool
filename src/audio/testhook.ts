@@ -1,5 +1,10 @@
+import { usePlayer } from '../store/player';
 import { useProjekt } from '../store/projektStore';
 import { aktuellerPlan } from '../wiedergabe/transport';
+import { holeLogo } from '../render/logo';
+import { renderFrame } from '../render/renderFrame';
+import { spieler } from '../wiedergabe/transport';
+import { useProgramm } from '../store/programm';
 import { mixdownRender } from './mixdown';
 import { audioPlan } from './plan';
 import { holeBuffer } from './speicher';
@@ -25,4 +30,49 @@ import { holeBuffer } from './speicher';
     const projekt = useProjekt.getState().projekt;
     return plan && projekt ? audioPlan(plan, projekt) : null;
   },
+};
+
+/** Verlauf der Abspielposition (nur Tests): hilft, Zeitsprünge zu finden. */
+const verlauf: { t: number; zeit: number; spielt: boolean }[] = [];
+usePlayer.subscribe((s, prev) => {
+  if (s.zeit !== prev.zeit || s.spielt !== prev.spielt)
+    verlauf.push({ t: Math.round(performance.now()), zeit: s.zeit, spielt: s.spielt });
+});
+(window as unknown as Record<string, Record<string, unknown>>).__bdvaTest!.zeitVerlauf = () =>
+  verlauf.slice();
+
+const hook = (window as unknown as Record<string, Record<string, unknown>>).__bdvaTest!;
+/** Springt im geöffneten Clip/Playlist an die Programmzeit und wartet, bis das Bild steht. */
+hook.springe = async (t: number) => {
+  await spieler.springe(t);
+  await new Promise((r) => setTimeout(r, 150));
+};
+/**
+ * Erwartetes Bild an der aktuellen Programmposition aus der Vorschau: Videobild + frisch mit `renderFrame()` gezeichnete Overlays
+ * (Grösse wie im Export). Rückgabe: PNG als Data-URL.
+ */
+hook.vorschauBild = (breite: number, hoehe: number): string => {
+  const v = spieler.aktivesElement;
+  const projekt = useProjekt.getState().projekt;
+  const g = useProgramm.getState();
+  const c = document.createElement('canvas');
+  c.width = breite;
+  c.height = hoehe;
+  const ctx = c.getContext('2d')!;
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, breite, hoehe);
+  if (v) ctx.drawImage(v, 0, 0, breite, hoehe);
+  const kontext =
+    g.art === 'clip'
+      ? { art: 'clip' as const, clipId: g.clipId! }
+      : { art: 'playlist' as const, playlistId: g.playlistId! };
+  renderFrame(usePlayer.getState().zeit, projekt, {
+    ctx,
+    breite,
+    hoehe,
+    modus: 'vorschau',
+    kontext,
+    logo: holeLogo(),
+  });
+  return c.toDataURL('image/png');
 };

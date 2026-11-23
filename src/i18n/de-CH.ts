@@ -118,6 +118,8 @@ export const t = {
   },
   dialog: { ok: 'OK', abbrechen: 'Abbrechen', speichern: 'Speichern' },
   hotkeys: {
+    praesentation:
+      'Präsentation: Pfeile/Bild auf/ab = Eintrag wechseln, Leertaste = Pause, C = Live-Zeichnung löschen, Esc = beenden',
     titel: 'Tastenkürzel',
     leertaste: 'Abspielen / Pause',
     pfeile: 'Bildweise zurück / vor',
@@ -135,7 +137,14 @@ export const t = {
     playlist: 'Playlist',
     zurQuelle: 'Zurück zur Quelle',
   },
-  seite: { quellen: 'Quellen', tags: 'Tags', clips: 'Clips', playlist: 'Playlist', setup: 'Setup' },
+  seite: {
+    quellen: 'Quellen',
+    tags: 'Tags',
+    clips: 'Clips',
+    playlist: 'Playlist',
+    setup: 'Setup',
+    export: 'Export',
+  },
   tags: {
     leiste: 'Tag-Leiste',
     setzen: (name: string, taste?: string) => (taste ? `${name} (Taste ${taste})` : name),
@@ -165,6 +174,61 @@ export const t = {
       'Zeichnen: Clip wählen und «Zeichnen» klicken, oder im Player auf «Zeichnen» (ohne Clip entsteht einer um die Position).',
     zu: 'Schliessen',
     anzahl: (n: number) => `${n} Tag(s)`,
+  },
+  praesentation: {
+    titel: 'Präsentation',
+    starten: 'Präsentation starten (Vollbild)',
+    zurueck: 'Vorheriger Eintrag',
+    weiter: 'Nächster Eintrag',
+    stift: 'Live-Stift',
+    loeschen: 'Löschen (C)',
+    beenden: 'Beenden (Esc)',
+    hinweis:
+      'Pfeile oder Bild auf/ab: vorheriger/nächster Eintrag · Leertaste: Pause · C: Zeichnung löschen · Esc: beenden',
+  },
+  banner: {
+    titel: (n: number) => (n === 1 ? 'Eine Videodatei fehlt.' : `${n} Videodateien fehlen.`),
+    zuordnen: 'Videodateien zuordnen',
+    keineTreffer: 'Keine passende Datei gefunden (Name, Grösse und Inhalt müssen übereinstimmen).',
+    teilweise: (ok: number, noch: number) => `${ok} zugeordnet, ${noch} fehlen noch.`,
+  },
+  projekte: {
+    importieren: 'Projekt importieren (.bdva)',
+    exportieren: 'Exportieren (.bdva)',
+    importFehler: 'Die Projektdatei konnte nicht geöffnet werden.',
+    importiert: (name: string) =>
+      `«${name}» wurde importiert. Beim Öffnen fragt die App nach den Videodateien.`,
+  },
+  export: {
+    titel: 'Export',
+    video: 'Video (MP4)',
+    playlist: 'Gesamtvideo (Playlist)',
+    clip: 'Einzelclip',
+    keinePlaylist: 'Noch keine Playlist.',
+    aufloesung: 'Auflösung',
+    ohneTon: 'ohne Ton',
+    dateiFehlt: (n: string) => `Videodatei fehlt: ${n}. Ordne sie im Reiter «Quellen» zu.`,
+    leerOderLaedt: 'Prüft … (oder der Clip/die Playlist ist leer).',
+    starten: 'Als MP4 exportieren',
+    abbrechen: 'Abbrechen',
+    phaseVorbereitung: 'Bereitet vor …',
+    phaseTon: 'Mischt den Ton …',
+    phaseVideo: (bild: number, gesamt: number, pct: number) =>
+      `Bild ${bild} von ${gesamt} (${pct} %)`,
+    rest: (r: string) => `noch ca. ${r}`,
+    langsam: (g: string) =>
+      `Dein Gerät kodiert langsam (kein schneller Hardware-Encoder?). Der Export dauert insgesamt etwa ${g}.`,
+    gespeichert: 'Gespeichert',
+    heruntergeladen: 'Heruntergeladen',
+    abgebrochen: 'Der Export wurde abgebrochen.',
+    fehlerAllgemein: 'Der Export ist fehlgeschlagen.',
+    bild: 'Aktuelles Bild',
+    png: 'Als PNG speichern',
+    keinBild: 'Kein Bild verfügbar.',
+    projektdatei: 'Projektdatei',
+    projektdateiHinweis:
+      'Enthält Projekt, Aufnahmen und Logo, aber nicht die Videos. Beim Öffnen fragt die App nach den Videodateien.',
+    bdvaSpeichern: 'Projekt als .bdva speichern',
   },
   ton: {
     titel: 'Ton',

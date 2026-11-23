@@ -158,6 +158,9 @@ test('Auto-Pause, Text, Marker, Zone, Verschieben, Kopieren, Favorit, Playlist',
   await zeiger(page, 'pointerup', 'mouse', 0.3, 0.3);
   await expect(page.getByTestId('play')).toHaveAttribute('aria-label', 'Abspielen');
   await expect(page.getByTestId('zeichnungsliste')).toContainText('Nummer');
+  // Feste Zeit für die weiteren Zeichnungen (Wiedergabe-Start/-Pause laufen asynchron)
+  await springeClipZeit(page, 0.2);
+  await page.waitForTimeout(300);
 
   // Text
   await page.getByTestId('werkzeug-text').click();

@@ -17,6 +17,8 @@ import {
 } from '../wiedergabe/transport';
 import { setzeTag, zuordnungTaste } from '../tagging/aktionen';
 import { useTagging } from '../store/tagging';
+import { useUi } from '../store/ui';
+import { beendePraesentation, naechsterEintrag } from '../praesentation/aktionen';
 import { schalteLogo, schalteScoreboard } from '../overlay/aktionen';
 import { useProgramm } from '../store/programm';
 import { useZeichnen } from '../store/zeichnen';
@@ -38,6 +40,19 @@ export function useEditorTasten() {
     const h = (e: KeyboardEvent) => {
       const st = useProjekt.getState();
       const mod = e.ctrlKey || e.metaKey;
+      // Präsentationsmodus: nur Navigation, Pause, Live-Zeichnung löschen, Beenden (auch für Presenter-Fernbedienungen)
+      if (useUi.getState().praesentation) {
+        if (mod || e.altKey) return;
+        const k = e.key;
+        if (k === 'ArrowRight' || k === 'PageDown' || k === 'ArrowDown') naechsterEintrag(1);
+        else if (k === 'ArrowLeft' || k === 'PageUp' || k === 'ArrowUp') naechsterEintrag(-1);
+        else if (k === ' ') toggleWiedergabe();
+        else if (k.toLowerCase() === 'c') useUi.getState().loescheLive();
+        else if (k === 'Escape') beendePraesentation();
+        else return;
+        e.preventDefault();
+        return;
+      }
       if (mod && !istEingabe(e.target)) {
         const k = e.key.toLowerCase();
         if (k === 'z' && !e.shiftKey) {

@@ -97,3 +97,19 @@
   max-height: none !important;
   overflow-y: auto;
 }
+
+/* Präsentationsmodus: nur die Bühne, schwarz, bildschirmfüllend */
+.praesi {
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  background: #000;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+  grid-template-areas: 'buehne';
+}
+.praesi .kopf,
+.praesi .seite,
+.praesi .zeit {
+  display: none;
+}

@@ -9,6 +9,10 @@ import { Buehne } from './Buehne';
 import { Timeline } from './Timeline';
 import { Seitenleiste } from './Seitenleiste';
 import { TagLeiste } from './TagLeiste';
+import { QuellenBanner } from './QuellenBanner';
+import { PraesentationsLeiste } from './PraesentationsLeiste';
+import { beendePraesentation } from '../praesentation/aktionen';
+import { useUi } from '../store/ui';
 import { ProgrammTimeline } from './ProgrammTimeline';
 import { useProgramm } from '../store/programm';
 import { HotkeyHilfe } from './HotkeyHilfe';
@@ -29,6 +33,7 @@ export function Editor({ projektId }: { projektId: string }) {
   const projekt = useProjekt((x) => x.projekt);
   const status = useProjekt((x) => x.status);
   const art = useProgramm((g) => g.art);
+  const praesi = useUi((u) => u.praesentation);
   const [fehlt, setFehlt] = useState(false);
   const [zeitHoehe, setZeitHoehe] = useState<number | null>(ladeHoehe);
 
@@ -55,6 +60,18 @@ export function Editor({ projektId }: { projektId: string }) {
 
   useEditorTasten();
 
+  // Verlässt der Nutzer das Vollbild (Esc im Browser), endet die Präsentation
+  useEffect(() => {
+    const f = () => {
+      if (!document.fullscreenElement) beendePraesentation();
+    };
+    document.addEventListener('fullscreenchange', f);
+    return () => {
+      document.removeEventListener('fullscreenchange', f);
+      beendePraesentation();
+    };
+  }, []);
+
   if (fehlt)
     return (
       <main style={{ padding: 24 }}>
@@ -66,7 +83,7 @@ export function Editor({ projektId }: { projektId: string }) {
   const q = projekt.quellen.find((x) => x.id === projekt.aktiveQuelleId) ?? projekt.quellen[0];
 
   return (
-    <div className={s.app}>
+    <div className={`${s.app} ${praesi ? s.praesi : ''}`} data-praesentation={praesi}>
       <header className={s.kopf}>
         <Streifen hoehe={20} />
         <a href="#/" style={{ color: 'var(--bd-ink)' }}>
@@ -92,8 +109,9 @@ export function Editor({ projektId }: { projektId: string }) {
         </span>
       </header>
       <section className={s.buehne}>
+        {!praesi && <QuellenBanner />}
         <Buehne quelle={q} />
-        {art === 'quelle' && <TagLeiste />}
+        {art === 'quelle' && !praesi && <TagLeiste />}
       </section>
       <aside className={s.seite} aria-label={t.editor.seitenleiste}>
         <Seitenleiste />
@@ -110,6 +128,7 @@ export function Editor({ projektId }: { projektId: string }) {
         )}
       </section>
       <HotkeyHilfe />
+      {praesi && <PraesentationsLeiste />}
     </div>
   );
 }

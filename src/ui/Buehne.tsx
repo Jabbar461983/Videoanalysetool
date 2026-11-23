@@ -20,6 +20,8 @@ import {
 import { ProxyDialog } from './ProxyDialog';
 import { oeffneZeichnenFuerPosition } from '../schnitt/aktionen';
 import { Werkzeugleiste } from './Werkzeugleiste';
+import { LiveStift } from './LiveStift';
+import { useUi } from '../store/ui';
 import { AufnahmeLeiste } from './AufnahmeLeiste';
 import { useAufnahme } from '../store/aufnahme';
 import { beiLogoGeladen, holeLogo } from '../render/logo';
@@ -67,6 +69,7 @@ export function Buehne({ quelle }: { quelle: Quelle | undefined }) {
   const [groesse, setGroesse] = useState({ w: 0, h: 0 });
   const [proxyOffen, setProxyOffen] = useState(false);
   const { zeit, spielt, tempo, fehler } = usePlayer();
+  const praesi = useUi((u) => u.praesentation);
   const aufnahmePhase = useAufnahme((a) => a.phase);
   const countdown = useAufnahme((a) => a.countdown);
 
@@ -260,14 +263,14 @@ export function Buehne({ quelle }: { quelle: Quelle | undefined }) {
 
   return (
     <>
-      {art !== 'quelle' && (
+      {art !== 'quelle' && !praesi && (
         <div className={s.modus} data-testid="modus">
           <span className="kicker">{art === 'clip' ? t.programm.clip : t.programm.playlist}</span>
           <strong style={{ color: 'var(--bd-ink)' }}>{programmName}</strong>
           <button onClick={() => useProgramm.getState().zurQuelle()}>{t.programm.zurQuelle}</button>
         </div>
       )}
-      {art === 'clip' && <Werkzeugleiste />}
+      {art === 'clip' && !praesi && <Werkzeugleiste />}
       <div ref={hostRef} className={s.host}>
         {!verknuepft && (
           <p className={s.leer}>
@@ -293,6 +296,7 @@ export function Buehne({ quelle }: { quelle: Quelle | undefined }) {
               style={{ zIndex: 5 }}
             />
           )}
+          {praesi && <LiveStift />}
           {art === 'clip' && anzeige && (
             <ZeichenEbene
               breite={Math.min(1920, anzeige.breite)}
@@ -325,114 +329,116 @@ export function Buehne({ quelle }: { quelle: Quelle | undefined }) {
           </div>
         )}
       </div>
-      <div className={s.leiste} role="toolbar">
-        <span className={s.gruppe}>
-          <button onClick={() => springeRelativ(-10)} title={t.player.zurueck10}>
-            −10 s
-          </button>
-          <button onClick={() => springeRelativ(-2)} title={t.player.zurueck2}>
-            −2 s
-          </button>
-          <button
-            onClick={() => bildSchritt(-1)}
-            title={t.player.bildZurueck}
-            aria-label={t.player.bildZurueck}
-          >
-            ◀|
-          </button>
-          <button
-            className="primaer"
-            onClick={toggleWiedergabe}
-            aria-label={spielt ? t.player.pause : t.player.abspielen}
-            data-testid="play"
-          >
-            {spielt ? '❚❚' : '▶'}
-          </button>
-          <button
-            onClick={() => bildSchritt(1)}
-            title={t.player.bildVor}
-            aria-label={t.player.bildVor}
-          >
-            |▶
-          </button>
-          <button onClick={() => springeRelativ(2)} title={t.player.vor2}>
-            +2 s
-          </button>
-          <button onClick={() => springeRelativ(10)} title={t.player.vor10}>
-            +10 s
-          </button>
-        </span>
-        {art === 'quelle' && (
-          <button
-            className="primaer"
-            data-testid="zeichnen-starten"
-            title={t.zeichnen.startenHinweis}
-            onClick={(e) => {
-              oeffneZeichnenFuerPosition();
-              e.currentTarget.blur();
-            }}
-          >
-            {t.zeichnen.starten}
-          </button>
-        )}
-        {art === 'quelle' && (
-          <button
-            className="primaer"
-            data-testid="vertonen-starten"
-            title={t.ton.vertonenHinweis}
-            onClick={(e) => {
-              oeffneZeichnenFuerPosition();
-              e.currentTarget.blur();
-            }}
-          >
-            🎙 {t.ton.vertonen}
-          </button>
-        )}
-        {art === 'quelle' && (
-          <label className="hinweis">
-            {t.player.tempo}{' '}
-            <select
-              value={tempo}
-              onChange={(e) => usePlayer.getState().setTempo(Number(e.target.value))}
-              aria-label={t.player.tempo}
+      {!praesi && (
+        <div className={s.leiste} role="toolbar">
+          <span className={s.gruppe}>
+            <button onClick={() => springeRelativ(-10)} title={t.player.zurueck10}>
+              −10 s
+            </button>
+            <button onClick={() => springeRelativ(-2)} title={t.player.zurueck2}>
+              −2 s
+            </button>
+            <button
+              onClick={() => bildSchritt(-1)}
+              title={t.player.bildZurueck}
+              aria-label={t.player.bildZurueck}
             >
-              {TEMPI.map((x) => (
-                <option key={x} value={x}>
-                  {x}×
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
-        <span className={s.gruppe}>
-          <button
-            aria-pressed={projekt?.einstellungen.logoAnzeigen ?? true}
-            data-testid="logo-schalter"
-            title={t.overlay.logoHinweis}
-            onClick={(e) => {
-              schalteLogo();
-              e.currentTarget.blur();
-            }}
-          >
-            {t.overlay.logo}
-          </button>
-          <button
-            aria-pressed={projekt?.einstellungen.scoreboardAnzeigen ?? true}
-            data-testid="scoreboard-schalter"
-            title={t.overlay.scoreboardHinweis}
-            onClick={(e) => {
-              schalteScoreboard();
-              e.currentTarget.blur();
-            }}
-          >
-            {t.overlay.scoreboard}
-          </button>
-        </span>
-        <span className={s.zeit} data-testid="zeit">
-          {formatZeit(zeit, fps)} / {formatZeit(dauer, fps)}
-        </span>
-      </div>
-      {art === 'clip' && clipId && <AufnahmeLeiste clipId={clipId} />}
+              ◀|
+            </button>
+            <button
+              className="primaer"
+              onClick={toggleWiedergabe}
+              aria-label={spielt ? t.player.pause : t.player.abspielen}
+              data-testid="play"
+            >
+              {spielt ? '❚❚' : '▶'}
+            </button>
+            <button
+              onClick={() => bildSchritt(1)}
+              title={t.player.bildVor}
+              aria-label={t.player.bildVor}
+            >
+              |▶
+            </button>
+            <button onClick={() => springeRelativ(2)} title={t.player.vor2}>
+              +2 s
+            </button>
+            <button onClick={() => springeRelativ(10)} title={t.player.vor10}>
+              +10 s
+            </button>
+          </span>
+          {art === 'quelle' && (
+            <button
+              className="primaer"
+              data-testid="zeichnen-starten"
+              title={t.zeichnen.startenHinweis}
+              onClick={(e) => {
+                oeffneZeichnenFuerPosition();
+                e.currentTarget.blur();
+              }}
+            >
+              {t.zeichnen.starten}
+            </button>
+          )}
+          {art === 'quelle' && (
+            <button
+              className="primaer"
+              data-testid="vertonen-starten"
+              title={t.ton.vertonenHinweis}
+              onClick={(e) => {
+                oeffneZeichnenFuerPosition();
+                e.currentTarget.blur();
+              }}
+            >
+              🎙 {t.ton.vertonen}
+            </button>
+          )}
+          {art === 'quelle' && (
+            <label className="hinweis">
+              {t.player.tempo}{' '}
+              <select
+                value={tempo}
+                onChange={(e) => usePlayer.getState().setTempo(Number(e.target.value))}
+                aria-label={t.player.tempo}
+              >
+                {TEMPI.map((x) => (
+                  <option key={x} value={x}>
+                    {x}×
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          <span className={s.gruppe}>
+            <button
+              aria-pressed={projekt?.einstellungen.logoAnzeigen ?? true}
+              data-testid="logo-schalter"
+              title={t.overlay.logoHinweis}
+              onClick={(e) => {
+                schalteLogo();
+                e.currentTarget.blur();
+              }}
+            >
+              {t.overlay.logo}
+            </button>
+            <button
+              aria-pressed={projekt?.einstellungen.scoreboardAnzeigen ?? true}
+              data-testid="scoreboard-schalter"
+              title={t.overlay.scoreboardHinweis}
+              onClick={(e) => {
+                schalteScoreboard();
+                e.currentTarget.blur();
+              }}
+            >
+              {t.overlay.scoreboard}
+            </button>
+          </span>
+          <span className={s.zeit} data-testid="zeit">
+            {formatZeit(zeit, fps)} / {formatZeit(dauer, fps)}
+          </span>
+        </div>
+      )}
+      {art === 'clip' && clipId && !praesi && <AufnahmeLeiste clipId={clipId} />}
       {proxyOffen && <ProxyDialog quelle={quelle} onZu={() => setProxyOffen(false)} />}
     </>
   );
