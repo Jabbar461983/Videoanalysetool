@@ -1,3 +1,4 @@
+import { SCHEMA_VERSION } from '../src/model/typen';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { parseKaderCsv } from '../src/tagging/csv';
 import { istGueltigesKuerzel, normalisiereKuerzel, pruefeHotkey } from '../src/tagging/kuerzel';
@@ -179,7 +180,7 @@ describe('Migration auf Version 2', () => {
       ],
     };
     const m = migriere(mitEigenem);
-    expect(m.version).toBe(6);
+    expect(m.version).toBe(SCHEMA_VERSION);
     expect(m.tagDefinitionen[0]).toMatchObject({ sichtbar: true, fest: false });
   });
 });

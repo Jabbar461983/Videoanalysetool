@@ -60,3 +60,20 @@ describe('Modellliste', () => {
     expect(holeModell('gibtsnicht').id).toBe(SAM_MODELLE[0]!.id);
   });
 });
+
+describe('Migration auf Version 7', () => {
+  it('leert alte Spieler-Platzhalter und ergänzt das KI-Modell', async () => {
+    const { migriere } = await import('../src/model/schema');
+    const m = migriere({
+      version: 6,
+      spielerObjekte: [{ id: 'x' }],
+      einstellungen: { zeichnenAnhalten: false },
+      quellen: [],
+      teams: [],
+      clips: [],
+    });
+    expect(m.spielerObjekte).toEqual([]);
+    expect(m.einstellungen.samModell).toBe('slimsam-77');
+    expect(m.einstellungen.zeichnenAnhalten).toBe(false);
+  });
+});

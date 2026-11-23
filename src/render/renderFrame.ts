@@ -2,6 +2,7 @@ import type { Projekt } from '../model/typen';
 import { baueProgrammPlan } from '../wiedergabe/plan';
 import { blendeAlpha, findeSegmentIndex, type Zeitplan } from '../wiedergabe/zeitachse';
 import { zeichneTitelfolie } from './titelfolie';
+import { zeichneSpielerObjekte, type BilderMap } from './spieler';
 import { zeichneClipZeichnungen, zeichneZeichnung } from './zeichnungen';
 import type { Zeichnung } from '../model/typen';
 import { ausblendenVon, istAusgeblendet } from '../overlay/ausblenden';
@@ -32,6 +33,8 @@ export interface RenderZiel {
   logo?: LogoBild | null;
   /** Nur Vorschau: Zeichnungen, die gerade durch `zusatz` ersetzt werden. */
   ausblenden?: ReadonlySet<string>;
+  /** Dekodierte Bilder der Spieler-Objekte (Vorschau: Lader in der Bühne; Export: Worker) */
+  bilder?: BilderMap;
 }
 
 const planCache = new WeakMap<Projekt, Map<string, Zeitplan | null>>();
@@ -92,6 +95,15 @@ export function renderFrame(t: number, projekt: Projekt | null, ziel: RenderZiel
   if (seg && seg.art !== 'titel' && seg.clipId) {
     const eintrag = plan.eintraege.find((e) => e.index === seg.eintragIndex);
     const clipZeit = k.art === 'clip' ? t : t - (eintrag?.start ?? 0);
+    zeichneSpielerObjekte(
+      ctx,
+      projekt.spielerObjekte,
+      seg.clipId,
+      clipZeit,
+      breite,
+      hoehe,
+      ziel.bilder,
+    );
     zeichneClipZeichnungen(
       ctx,
       projekt.zeichnungen,

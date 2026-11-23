@@ -1,4 +1,5 @@
 import { holeLogo } from '../render/logo';
+import { ladeSpielerBilder, vorschauBilder } from '../render/spielerBilder';
 import { renderFrame, type RenderKontext } from '../render/renderFrame';
 import { usePlayer } from '../store/player';
 import { useProgramm } from '../store/programm';
@@ -38,7 +39,16 @@ export async function exportiereAktuellesBild(): Promise<string | null> {
         ? { art: 'playlist', playlistId: g.playlistId }
         : { art: 'quelle', quelleId };
   const t = g.art === 'quelle' ? video.currentTime : usePlayer.getState().zeit;
-  renderFrame(t, projekt, { ctx, breite, hoehe, modus: 'export', kontext, logo: holeLogo() });
+  await ladeSpielerBilder(projekt, vorschauBilder);
+  renderFrame(t, projekt, {
+    ctx,
+    breite,
+    hoehe,
+    modus: 'export',
+    kontext,
+    logo: holeLogo(),
+    bilder: vorschauBilder,
+  });
   const blob = await new Promise<Blob | null>((r) => canvas.toBlob(r, 'image/png'));
   if (!blob) return null;
   const sek = Math.floor(t);

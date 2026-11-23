@@ -32,6 +32,7 @@ export function neuesProjekt(name: string, jetzt = Date.now()): Projekt {
       logoGroesse: 10,
       scoreboardAnzeigen: true,
       startstand: [0, 0],
+      samModell: 'slimsam-77',
     },
   };
 }
@@ -101,6 +102,12 @@ export const migrationen: Migration[] = [
     delete rest.audioSpuren;
     return rest;
   },
+  // 6 → 7: Spieler-Objekte mit Maske/Effekten (alte Platzhalter verworfen), KI-Modell-Einstellung
+  (p) => ({
+    ...p,
+    spielerObjekte: [],
+    einstellungen: { samModell: 'slimsam-77', ...(p.einstellungen as Record<string, unknown>) },
+  }),
 ];
 
 export function migriere(roh: unknown): Projekt {

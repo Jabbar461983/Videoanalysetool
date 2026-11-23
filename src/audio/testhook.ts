@@ -3,6 +3,7 @@ import { useProjekt } from '../store/projektStore';
 import { aktuellerPlan } from '../wiedergabe/transport';
 import { holeLogo } from '../render/logo';
 import { renderFrame } from '../render/renderFrame';
+import { vorschauBilder } from '../render/spielerBilder';
 import { spieler } from '../wiedergabe/transport';
 import { useProgramm } from '../store/programm';
 import { mixdownRender } from './mixdown';
@@ -73,6 +74,7 @@ hook.vorschauBild = (breite: number, hoehe: number): string => {
     modus: 'vorschau',
     kontext,
     logo: holeLogo(),
+    bilder: vorschauBilder,
   });
   return c.toDataURL('image/png');
 };

@@ -1,3 +1,4 @@
+import { SCHEMA_VERSION } from '../src/model/typen';
 import { describe, expect, it } from 'vitest';
 import { migriere, neuesProjekt } from '../src/model/schema';
 import { spielstand, toreOhneTeam } from '../src/overlay/spielstand';
@@ -135,7 +136,7 @@ describe('Migration auf Version 5', () => {
     p.overlays = { logo: [], scoreboard: [], scoreKorrekturen: [] };
     p.einstellungen = { trackingModus: 'auto', exportAufloesung: 1080, zeichnenAnhalten: false };
     const m = migriere(p);
-    expect(m.version).toBe(6);
+    expect(m.version).toBe(SCHEMA_VERSION);
     expect(m.einstellungen).toMatchObject({
       zeichnenAnhalten: false,
       logoAnzeigen: true,

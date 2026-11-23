@@ -1,3 +1,4 @@
+import { SCHEMA_VERSION } from '../src/model/typen';
 import { describe, expect, it } from 'vitest';
 import { migriere, neuesProjekt } from '../src/model/schema';
 import {
@@ -216,7 +217,7 @@ describe('Migration auf Version 6', () => {
     p.version = 5;
     p.audioSpuren = [{ id: 'x', typ: 'original' }];
     const m = migriere(p);
-    expect(m.version).toBe(6);
+    expect(m.version).toBe(SCHEMA_VERSION);
     expect('audioSpuren' in m).toBe(false);
   });
 });

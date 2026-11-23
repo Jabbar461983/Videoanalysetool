@@ -1,3 +1,4 @@
+import { SCHEMA_VERSION } from '../src/model/typen';
 import { describe, expect, it } from 'vitest';
 import {
   abstandPfad,
@@ -364,7 +365,7 @@ describe('Migration auf Version 4', () => {
     p.einstellungen = { trackingModus: 'auto', exportAufloesung: 1080 };
     p.zeichnungen = [{ id: 'x', quelleId: 'q', start: 0, ende: 1 }];
     const m = migriere(p);
-    expect(m.version).toBe(6);
+    expect(m.version).toBe(SCHEMA_VERSION);
     expect(m.einstellungen.zeichnenAnhalten).toBe(true);
     expect(m.zeichnungen).toEqual([]);
   });

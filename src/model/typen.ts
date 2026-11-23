@@ -1,5 +1,5 @@
 /** Datenmodell nach CLAUDE.md Abschnitt 5. Zeiten in Sekunden der jeweiligen Quelle. */
-export const SCHEMA_VERSION = 6;
+export const SCHEMA_VERSION = 7;
 
 export interface Quelle {
   id: string;
@@ -144,13 +144,54 @@ export interface Zeichnung {
   text?: string;
   nummer?: number;
 }
-export type SpielerObjekt = {
+/** Rechteck in normierten Bildkoordinaten (0–1). */
+export interface NormRahmen {
+  x: number;
+  y: number;
+  b: number;
+  h: number;
+}
+export interface SpielerEffekte {
+  spotlight: boolean;
+  /** Abdunkelung der Umgebung 0–1 */
+  spotlightStaerke: number;
+  ring: boolean;
+  kontur: boolean;
+  lupe: boolean;
+  label: boolean;
+  /** Beschriftung (z. B. «#7 Meier») */
+  text: string;
+}
+/** Maske zu einem Zeitpunkt (Clip-Zeit); Etappe 8 füllt mehrere Keyframes fürs Tracking. */
+export interface MaskenKeyframe {
+  zeit: number;
+  box: NormRahmen;
+  /** Freigestellter Spieler (PNG, Data-URL), genau `box` gross */
+  bild: string;
+  /** Umgebungsausschnitt (JPEG, Data-URL) für die Lupe, `lupeBox` gross */
+  ausschnitt: string;
+  lupeBox: NormRahmen;
+  /** Mit Hintergrund gefüllte Fläche (PNG, Data-URL) über `box`; nur bei Umplatzieren */
+  hintergrund?: string;
+  /** Fusspunkt (Mitte unten) normiert */
+  fuss: { x: number; y: number };
+}
+/** Markierter/verschobener Spieler auf einem Clip. `start`/`ende` in Clip-Zeit (wie Zeichnungen). */
+export interface SpielerObjekt {
   id: string;
+  clipId: string;
   quelleId: string;
   start: number;
   ende: number;
-  [k: string]: unknown;
-};
+  trackingModus: 'freeze' | 'auto';
+  farbe: string;
+  effekte: SpielerEffekte;
+  /** Verschiebung gegenüber der Originalposition (normiert), 0/0 = nicht verschoben */
+  versatz: { x: number; y: number };
+  /** Gestrichelter Pfeil von alter zu neuer Position */
+  pfeil: boolean;
+  maskenKeyframes: MaskenKeyframe[];
+}
 /** Ein aufgenommenes Stück Kommentar. `start` in Clip-Zeit, `offset`/`dauer` in Sekunden des Blobs. */
 export interface AudioSegment {
   id: string;
@@ -209,5 +250,7 @@ export interface Projekt {
     scoreboardAnzeigen: boolean;
     /** Startstand Team 1 : Team 2 */
     startstand: [number, number];
+    /** KI-Modell fürs Freistellen (siehe src/ki/modelle.ts) */
+    samModell: string;
   };
 }

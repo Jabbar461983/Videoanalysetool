@@ -25,6 +25,7 @@ import { useUi } from '../store/ui';
 import { AufnahmeLeiste } from './AufnahmeLeiste';
 import { useAufnahme } from '../store/aufnahme';
 import { beiLogoGeladen, holeLogo } from '../render/logo';
+import { ladeSpielerBilder, vorschauBilder } from '../render/spielerBilder';
 import { schalteLogo, schalteScoreboard } from '../overlay/aktionen';
 import { ZeichenEbene } from './ZeichenEbene';
 import { useZeichnen } from '../store/zeichnen';
@@ -112,9 +113,24 @@ export function Buehne({ quelle }: { quelle: Quelle | undefined }) {
         modus: 'vorschau',
         kontext: kontextAus(),
         logo: holeLogo(),
+        bilder: vorschauBilder,
         ...zeichenVorschau(),
       });
   };
+
+  // Bilder der Spieler-Objekte werden asynchron dekodiert: danach neu zeichnen
+  const spielerObjekte = useProjekt((x) => x.projekt?.spielerObjekte);
+  useEffect(() => {
+    const p = useProjekt.getState().projekt;
+    if (!p) return;
+    let aktiv = true;
+    void ladeSpielerBilder(p, vorschauBilder).then(() => {
+      if (aktiv) zeichne(usePlayer.getState().zeit);
+    });
+    return () => {
+      aktiv = false;
+    };
+  }, [spielerObjekte]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Logo wird asynchron geladen: danach neu zeichnen
   useEffect(() => beiLogoGeladen(() => zeichne(usePlayer.getState().zeit)), []);

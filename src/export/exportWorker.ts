@@ -13,6 +13,8 @@ import {
   StreamTarget,
 } from 'mediabunny';
 import { renderFrame, type RenderKontext } from '../render/renderFrame';
+import { ladeSpielerBilder } from '../render/spielerBilder';
+import type { BilderMap } from '../render/spieler';
 import { baueProgrammPlan } from '../wiedergabe/plan';
 import type { Segment } from '../wiedergabe/zeitachse';
 import { frameAnzahl, quellZeitFuerFrame } from './format';
@@ -46,6 +48,8 @@ async function laufe(a: ExportAuftrag): Promise<void> {
     const canvas = new OffscreenCanvas(a.breite, a.hoehe);
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('Zeichenfläche nicht verfügbar.');
+    const spielerBilder: BilderMap = new Map();
+    await ladeSpielerBilder(a.projekt, spielerBilder);
     const logo = a.logo
       ? { bild: a.logo.bild, breite: a.logo.breite, hoehe: a.logo.hoehe, platzhalter: false }
       : null;
@@ -180,6 +184,7 @@ async function laufe(a: ExportAuftrag): Promise<void> {
         modus: 'export',
         kontext,
         logo,
+        bilder: spielerBilder,
       });
       await schreibeAudio(t + 1);
       await videoQuelle.add(t, 1 / a.fps);

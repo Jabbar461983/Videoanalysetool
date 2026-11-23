@@ -1,3 +1,4 @@
+import { SCHEMA_VERSION } from '../src/model/typen';
 import { describe, expect, it } from 'vitest';
 import { migriere, neuesProjekt } from '../src/model/schema';
 import {
@@ -128,7 +129,7 @@ describe('Migration auf Version 3', () => {
       { typ: 'titel', text: 'Hallo', dauer: 4 },
     ];
     const m = migriere(p);
-    expect(m.version).toBe(6);
+    expect(m.version).toBe(SCHEMA_VERSION);
     expect(m.clips[0]!.zeitlupen).toEqual([]);
     expect(m.playlisten).toHaveLength(1);
     expect(m.aktivePlaylistId).toBe(m.playlisten[0]!.id);
