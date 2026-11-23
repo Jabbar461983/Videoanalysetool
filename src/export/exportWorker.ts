@@ -30,7 +30,6 @@ self.onmessage = (e: MessageEvent<WorkerBefehl>) => {
 class Abbruch extends Error {}
 
 async function laufe(a: ExportAuftrag): Promise<void> {
-  console.log('[worker] laufe');
   const inputs: Input[] = [];
   let output: Output | null = null;
   try {
@@ -68,9 +67,7 @@ async function laufe(a: ExportAuftrag): Promise<void> {
         ? new AudioSampleSource({ codec: a.audioCodec, bitrate: 128_000 })
         : null;
     if (audioQuelle) output.addAudioTrack(audioQuelle);
-    console.log('[worker] output.start');
     await output.start();
-    console.log('[worker] gestartet');
 
     // Quellen öffnen
     const senken = new Map<string, CanvasSink>();
@@ -148,8 +145,6 @@ async function laufe(a: ExportAuftrag): Promise<void> {
       }
       return out;
     };
-
-    console.log('[worker] frames', gesamt);
     for (let i = 0; i < gesamt; i++) {
       if (abbruch) throw new Abbruch();
       const t = i / a.fps;
