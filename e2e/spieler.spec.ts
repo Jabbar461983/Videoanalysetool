@@ -128,8 +128,10 @@ test('Spieler freistellen, hervorheben, verschieben; Export deckt sich mit der V
   await zeiger(page, 'pointermove', 0.35, 0.49);
   await zeiger(page, 'pointermove', 0.2, 0.49);
   await zeiger(page, 'pointerup', 0.2, 0.49);
+  await expect
+    .poll(async () => (await pixel(page, 0.2, 0.49))[3], { timeout: 10_000 })
+    .toBeGreaterThan(200);
   const neu = await pixel(page, 0.2, 0.49);
-  expect(neu[3]).toBeGreaterThan(200);
   expect(neu[0]).toBeGreaterThan(150); // rot
   expect(neu[1]).toBeLessThan(80);
   const alt = await pixel(page, 0.503, 0.49); // alte Stelle: Hintergrund statt Loch, kein Rot
