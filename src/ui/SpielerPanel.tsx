@@ -54,7 +54,11 @@ export function SpielerPanel({ clipId }: { clipId: string }) {
         ))}
       </ul>
       {o && (
-        <div data-testid="spieler-eigenschaften" style={{ display: 'grid', gap: 6, marginTop: 8 }}>
+        <div
+          data-testid="spieler-eigenschaften"
+          data-hintergrund={o.maskenKeyframes[0]?.hintergrund ? 'ja' : 'nein'}
+          style={{ display: 'grid', gap: 6, marginTop: 8 }}
+        >
           {(
             [
               ['spotlight', t.spieler.spotlight],
