@@ -3,7 +3,7 @@ import type { Werkzeug, ZeichenAnimation, ZeichenStil, Zeichnung } from '../mode
 import { STANDARD_STIL } from '../zeichnen/geometrie';
 import { STANDARD_ANIMATION } from '../zeichnen/logik';
 
-export type Modus = 'auswahl' | Werkzeug;
+export type Modus = 'auswahl' | 'spieler' | Werkzeug;
 
 /** Flüchtiger Zeichenzustand: Werkzeug, Standard-Stil, Auswahl, Entwurf und Zwischenablage. */
 interface ZeichnenState {

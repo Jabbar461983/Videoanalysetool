@@ -89,20 +89,29 @@ export function bereinigeMaske(
       g++;
       const x = p % breite;
       const y = (p / breite) | 0;
-      if (x > 0 && maske[p - 1] && !label[p - 1]) ((label[p - 1] = n), stapel.push(p - 1));
-      if (x < breite - 1 && maske[p + 1] && !label[p + 1]) ((label[p + 1] = n), stapel.push(p + 1));
-      if (y > 0 && maske[p - breite] && !label[p - breite])
-        ((label[p - breite] = n), stapel.push(p - breite));
-      if (y < hoehe - 1 && maske[p + breite] && !label[p + breite])
-        ((label[p + breite] = n), stapel.push(p + breite));
+      if (x > 0 && maske[p - 1] && !label[p - 1]) {
+        label[p - 1] = n;
+        stapel.push(p - 1);
+      }
+      if (x < breite - 1 && maske[p + 1] && !label[p + 1]) {
+        label[p + 1] = n;
+        stapel.push(p + 1);
+      }
+      if (y > 0 && maske[p - breite] && !label[p - breite]) {
+        label[p - breite] = n;
+        stapel.push(p - breite);
+      }
+      if (y < hoehe - 1 && maske[p + breite] && !label[p + breite]) {
+        label[p + breite] = n;
+        stapel.push(p + breite);
+      }
     }
     groessen[n] = g;
   }
   if (n === 0) return maske;
-  let behalten = 0;
   const kx = Math.min(breite - 1, Math.max(0, Math.round(px)));
   const ky = Math.min(hoehe - 1, Math.max(0, Math.round(py)));
-  behalten = label[ky * breite + kx] ?? 0;
+  let behalten = label[ky * breite + kx] ?? 0;
   if (!behalten) behalten = groessen.indexOf(Math.max(...groessen.slice(1)));
   const aus = new Uint8Array(maske.length);
   for (let i = 0; i < maske.length; i++) if (label[i] === behalten) aus[i] = 255;
@@ -111,13 +120,19 @@ export function bereinigeMaske(
   for (let x = 0; x < breite; x++) {
     for (const y of [0, hoehe - 1]) {
       const p = y * breite + x;
-      if (!aus[p] && !aussen[p]) ((aussen[p] = 1), stapel.push(p));
+      if (!aus[p] && !aussen[p]) {
+        aussen[p] = 1;
+        stapel.push(p);
+      }
     }
   }
   for (let y = 0; y < hoehe; y++) {
     for (const x of [0, breite - 1]) {
       const p = y * breite + x;
-      if (!aus[p] && !aussen[p]) ((aussen[p] = 1), stapel.push(p));
+      if (!aus[p] && !aussen[p]) {
+        aussen[p] = 1;
+        stapel.push(p);
+      }
     }
   }
   while (stapel.length) {
@@ -130,7 +145,10 @@ export function bereinigeMaske(
       y > 0 ? p - breite : -1,
       y < hoehe - 1 ? p + breite : -1,
     ]) {
-      if (q >= 0 && !aus[q] && !aussen[q]) ((aussen[q] = 1), stapel.push(q));
+      if (q >= 0 && !aus[q] && !aussen[q]) {
+        aussen[q] = 1;
+        stapel.push(q);
+      }
     }
   }
   for (let i = 0; i < aus.length; i++) if (!aus[i] && !aussen[i]) aus[i] = 255;

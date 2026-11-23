@@ -148,7 +148,10 @@ async function maske(id: number, punkte: { x: number; y: number; label: 0 | 1 }[
     for (let i = 0; i < k; i++) {
       if (scores[i]! >= scores[best]! * 0.8) {
         const a = flaeche(i);
-        if (a > gA) ((gross = i), (gA = a));
+        if (a > gA) {
+          gross = i;
+          gA = a;
+        }
       }
     }
     best = gross;

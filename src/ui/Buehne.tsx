@@ -28,6 +28,7 @@ import { beiLogoGeladen, holeLogo } from '../render/logo';
 import { ladeSpielerBilder, vorschauBilder } from '../render/spielerBilder';
 import { schalteLogo, schalteScoreboard } from '../overlay/aktionen';
 import { ZeichenEbene } from './ZeichenEbene';
+import { SpielerEbene } from './SpielerEbene';
 import { useZeichnen } from '../store/zeichnen';
 import type { Zeichnung } from '../model/typen';
 import s from './Buehne.module.css';
@@ -102,6 +103,8 @@ export function Buehne({ quelle }: { quelle: Quelle | undefined }) {
     return () => spieler.detach();
   }, [!quelle]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const werkzeugModus = useZeichnen((z) => z.werkzeug);
+
   const zeichne = (tt: number) => {
     const c = canvasRef.current;
     const ctx = c?.getContext('2d');
@@ -130,7 +133,7 @@ export function Buehne({ quelle }: { quelle: Quelle | undefined }) {
     return () => {
       aktiv = false;
     };
-  }, [spielerObjekte]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [spielerObjekte]);
 
   // Logo wird asynchron geladen: danach neu zeichnen
   useEffect(() => beiLogoGeladen(() => zeichne(usePlayer.getState().zeit)), []);
@@ -313,7 +316,8 @@ export function Buehne({ quelle }: { quelle: Quelle | undefined }) {
             />
           )}
           {praesi && <LiveStift />}
-          {art === 'clip' && anzeige && (
+          {art === 'clip' && anzeige && werkzeugModus === 'spieler' && <SpielerEbene />}
+          {art === 'clip' && anzeige && werkzeugModus !== 'spieler' && (
             <ZeichenEbene
               breite={Math.min(1920, anzeige.breite)}
               hoehe={Math.round((Math.min(1920, anzeige.breite) * anzeige.hoehe) / anzeige.breite)}

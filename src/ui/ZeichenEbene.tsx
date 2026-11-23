@@ -113,6 +113,7 @@ export function ZeichenEbene({ breite, hoehe }: { breite: number; hoehe: number 
     anhalten();
     const zeit = zeitspanne();
     const w = st.werkzeug;
+    if (w === 'spieler') return;
     if (w === 'text') {
       // Eingabefeld erst beim Loslassen öffnen, sonst nimmt der Browser dem Feld den Fokus gleich wieder weg
       textStart.current = pos;
