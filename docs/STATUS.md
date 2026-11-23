@@ -1,6 +1,30 @@
 # STATUS
 
-Stand: Ende Etappe 5 «Audio & Vertonung» (Etappen 0–4 siehe unten, weiterhin gültig).
+Stand: Ende Etappe 6 «Export, Projektdatei & Präsentationsmodus» (Etappen 0–5 siehe unten, weiterhin gültig). **Ab hier ist das Tool im Verein einsetzbar.**
+
+## Erledigt (Etappe 6)
+
+- **Export-Pipeline** (Worker): Quellbilder decodieren (Mediabunny) → `OffscreenCanvas` → **`renderFrame()`** (Titelfolien, Zeichnungen, Logo, Scoreboard, Blenden; dieselbe Funktion wie die Vorschau) → `VideoEncoder` (H.264) → MP4. Standbilder, Zeitlupe und mehrere Quellen laufen über die Zeitachse aus Etappe 2.
+- **Ton:** Mixdown auf dem Hauptthread (Originalton aus der Quelle + Kommentare, Ducking/Solo/Stumm wie in der Vorschau, `mixdownRender`), im Wechsel mit den Bildern in den Mux geschrieben (AAC; ohne AAC-Encoder Opus mit Hinweis).
+- **Einstellungen:** 1080p (Standard) oder 720p; Bildrate der Quelle bis 60; Bitrate automatisch; 4K wird auf 1080p herunterskaliert, kleinere Quellen werden nicht hochskaliert; Ausgabegrösse folgt dem Seitenverhältnis der Quelle.
+- **Einzelclip und Gesamtvideo (Playlist)**, Fortschritt mit Bildanzahl und **Restzeit**, **Abbrechen** (angefangene Datei wird entfernt, wenn der Browser es erlaubt). Hinweis mit geschätzter Dauer, wenn der Browser langsam kodiert (kein Hardware-Encoder).
+- **Ziel:** ab ca. 150 MB geschätzter Grösse direkt in eine Datei (`showSaveFilePicker`, kein Aufbau im Arbeitsspeicher), sonst Download.
+- **PNG** des aktuellen Bilds inkl. aller Overlays (Reiter «Export»).
+- **Projektdatei `.bdva`** (ZIP: Manifest, Projekt, Aufnahmen, Logo; ohne Quellvideos): Export im Reiter «Export» und auf der Startseite, Import auf der Startseite (neues Projekt, bei gleicher Id «(importiert)», Schema-Migration, Aufnahmen werden wiederhergestellt, klare Fehlermeldungen). Banner im Editor **«Videodateien fehlen»** mit Mehrfachauswahl und Zuordnung über Name, Grösse und Teil-Hash.
+- **Präsentationsmodus** (Reiter «Playlist» → «Präsentation starten»): Vollbild nur mit Bühne; Pfeile / Bild auf/ab = nächster/vorheriger Eintrag, Leertaste Pause, `Esc` beendet, `C` löscht die Live-Zeichnung; **Live-Stift** (Stift immer, Maus/Finger per Schalter; nicht gespeichert); Steuerleiste blendet sich nach 2.5 s aus.
+- **Geprüft:** E2E exportiert einen Clip mit Tor-Tag, Logo, Scoreboard und Ton, prüft die MP4 mit ffprobe (H.264, 640×360, 25 fps, Dauer, Tonspur) und vergleicht das Bild mit der Vorschau (PSNR ganzes Bild > 26 dB, Scoreboard- und Logobereich > 24 dB). Weitere E2E: PNG, Abbrechen, Projektdatei (Export → Import → Banner → Zuordnung → defekte Datei), Präsentation (Navigation, Pause, Live-Stift mit Stift und Maus, Ausblenden der Leiste, Esc).
+- Tests: 106 Unit-Tests, 13 E2E-Tests.
+
+## Etappe 6: Entscheide und Grenzen
+
+- **Nicht in dieser Umgebung geprüft:** Abspielen der MP4 in **VLC, Windows-Fotos, QuickTime und auf dem Handy**, 1080p-Export einer langen Playlist, Export mit AAC (der Test-Browser hat nur Opus) und Hardware-Encoding. Bitte mit deinem Gerät prüfen (Abnahme-Schritte in der Testanleitung).
+- **Ton im Export liegt im Arbeitsspeicher** (48 kHz, Stereo, Float): für ein Gesamtvideo von 30 Min. rund 700 MB – längere Playlists bitte aufteilen.
+- Ohne AAC-Encoder (z. B. manche Linux-Browser) entsteht Opus-Ton im MP4, den QuickTime unter Umständen nicht abspielt; ohne H.264 wird VP9 verwendet. Chrome/Edge auf Windows/macOS können H.264 + AAC.
+- Eine HEVC-Quelle ohne Proxy kann nicht decodiert werden: Der Export meldet das und verweist auf die Proxy-Datei (Reiter «Quellen»). Mit Proxy wird die Proxy-Datei (1080p/30) als Quelle exportiert.
+- Der Export verwendet Zeichnungen, Overlays und Titelfolien so, wie sie im Projekt gespeichert sind; die Live-Zeichnung der Präsentation ist nie enthalten.
+- Der Präsentationsmodus nutzt das Vollbild des Browsers; verweigert er es, läuft die Präsentation im Fenster. Ein Wechsel zwischen Clips mit verschiedener Bildgrösse passt das Bildformat der Bühne an.
+- Import legt immer ein neues Projekt an (nie Überschreiben).
+- Videodateien müssen nach einem Neuladen wieder zugeordnet werden (Handles gibt es nur in Chrome/Edge); das Banner macht das mit einer Mehrfachauswahl einfach.
 
 ## Layout-Verbesserung (nach Etappe 5)
 
