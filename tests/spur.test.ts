@@ -52,12 +52,7 @@ describe('Spur', () => {
       p(3, 0.1),
     ];
     const st = unsichereStellen(s);
-    expect(st).toEqual(
-      [{ von: 1, bis: 2.5 - 0.5 + 0.5 - 0.5 + 0.5 - 0.5 + 0.5 - 0.5, verloren: true }].map((x) => ({
-        ...x,
-        bis: 2,
-      })),
-    );
+    expect(st).toEqual([{ von: 1, bis: 2, verloren: true }]);
     expect(verlorenAnteil(s)).toBeCloseTo(2 / 7);
     expect(verlorenAnteil([])).toBe(0);
   });
