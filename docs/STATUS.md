@@ -2,6 +2,25 @@
 
 Stand: Ende Etappe 6 «Export, Projektdatei & Präsentationsmodus» (Etappen 0–5 siehe unten, weiterhin gültig). **Ab hier ist das Tool im Verein einsetzbar.**
 
+## Erledigt (Etappe 7)
+
+- **KI-Modell:** SlimSAM-77 (Apache-2.0, ca. 14 MB) als Standard, Vergleich mit SlimSAM-50 und SAM 2.1 tiny in `docs/LIZENZEN.md`. Läuft in einem Web Worker (onnxruntime-web, WebGPU wenn ein Adapter da ist, sonst WASM), wird erst beim ersten Klick geladen (Fortschritt sichtbar) und danach im Browser-Cache gehalten. Die Laufzeitdateien kommen mit der App; nur die Modellgewichte kommen einmalig von Hugging Face.
+- **Benchmark-Seite** `#/benchmark`: Standbild wählen, auf einen Spieler klicken, alle Modelle werden mit Ladezeit, Einbetten, Maske und Vorschau verglichen (eigenes Spielvideo-Standbild verwenden!).
+- **Werkzeug «Spieler»** im Clip-Editor: Klick = freistellen; Shift+Klick ergänzt, Alt+Klick entfernt (Touch: Knöpfe «Ergänzen»/«Entfernen»); Maske bereinigt und weich geglättet. Steht der Abspielkopf nicht in einem Standbild, wird automatisch eines (3 s) eingefügt.
+- **Effekte** (kombinierbar): Spotlight (weicher Rand, Stärke regelbar), Ring am Boden, Kontur, Lupe, Beschriftung (frei oder aus dem Kader), Farbe aus der Palette. Alles wird in `renderFrame()` gezeichnet; Vorschau, PNG und MP4-Export sind identisch (E2E-Test mit PSNR-Vergleich).
+- **Umplatzieren:** «Verschieben» aktivieren, Spieler im Bild ziehen. Die alte Stelle wird mit Hintergrund gefüllt (OpenCV.js Telea im Worker, wird erst dann geladen; Ausweichlösung ohne OpenCV: ringweise Füllung), optional gestrichelter Pfeil alt → neu. Mehrere Spieler gleichzeitig möglich.
+- Datenmodell Version 7 (`SpielerObjekt` mit Masken-Keyframes für Etappe 8), Migration, Einstellung `samModell`.
+
+## Etappe 7: Entscheide und Grenzen
+
+- **Modellqualität bei kleinen Spielern in Streethockey-Videos konnte hier nicht geprüft werden** (kein Spielmaterial in der Testumgebung). Gemessen wurde mit einem Fussball-Foto und einer synthetischen Figur. Bitte mit eigenem Standbild über `#/benchmark` und im Werkzeug prüfen. Bei schlechter Maske: Shift/Alt-Klicks, ggf. anderes Modell.
+- **Geschwindigkeit:** Nur WASM (ohne WebGPU) hat im Test rund 10 s für das Einbetten gebraucht (800×533, 1 Thread). Auf dem Laptop mit WebGPU soll es deutlich schneller sein, ist aber hier nicht messbar. Ohne WebGPU zeigt die Werkzeugleiste einen Hinweis.
+- **Hintergrund füllen:** Nur räumliches Inpainting (Telea). Der zeitliche Hintergrund aus Nachbarframes («wenn die Kamera ruhig ist») und LaMa sind **nicht umgesetzt**; bei grossen Spielern oder Linien unter dem Spieler sind Reste sichtbar. Vorschlag: bei Bedarf nachrüsten.
+- Ausschnitt um den Klick: 30 % der Bildbreite (mind. 256 px). Sehr grosse Spieler (Nahaufnahme) werden abgeschnitten.
+- Nur Freeze-Frame-Modus. «Automatisch» (Mitführen) kommt in Etappe 8; die Keyframe-Struktur ist vorbereitet.
+- Das Einblenden/Ausblenden der Effekte ist hart (kein Überblenden). Spieler-Bilder liegen als PNG/JPEG im Projekt (wenige 100 KB je Spieler), nicht im `.bdva`-Sonderformat.
+- Shift/Alt-Korrekturen gehen nur direkt nach dem Freistellen (nicht nach einem Neuladen der Seite).
+
 ## Erledigt (Etappe 6)
 
 - **Export-Pipeline** (Worker): Quellbilder decodieren (Mediabunny) → `OffscreenCanvas` → **`renderFrame()`** (Titelfolien, Zeichnungen, Logo, Scoreboard, Blenden; dieselbe Funktion wie die Vorschau) → `VideoEncoder` (H.264) → MP4. Standbilder, Zeitlupe und mehrere Quellen laufen über die Zeitachse aus Etappe 2.
