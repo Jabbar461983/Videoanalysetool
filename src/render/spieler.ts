@@ -152,8 +152,7 @@ function zeichneEinen(
   }
 
   // 5. Der Spieler selbst (am neuen Ort)
-  if (bild && (verschoben || e.kontur || e.spotlight))
-    ctx.drawImage(bild, box.x + dx, box.y + dy, box.b, box.h);
+  if (bild && (verschoben || e.kontur)) ctx.drawImage(bild, box.x + dx, box.y + dy, box.b, box.h);
 
   // 6. Pfeil von alter zu neuer Position
   if (o.pfeil && verschoben) {
