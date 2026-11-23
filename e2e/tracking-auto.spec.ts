@@ -28,17 +28,6 @@ async function zeiger(page: Page, typ: string, x: number, y: number) {
     { typ, x, y },
   );
 }
-const pixel = (page: Page, x: number, y: number) =>
-  page.getByTestId('overlay').evaluate(
-    (c: HTMLCanvasElement, p) => {
-      const d = c
-        .getContext('2d')!
-        .getImageData(Math.round(p.x * c.width), Math.round(p.y * c.height), 1, 1).data;
-      return d[3]!;
-    },
-    { x, y },
-  );
-
 test('Spotlight folgt dem Spieler automatisch', async ({ page }) => {
   test.skip(!process.env.BM_VIDEO, 'BM_VIDEO nicht gesetzt');
   await page.addInitScript(() => {
