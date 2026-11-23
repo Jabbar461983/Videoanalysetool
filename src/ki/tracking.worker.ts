@@ -82,17 +82,26 @@ async function erkenne(
   const roh = new tf.RawImage(rgba, seite, seite, 4).rgb();
   const inputs = await processor(roh);
   const out = await model(inputs);
-  const res = processor.post_process_object_detection(out, 0.1, [[seite, seite]])[0];
+  // RT-DETR: Sigmoid je Klasse (kein Softmax), Boxen als (cx, cy, w, h) in 0–1; keine NMS nötig.
   const id2label = model.config.id2label as Record<number, string>;
+  const personId = Number(Object.keys(id2label).find((k) => id2label[Number(k)] === 'person') ?? 0);
+  const [, anzahl, klassen] = out.logits.dims as number[];
+  const logits = out.logits.data as Float32Array;
+  const boxen = out.pred_boxes.data as Float32Array;
   const liste: { box: Box; score: number }[] = [];
-  res.boxes.forEach((b: number[], i: number) => {
-    if (id2label[res.classes[i] as number] !== 'person') return;
-    const [x0, y0, x1, y1] = b as [number, number, number, number];
+  for (let j = 0; j < (anzahl ?? 0); j++) {
+    const score = 1 / (1 + Math.exp(-logits[j * (klassen ?? 1) + personId]!));
+    if (score < 0.1) continue;
     liste.push({
-      box: { cx: (x0 + x1) / 2, cy: (y0 + y1) / 2, b: x1 - x0, h: y1 - y0 },
-      score: res.scores[i] as number,
+      score,
+      box: {
+        cx: boxen[j * 4]! * seite,
+        cy: boxen[j * 4 + 1]! * seite,
+        b: boxen[j * 4 + 2]! * seite,
+        h: boxen[j * 4 + 3]! * seite,
+      },
     });
-  });
+  }
   return liste;
 }
 
