@@ -130,6 +130,9 @@ test('Spieler freistellen, hervorheben, verschieben; Export deckt sich mit der V
   await zeiger(page, 'pointermove', 0.35, 0.49);
   await zeiger(page, 'pointermove', 0.2, 0.49);
   await zeiger(page, 'pointerup', 0.2, 0.49);
+  await page.waitForTimeout(1500);
+  await page.screenshot({ path: '/tmp/claude-0/sp-after.png' });
+  console.log('PIX', JSON.stringify([await pixel(page, 0.1, 0.1), await pixel(page, 0.2, 0.49), await pixel(page, 0.503, 0.49)]));
   await expect
     .poll(async () => (await pixel(page, 0.2, 0.49))[3], { timeout: 10_000 })
     .toBeGreaterThan(200);
