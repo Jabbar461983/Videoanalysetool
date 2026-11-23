@@ -22,3 +22,7 @@ Weiter auf `claude/magical-cerf-nxizu6`. Netzwerk: Für die Modelle wurde eine e
 | Lange Modellladung/Inferenz auf WASM | Fortschrittsanzeige, Hinweis «nur WASM», Ergebnis wird je Bild zwischengespeichert |
 | Grosse Dateien (ORT 28 MB, OpenCV ca. 10 MB) | Nur bei Bedarf geladen (dynamischer Import, Service-Worker-frei im Browser-Cache) |
 | Hintergrund-Füllung unsauber | Zwei Verfahren + manuelle Rücknahme (Versatz löschen) |
+
+
+## Ergebnis Benchmark
+Siehe `docs/LIZENZEN.md`. Entscheid: SlimSAM-77 als Standard; SAM 2.1 tiny verworfen. Klick wählt die grösste plausible Maske (Teil/Ganz-Mehrdeutigkeit), Ausschnitt 0.3 × Bildbreite (mind. 256 px).

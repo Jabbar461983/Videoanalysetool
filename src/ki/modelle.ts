@@ -32,7 +32,7 @@ export const SAM_MODELLE: SamModellInfo[] = [
   },
   {
     id: 'sam2-tiny',
-    anzeige: 'SAM 2.1 tiny',
+    anzeige: 'SAM 2.1 tiny (nicht gewählt)',
     repo: 'onnx-community/sam2.1-hiera-tiny-ONNX',
     art: 'sam2',
     dtype: 'q4f16',
