@@ -1,8 +1,10 @@
 import { useProjekt } from '../store/projektStore';
 import { useSchnitt } from '../store/schnitt';
 import { useUi } from '../store/ui';
+import { useProgramm } from '../store/programm';
 import { aktiveQuelle, aktuelleZeit } from '../tagging/aktionen';
 import { neuerClip, trimmeClipImProjekt } from './schnittLogik';
+import { formatZeit } from '../video/bildmathe';
 
 export function setzeInPunkt(): void {
   const q = aktiveQuelle();
@@ -61,4 +63,30 @@ export function nudgeClip(clipId: string, seite: 'in' | 'out', bilder: number): 
   useProjekt.getState().aendere('Clip trimmen', (d) => {
     trimmeClipImProjekt(d, clipId, seite, ziel, q);
   });
+}
+
+/**
+ * «Zeichnen»-Knopf im Player: öffnet den Clip-Editor für den ausgewählten oder den an der aktuellen
+ * Position liegenden Clip; gibt es keinen, entsteht ein Clip um die Position (4 s davor/danach).
+ */
+export function oeffneZeichnenFuerPosition(): void {
+  const p = useProjekt.getState().projekt;
+  const q = aktiveQuelle();
+  if (!p || !q) return;
+  const t = aktuelleZeit();
+  const deckt = (c: { quelleId: string; in: number; out: number }) =>
+    c.quelleId === q.id && t >= c.in - 1e-6 && t <= c.out + 1e-6;
+  const gew = p.clips.find((c) => c.id === useSchnitt.getState().gewaehlterClipId);
+  let clip = gew && deckt(gew) ? gew : p.clips.find(deckt);
+  if (!clip) {
+    const neu = neuerClip(q, t - 4, t + 4, `Zeichnung ${formatZeit(t, q.fps)}`);
+    if (!neu) return;
+    useProjekt.getState().aendere('Clip für Zeichnung', (d) => {
+      d.clips.push(neu);
+    });
+    clip = neu;
+  }
+  useSchnitt.getState().waehleClip(clip.id);
+  useUi.getState().setzeTab('clips');
+  useProgramm.getState().oeffneClip(clip.id);
 }

@@ -17,6 +17,7 @@ import {
   toggleWiedergabe,
 } from '../wiedergabe/transport';
 import { ProxyDialog } from './ProxyDialog';
+import { oeffneZeichnenFuerPosition } from '../schnitt/aktionen';
 import { Werkzeugleiste } from './Werkzeugleiste';
 import { ZeichenEbene } from './ZeichenEbene';
 import { useZeichnen } from '../store/zeichnen';
@@ -329,6 +330,19 @@ export function Buehne({ quelle }: { quelle: Quelle | undefined }) {
             +10 s
           </button>
         </span>
+        {art === 'quelle' && (
+          <button
+            className="primaer"
+            data-testid="zeichnen-starten"
+            title={t.zeichnen.startenHinweis}
+            onClick={(e) => {
+              oeffneZeichnenFuerPosition();
+              e.currentTarget.blur();
+            }}
+          >
+            {t.zeichnen.starten}
+          </button>
+        )}
         {art === 'quelle' && (
           <label className="hinweis">
             {t.player.tempo}{' '}

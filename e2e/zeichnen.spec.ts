@@ -210,3 +210,25 @@ test('Auto-Pause, Text, Marker, Zone, Verschieben, Kopieren, Favorit, Playlist',
   await expect(page.getByTestId('modus')).toContainText('Playlist');
   await expect.poll(() => pixel(page, 0.2, 0.2, 0.45, 0.4), { timeout: 8000 }).toBeGreaterThan(0); // Marker bei (0.3, 0.3)
 });
+
+test('Zeichnen-Knopf im Player öffnet die Werkzeuge, auch ohne vorhandenen Clip', async ({
+  page,
+}) => {
+  await page.goto('./');
+  const ok = page.getByRole('button', { name: 'Verstanden' });
+  if (await ok.isVisible().catch(() => false)) await ok.click();
+  await page.getByRole('button', { name: 'Neues Projekt' }).click();
+  await page.getByTestId('datei-input').setInputFiles(VIDEO);
+  const video = page.getByTestId('video');
+  await expect
+    .poll(() => video.evaluate((v: HTMLVideoElement) => v.readyState))
+    .toBeGreaterThanOrEqual(2);
+  await video.evaluate((v: HTMLVideoElement) => {
+    v.currentTime = 6;
+  });
+  await expect.poll(() => video.evaluate((v: HTMLVideoElement) => v.seeking)).toBe(false);
+  await page.getByTestId('zeichnen-starten').click();
+  await expect(page.getByTestId('werkzeugleiste')).toBeVisible();
+  await expect(page.getByTestId('zeichenebene')).toBeVisible();
+  await expect(page.getByTestId('clip-editor')).toBeVisible();
+});

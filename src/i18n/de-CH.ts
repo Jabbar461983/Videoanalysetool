@@ -158,11 +158,16 @@ export const t = {
     notiz: 'Notiz',
     zeit: 'Zeit',
     bearbeiten: 'Bearbeiten',
+    zeichnenHinweis:
+      'Zeichnen: Clip wählen und «Zeichnen» klicken, oder im Player auf «Zeichnen» (ohne Clip entsteht einer um die Position).',
     zu: 'Schliessen',
     anzahl: (n: number) => `${n} Tag(s)`,
   },
   zeichnen: {
     leiste: 'Zeichenwerkzeuge',
+    starten: 'Zeichnen',
+    startenHinweis:
+      'Öffnet den Clip-Editor mit den Zeichenwerkzeugen (legt bei Bedarf einen Clip um die Position an)',
     auswahl: 'Auswählen',
     pfeil: 'Pfeil',
     linie: 'Linie',
@@ -271,6 +276,8 @@ export const t = {
     speichern: 'Clip speichern',
     verwerfen: 'Verwerfen',
     zuKurz: 'Der Clip muss mindestens 0.5 s lang sein.',
+    zeichnenHinweis:
+      'Zeichnen: Clip wählen und «Zeichnen» klicken, oder im Player auf «Zeichnen» (ohne Clip entsteht einer um die Position).',
     bearbeiten: 'Bearbeiten',
     duplizieren: 'Duplizieren',
     loeschen: 'Löschen',

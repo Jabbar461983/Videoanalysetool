@@ -76,6 +76,11 @@ export function ClipListe() {
       )}
       {art === 'clip' && editorClipId && <ClipEditor clipId={editorClipId} />}
 
+      {art !== 'clip' && (
+        <p className="hinweis" data-testid="zeichnen-hinweis">
+          {t.clips.zeichnenHinweis}
+        </p>
+      )}
       <p className="kicker" style={{ marginTop: 12 }}>
         {t.clips.titel} · <span className="hinweis">{clips.length}</span>
       </p>
@@ -113,6 +118,19 @@ export function ClipListe() {
                     {formatZeit(c.in, q?.fps ?? 25)} – {formatZeit(c.out, q?.fps ?? 25)} ·{' '}
                     {t.clips.dauer} {clipDauer(c).toFixed(1)} s
                   </span>
+                </button>
+              </div>
+              <div className={s.reihe} style={{ margin: '4px 0 0' }}>
+                <button
+                  className={`${s.mini} primaer`}
+                  data-testid="clip-zeichnen"
+                  onClick={() => {
+                    useSchnitt.getState().waehleClip(c.id);
+                    useProgramm.getState().oeffneClip(c.id);
+                    useUi.getState().setzeTab('clips');
+                  }}
+                >
+                  {t.zeichnen.starten}
                 </button>
               </div>
               {(def || team) && (
