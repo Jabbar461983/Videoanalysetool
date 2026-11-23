@@ -99,7 +99,7 @@ test('Spieler freistellen, hervorheben, verschieben; Export deckt sich mit der V
 }) => {
   test.setTimeout(420_000);
   page.on('pageerror', (e) => console.log('PAGEERROR', e.message));
-  page.on('console', (m) => m.type() === 'error' && console.log('CONSOLE', m.text()));
+  page.on('console', (m) => console.log('CONSOLE', m.type(), m.text()));
   await projektMitClip(page);
   await springe(page, 0.5);
   await page.getByTestId('werkzeug-spieler').click();

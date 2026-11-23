@@ -59,6 +59,7 @@ export function SpielerEbene() {
     setHinweis(null);
     const art = e.shiftKey ? 'plus' : e.altKey ? 'minus' : st.klickArt;
 
+    console.log('DBG down', JSON.stringify({ pos, v: st.verschieben, a: st.auswahlId, art, zeit: usePlayer.getState().zeit, clip: aktuelleClipId(), objs: useProjekt.getState().projekt?.spielerObjekte.map((o) => [o.id.slice(0, 4), o.clipId.slice(0, 4), o.start, o.ende, o.versatz, o.maskenKeyframes[0]?.box]) }));
     // Verschieben: Ziehen im ausgewählten Spieler
     if (st.verschieben && st.auswahlId && art === 'neu') {
       const o = useProjekt.getState().projekt?.spielerObjekte.find((x) => x.id === st.auswahlId);
