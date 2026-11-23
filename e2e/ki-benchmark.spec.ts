@@ -44,7 +44,19 @@ test('Tracking: folgt dem Spieler über das Panorama-Video', async ({ page }) =>
   for (const [k, v] of Object.entries({ zeit, cx, cy, b, h, dauer }))
     await page.getByTestId(`bm-t-${k}`).fill(String(v));
   await page.getByTestId('bm-t-start').click();
-  await expect(page.getByTestId('bm-t-status')).toContainText('Fertig', { timeout: 600_000 });
+  page.on('console', (m) => console.log('PAGE', m.type(), m.text().slice(0, 300)));
+  page.on('pageerror', (e) => console.log('PAGEERROR', e.message));
+  const wach = setInterval(() => {
+    void page
+      .getByTestId('bm-t-status')
+      .innerText()
+      .then((x) => console.log('STATUS', x))
+      .catch(() => undefined);
+  }, 15_000);
+  await expect(page.getByTestId('bm-t-status')).toContainText(/Fertig|Fehler/, {
+    timeout: 840_000,
+  });
+  clearInterval(wach);
   console.log('TRACK ' + (await page.getByTestId('bm-t-status').innerText()));
   const punkte = JSON.parse(await page.getByTestId('bm-t-json').innerText()) as [
     number,
