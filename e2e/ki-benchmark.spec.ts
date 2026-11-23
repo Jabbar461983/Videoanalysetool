@@ -17,6 +17,7 @@ test('Benchmark: alle Modelle liefern eine Maske', async ({ page }) => {
   const x = Number(process.env.BM_X ?? 0.5 * dim[0]!);
   const y = Number(process.env.BM_Y ?? 0.5 * dim[1]!);
   await page.mouse.click(box.x + (x / dim[0]!) * box.width, box.y + (y / dim[1]!) * box.height);
+  if (process.env.BM_GERAET) await page.locator('select').selectOption(process.env.BM_GERAET);
   await page.getByTestId('bm-start').click();
   await expect(page.getByTestId('bm-tabelle').locator('tbody tr')).toHaveCount(3, {
     timeout: 800_000,
