@@ -46,6 +46,7 @@ test('Spotlight folgt dem Spieler automatisch', async ({ page }) => {
     localStorage.setItem('bdva-tracking-erzwingen', '1');
   });
   page.on('pageerror', (e) => console.log('PAGEERROR', e.message));
+  page.on('console', (m) => m.type() === 'error' && console.log('CONSOLE', m.text().slice(0, 400)));
   await page.goto('./');
   const ok = page.getByRole('button', { name: 'Verstanden' });
   if (await ok.isVisible().catch(() => false)) await ok.click();
@@ -84,6 +85,9 @@ test('Spotlight folgt dem Spieler automatisch', async ({ page }) => {
   await expect(page.getByTestId('spielerliste').locator('li')).toHaveCount(1, { timeout: 600_000 });
   await expect(page.getByTestId('tracking-abbrechen')).toBeVisible({ timeout: 600_000 });
   await expect(page.getByTestId('tracking-abbrechen')).toBeHidden({ timeout: 800_000 });
+  console.log(
+    'PANEL ' + (await page.getByTestId('spieler-panel').innerText()).replace(/\n/g, ' | '),
+  );
   await expect(page.getByTestId('spieler-modus')).toHaveValue('auto');
 
   // Clip-Zeit 0.5 → Quellzeit 1.5, Clip-Zeit 2.5 → Quellzeit 3.5: Spieler wandert 60 px nach links (0.1 der Breite)
