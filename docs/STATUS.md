@@ -1,6 +1,31 @@
 # STATUS
 
-Stand: Ende Etappe 2 «Schneiden, Clips & Gesamtvideo» (Etappen 0 und 1 siehe unten, weiterhin gültig).
+Stand: Ende Etappe 3 «Zeichnen auf dem Video» (Etappen 0–2 siehe unten, weiterhin gültig).
+
+## Erledigt (Etappe 3)
+
+- **Werkzeuge** (im Clip-Editor): Pfeil (gerade oder gebogen, durchgezogen/gestrichelt, Spitze am Ende/beidseitig/keine), Linie, Freihand (vereinfacht und geglättet, optional Stiftdruck), Kreis/Ellipse am Boden (Mittelpunkt + zwei Achsenpunkte → flach und verzerrbar), Zone (Polygon, halbtransparent; schliessen per Klick auf die erste Ecke, Doppelklick, Enter oder Knopf), Text (mit Hintergrundbox), Nummer-Marker (zählt hoch, Nummer änderbar).
+- **Stil:** Gold, Grün, Weiss, Rot, Blau, Schwarz; Strichstärke; Deckkraft; gestrichelt; Pfeilspitzen. Im Auswahl-Modus wirkt die Leiste auf die ausgewählte Zeichnung, sonst auf die nächste.
+- **Zeit:** Jede Zeichnung gehört zu einem Clip, Start/Ende in Clip-Zeit. Standard ab jetzt bis Ende des Standbilds, sonst 3 s. Eigene Overlay-Spur in der Clip-Zeitleiste: Balken ziehen verschiebt, Ränder ziehen ändert die Zeitspanne; Zahlenfelder im Panel.
+- **Animation:** sofort, einblenden, «zeichnet sich» (Linienwerkzeuge), dazu Ausblenden am Ende; Dauer einstellbar.
+- **Bearbeiten:** auswählen (Klick, Liste, Balken), verschieben, Punkte ziehen, kopieren/einfügen (Strg+C/V), löschen (Entf), Ebenen (nach vorn/hinten/eine Ebene), Undo/Redo, Pfeil gerade ↔ gebogen.
+- **Eingabe:** Pointer Events für Maus, Finger, Stift. Stift hat Vorrang: Berührungen bis 1.5 s nach Stiftkontakt/-schweben (Handballen) und zusätzliche Finger werden ignoriert. Optionale Druckstärke bei Freihand.
+- **«Beim Zeichnen anhalten»** (Projekteinstellung, Standard an) hält die Wiedergabe beim ersten Kontakt an.
+- **Rendering:** ausschliesslich in `renderFrame()` (`src/render/zeichnungen.ts`), normierte Koordinaten, Grössen skalieren mit der Bildbreite. Auch die Live-Vorschau beim Zeichnen/Verschieben läuft über `renderFrame()`. Playlists zeigen die Zeichnungen ihrer Clips.
+- **Zeitabgleich:** Standbild/Zeitlupe einfügen oder entfernen und Trimmen verschiebt Start/Ende der Zeichnungen so, dass sie am gleichen Videobild bleiben.
+- **Favoriten:** Zeichnung als Favorit speichern (Vorlagen in IndexedDB) und an der aktuellen Zeit wieder einfügen.
+- Clip löschen entfernt seine Zeichnungen, Clip duplizieren kopiert sie.
+- Schema-Version 4. Tests: 68 Unit-Tests, 6 E2E-Tests (neu: Stift-Pfeil mit Animation und Zeitfenster samt Handballen-Test; Marker/Text/Zone/Verschieben/Kopieren/Favorit/Playlist).
+
+## Etappe 3: Entscheide und Grenzen
+
+- **Standard-Animation ist «sofort»** (nicht «zeichnet sich»), damit eine frisch gezeichnete Linie im angehaltenen Bild sichtbar bleibt. Die Animation wählst du in der Leiste (oder im Panel pro Zeichnung).
+- Gezeichnet wird nur im Clip-Editor; in der reinen Quell-Ansicht erscheinen keine Zeichnungen.
+- Die Stift-/Touch-Logik ist getestet (Unit-Test, synthetische Zeigerereignisse), aber **nicht mit echtem Stift auf einem Convertible**. Bitte dort prüfen, v. a. Handballen und Druckstärke.
+- Die Auswahl-Hilfsrahmen und Griffe sind Bedienelemente und nicht im Export enthalten (sollen sie auch nicht).
+- Bei mehr als vier sich zeitlich überlappenden Zeichnungen teilen sich die letzten die unterste Bahn der Overlay-Spur (sie sind in der Liste weiter einzeln wählbar).
+- Perspektivische Verzerrung ist auf Ellipsen (affin: Achsen frei ziehbar) begrenzt; keine echte Perspektiv-Homographie (kommt mit der Kalibrierung in Etappe 9).
+- Text hat eine feste Schriftgrösse aus der Stärke (20 + 3 × Stärke) und bricht nicht um.
 
 ## Erledigt (Etappe 2)
 

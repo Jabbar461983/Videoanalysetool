@@ -1,5 +1,5 @@
 /** Datenmodell nach CLAUDE.md Abschnitt 5. Zeiten in Sekunden der jeweiligen Quelle. */
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 4;
 
 export interface Quelle {
   id: string;
@@ -94,13 +94,43 @@ export interface Abschnitt {
 }
 
 // Platzhalter-Typen: Inhalt kommt in späteren Etappen, die Felder existieren schon.
-export type Zeichnung = {
+export type Werkzeug = 'pfeil' | 'linie' | 'freihand' | 'kreis' | 'zone' | 'text' | 'marker';
+/** Punkt in normierten Bildkoordinaten (0–1); `d` = Stiftdruck 0–1 (nur Freihand). */
+export interface Punkt {
+  x: number;
+  y: number;
+  d?: number;
+}
+export interface ZeichenStil {
+  farbe: string;
+  /** Strichstärke in Pixel bei 1920 Bildbreite */
+  staerke: number;
+  deckkraft: number;
+  gestrichelt: boolean;
+  spitze: 'ende' | 'beide' | 'keine';
+}
+export interface ZeichenAnimation {
+  ein: 'keine' | 'einblenden' | 'zeichnen';
+  dauerEin: number;
+  aus: 'keine' | 'ausblenden';
+  dauerAus: number;
+}
+/**
+ * Zeichnung auf einem Clip. `start`/`ende` in Clip-Zeit (Sekunden).
+ * punkte: pfeil/linie [a, b, (Steuerpunkt)], kreis [Mitte, Mitte+u, Mitte+v], zone/freihand: Punktliste, text/marker [Position].
+ */
+export interface Zeichnung {
   id: string;
-  quelleId: string;
+  clipId: string;
   start: number;
   ende: number;
-  [k: string]: unknown;
-};
+  werkzeug: Werkzeug;
+  punkte: Punkt[];
+  stil: ZeichenStil;
+  animation: ZeichenAnimation;
+  text?: string;
+  nummer?: number;
+}
 export type SpielerObjekt = {
   id: string;
   quelleId: string;
@@ -146,5 +176,10 @@ export interface Projekt {
     situationen: unknown[];
     anzeige: Abschnitt[];
   };
-  einstellungen: { trackingModus: 'auto' | 'freeze'; exportAufloesung: 1080 | 720 };
+  einstellungen: {
+    trackingModus: 'auto' | 'freeze';
+    exportAufloesung: 1080 | 720;
+    /** Wiedergabe beim Zeichnen automatisch anhalten (Standard: an) */
+    zeichnenAnhalten: boolean;
+  };
 }

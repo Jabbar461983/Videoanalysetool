@@ -2,7 +2,7 @@ import { useProjekt } from '../store/projektStore';
 import { useSchnitt } from '../store/schnitt';
 import { useUi } from '../store/ui';
 import { aktiveQuelle, aktuelleZeit } from '../tagging/aktionen';
-import { neuerClip, trimmeClip } from './schnittLogik';
+import { neuerClip, trimmeClipImProjekt } from './schnittLogik';
 
 export function setzeInPunkt(): void {
   const q = aktiveQuelle();
@@ -46,8 +46,7 @@ export function trimmeAuswahlAufPosition(seite: 'in' | 'out'): boolean {
   const zeit = aktuelleZeit();
   let ok = false;
   useProjekt.getState().aendere('Clip trimmen', (d) => {
-    const c = d.clips.find((x) => x.id === id);
-    if (c) ok = trimmeClip(c, seite, zeit, q);
+    ok = trimmeClipImProjekt(d, clip.id, seite, zeit, q);
   });
   return ok;
 }
@@ -60,7 +59,6 @@ export function nudgeClip(clipId: string, seite: 'in' | 'out', bilder: number): 
   if (!clip || !q) return;
   const ziel = (seite === 'in' ? clip.in : clip.out) + bilder / q.fps;
   useProjekt.getState().aendere('Clip trimmen', (d) => {
-    const c = d.clips.find((x) => x.id === clipId);
-    if (c) trimmeClip(c, seite, ziel, q);
+    trimmeClipImProjekt(d, clipId, seite, ziel, q);
   });
 }

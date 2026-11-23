@@ -99,3 +99,52 @@
   font-size: 11px;
   color: var(--bd-ink-subtle);
 }
+
+.zSpurLabel {
+  position: absolute;
+  left: 0;
+  top: 108px;
+  font-size: 10px;
+  color: var(--bd-ink-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  pointer-events: none;
+}
+.zBalken {
+  position: absolute;
+  height: 14px;
+  min-height: 14px;
+  min-width: 6px;
+  padding: 0 4px;
+  border: 1px solid rgba(0, 0, 0, 0.6);
+  font-size: 10px;
+  line-height: 12px;
+  color: #000;
+  overflow: hidden;
+  white-space: nowrap;
+  text-align: left;
+  cursor: grab;
+  touch-action: none;
+}
+.zBalken[aria-pressed='true'] {
+  outline: 2px solid var(--bd-gold);
+  z-index: 2;
+}
+.zKante {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  cursor: ew-resize;
+}
+.zKante::after {
+  content: '';
+  position: absolute;
+  inset: -6px -4px;
+}
+.zKante.l {
+  left: 0;
+}
+.zKante.r {
+  right: 0;
+}

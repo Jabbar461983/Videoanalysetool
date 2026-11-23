@@ -25,7 +25,7 @@ export function neuesProjekt(name: string, jetzt = Date.now()): Projekt {
     overlays: { logo: [], scoreboard: [], scoreKorrekturen: [] },
     audioSpuren: [{ id: neueId(), typ: 'original', lautstaerke: 1, stumm: false, segmente: [] }],
     taktik: { feld: {}, kalibrierungen: [], situationen: [], anzeige: [] },
-    einstellungen: { trackingModus: 'auto', exportAufloesung: 1080 },
+    einstellungen: { trackingModus: 'auto', exportAufloesung: 1080, zeichnenAnhalten: true },
   };
 }
 
@@ -70,6 +70,12 @@ export const migrationen: Migration[] = [
     delete rest.playlist;
     return { ...rest, clips, playlisten, aktivePlaylistId: playlisten[0]?.id };
   },
+  // 3 → 4: Zeichnen – neue Zeichnungsstruktur, Einstellung «Beim Zeichnen anhalten»
+  (p) => ({
+    ...p,
+    zeichnungen: [],
+    einstellungen: { zeichnenAnhalten: true, ...(p.einstellungen as Record<string, unknown>) },
+  }),
 ];
 
 export function migriere(roh: unknown): Projekt {

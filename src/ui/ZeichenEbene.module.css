@@ -1,0 +1,42 @@
+.ebene {
+  position: absolute;
+  inset: 0;
+  z-index: 7;
+  touch-action: none;
+  user-select: none;
+}
+.zeichnen {
+  cursor: crosshair;
+}
+.griff {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  background: var(--bd-gold);
+  border: 2px solid #000;
+  pointer-events: none;
+}
+.griff::after {
+  content: '';
+  position: absolute;
+  inset: -12px;
+}
+.rahmen {
+  position: absolute;
+  border: 1px dashed var(--bd-gold);
+  pointer-events: none;
+}
+.text {
+  position: absolute;
+  z-index: 8;
+  min-height: 32px;
+  font:
+    700 16px Arial,
+    sans-serif;
+  background: #000;
+  color: #fff;
+  border: 1px solid var(--bd-gold);
+  padding: 2px 6px;
+  min-width: 120px;
+}

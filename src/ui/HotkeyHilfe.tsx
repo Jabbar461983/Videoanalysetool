@@ -47,6 +47,7 @@ export function HotkeyHilfe() {
           t.hotkeys.tempo,
           t.hotkeys.undo,
           t.hotkeys.tagging,
+          t.hotkeys.zeichnen,
         ].map((z) => (
           <p key={z}>{z}</p>
         ))}

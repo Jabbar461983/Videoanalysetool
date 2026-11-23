@@ -6,7 +6,7 @@ import { usePlayer } from '../store/player';
 import { useProjekt } from '../store/projektStore';
 import { useTagging } from '../store/tagging';
 import { useSchnitt } from '../store/schnitt';
-import { trimmeClip } from '../schnitt/schnittLogik';
+import { trimmeClipImProjekt } from '../schnitt/schnittLogik';
 import { erzeugeVorschauen } from '../video/thumbs';
 import { formatKurz, formatZeit, vorschauZeiten } from '../video/bildmathe';
 import s from './Timeline.module.css';
@@ -265,8 +265,7 @@ export function Timeline({
                               if (zieh && quelle) {
                                 const ziel = zieh;
                                 useProjekt.getState().aendere('Clip trimmen', (d) => {
-                                  const cc = d.clips.find((x) => x.id === ziel.id);
-                                  if (cc) trimmeClip(cc, ziel.seite, ziel.zeit, quelle);
+                                  trimmeClipImProjekt(d, ziel.id, ziel.seite, ziel.zeit, quelle);
                                 });
                               }
                               setZieh(null);

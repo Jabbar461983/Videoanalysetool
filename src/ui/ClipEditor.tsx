@@ -9,6 +9,8 @@ import {
   STANDARD_STANDBILD_DAUER,
   ZEITLUPE_TEMPI,
 } from '../schnitt/schnittLogik';
+import { ZeichnungenPanel } from './ZeichnungenPanel';
+import { mitZeichnungsAbgleich } from '../zeichnen/logik';
 import { nudgeClip } from '../schnitt/aktionen';
 import { clipDauer } from '../wiedergabe/zeitachse';
 import { aktuelleQuellPosition } from '../wiedergabe/transport';
@@ -28,8 +30,7 @@ export function ClipEditor({ clipId }: { clipId: string }) {
   const zahl = (x: string) => Number(x.replace(',', '.'));
   const aendere = (name: string, fn: (c: Clip) => void) =>
     useProjekt.getState().aendere(name, (p) => {
-      const c = p.clips.find((x) => x.id === clipId);
-      if (c) fn(c);
+      mitZeichnungsAbgleich(p, clipId, fn);
     });
 
   const standbild = () => {
@@ -207,6 +208,7 @@ export function ClipEditor({ clipId }: { clipId: string }) {
           {meldung}
         </p>
       )}
+      <ZeichnungenPanel clipId={clipId} />
     </section>
   );
 }

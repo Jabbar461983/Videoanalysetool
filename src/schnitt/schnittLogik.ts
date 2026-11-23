@@ -1,6 +1,11 @@
 import type { Clip, Playlist, PlaylistEintrag, Projekt, Quelle, Uebergang } from '../model/typen';
 import { neueId } from '../model/schema';
 import { formatZeit } from '../video/bildmathe';
+import {
+  dupliziereZeichnungen,
+  entferneZeichnungenVonClip,
+  mitZeichnungsAbgleich,
+} from '../zeichnen/logik';
 
 export const MIN_CLIP_DAUER = 0.5;
 const runde = (x: number) => Math.round(x * 1000) / 1000;
@@ -66,12 +71,14 @@ export function dupliziereClip(p: Projekt, clipId: string, suffix = ' (Kopie)'):
   kopie.name = c.name + suffix;
   delete kopie.tagId; // eigenständig: Tag löschen darf die Kopie nicht mitnehmen
   p.clips.splice(i + 1, 0, kopie);
+  dupliziereZeichnungen(p, clipId, kopie.id);
   return kopie.id;
 }
 
 /** Löscht einen Clip und alle Playlist-Einträge, die auf ihn zeigen. */
 export function entferneClip(p: Projekt, clipId: string): void {
   p.clips = p.clips.filter((c) => c.id !== clipId);
+  entferneZeichnungenVonClip(p, clipId);
   for (const pl of p.playlisten) {
     pl.eintraege = pl.eintraege.filter((e) => !(e.typ === 'clip' && e.clipId === clipId));
   }
@@ -168,4 +175,15 @@ export function fuegeZeitlupeHinzu(
   clip.zeitlupen.push({ von: a, bis: b, tempo });
   clip.zeitlupen.sort((x, y) => x.von - y.von);
   return true;
+}
+
+/** Trimmen mit Zeitabgleich der Zeichnungen (alle Aufrufer aus der Oberfläche nutzen diese Variante). */
+export function trimmeClipImProjekt(
+  p: Projekt,
+  clipId: string,
+  seite: 'in' | 'out',
+  zeit: number,
+  quelle: Pick<Quelle, 'dauer' | 'fps'>,
+): boolean {
+  return mitZeichnungsAbgleich(p, clipId, (c) => trimmeClip(c, seite, zeit, quelle)) ?? false;
 }

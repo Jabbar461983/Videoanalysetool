@@ -20,7 +20,7 @@ export interface WiederherstellungRow {
   zeitpunkt: number;
   projekt: Projekt;
 }
-export type VorlageTyp = 'team' | 'kader' | 'tagset';
+export type VorlageTyp = 'team' | 'kader' | 'tagset' | 'zeichnung';
 export interface VorlageRow {
   id: string;
   typ: VorlageTyp;

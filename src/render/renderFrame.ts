@@ -2,6 +2,8 @@ import type { Projekt } from '../model/typen';
 import { baueProgrammPlan } from '../wiedergabe/plan';
 import { blendeAlpha, findeSegmentIndex, type Zeitplan } from '../wiedergabe/zeitachse';
 import { zeichneTitelfolie } from './titelfolie';
+import { zeichneClipZeichnungen, zeichneZeichnung } from './zeichnungen';
+import type { Zeichnung } from '../model/typen';
 
 export type RenderKontext =
   { art: 'quelle' } | { art: 'clip'; clipId: string } | { art: 'playlist'; playlistId: string };
@@ -17,6 +19,10 @@ export interface RenderZiel {
   modus: 'vorschau' | 'export';
   /** Bedeutung von `t`: Quellzeit (Standard), Clip-Zeit oder Playlist-Zeit. */
   kontext?: RenderKontext;
+  /** Nur Vorschau: Entwürfe/gerade verschobene Zeichnungen (Clip-Zeit = `t`). */
+  zusatz?: Zeichnung[];
+  /** Nur Vorschau: Zeichnungen, die gerade durch `zusatz` ersetzt werden. */
+  ausblenden?: ReadonlySet<string>;
 }
 
 const planCache = new WeakMap<Projekt, Map<string, Zeitplan | null>>();
@@ -53,6 +59,22 @@ export function renderFrame(t: number, projekt: Projekt | null, ziel: RenderZiel
   if (!plan || plan.segmente.length === 0) return;
   const seg = plan.segmente[findeSegmentIndex(plan.segmente, t)];
   if (seg?.art === 'titel' && seg.titel) zeichneTitelfolie(ctx, breite, hoehe, seg.titel);
+  // Zeichnungen des Clips (Clip-Zeit: im Clip-Editor = t, in der Playlist t − Start des Eintrags)
+  if (seg && seg.art !== 'titel' && seg.clipId) {
+    const eintrag = plan.eintraege.find((e) => e.index === seg.eintragIndex);
+    const clipZeit = k.art === 'clip' ? t : t - (eintrag?.start ?? 0);
+    zeichneClipZeichnungen(
+      ctx,
+      projekt.zeichnungen,
+      seg.clipId,
+      clipZeit,
+      breite,
+      hoehe,
+      ziel.ausblenden,
+    );
+    if (k.art === 'clip')
+      for (const z of ziel.zusatz ?? []) zeichneZeichnung(ctx, z, breite, hoehe, clipZeit);
+  }
   const alpha = blendeAlpha(plan, t);
   if (alpha > 0) {
     ctx.save();

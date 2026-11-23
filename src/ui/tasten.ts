@@ -17,6 +17,14 @@ import {
 } from '../wiedergabe/transport';
 import { setzeTag, zuordnungTaste } from '../tagging/aktionen';
 import { useTagging } from '../store/tagging';
+import { useProgramm } from '../store/programm';
+import { useZeichnen } from '../store/zeichnen';
+import {
+  fuegeAusZwischenablageEin,
+  kopiereAuswahl,
+  loescheAuswahl,
+  schliesseZone,
+} from '../zeichnen/aktionen';
 import { naechstesTempo } from '../video/bildmathe';
 
 const istEingabe = (el: EventTarget | null) =>
@@ -55,6 +63,37 @@ export function useEditorTasten() {
         }
       }
       const programm = istProgramm();
+      // Zeichnen im Clip-Editor: Entf, Strg+C/V, Enter (Zone fertig), Esc
+      if (programm && useProgramm.getState().art === 'clip') {
+        const z = useZeichnen.getState();
+        const k = e.key.toLowerCase();
+        if (mod && k === 'c' && z.auswahlId) {
+          e.preventDefault();
+          kopiereAuswahl();
+          return;
+        }
+        if (mod && k === 'v' && z.zwischenablage) {
+          e.preventDefault();
+          fuegeAusZwischenablageEin();
+          return;
+        }
+        if ((e.key === 'Delete' || e.key === 'Backspace') && z.auswahlId && !z.entwurf) {
+          e.preventDefault();
+          loescheAuswahl();
+          return;
+        }
+        if (e.key === 'Enter' && z.entwurf?.werkzeug === 'zone') {
+          e.preventDefault();
+          schliesseZone();
+          return;
+        }
+        if (e.key === 'Escape') {
+          if (z.entwurf) z.setzeEntwurf(null);
+          else if (z.auswahlId) z.waehle(null);
+          else if (z.werkzeug !== 'auswahl') z.setzeWerkzeug('auswahl');
+          return;
+        }
+      }
       if (!programm) {
         // Schneiden: I / O setzen Punkte, Shift+I / Shift+O trimmen den ausgewählten Clip, Enter speichert
         const k = e.key.toLowerCase();

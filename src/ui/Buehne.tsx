@@ -17,7 +17,26 @@ import {
   toggleWiedergabe,
 } from '../wiedergabe/transport';
 import { ProxyDialog } from './ProxyDialog';
+import { Werkzeugleiste } from './Werkzeugleiste';
+import { ZeichenEbene } from './ZeichenEbene';
+import { useZeichnen } from '../store/zeichnen';
+import type { Zeichnung } from '../model/typen';
 import s from './Buehne.module.css';
+
+/** Entwurf und gerade bearbeitete Zeichnung für die Live-Vorschau (zeitunabhängig sichtbar). */
+function zeichenVorschau(): { zusatz?: Zeichnung[]; ausblenden?: ReadonlySet<string> } {
+  const { entwurf, ersatz } = useZeichnen.getState();
+  const immer = (z: Zeichnung): Zeichnung => ({
+    ...z,
+    start: -1,
+    ende: 1e9,
+    animation: { ein: 'keine', dauerEin: 0, aus: 'keine', dauerAus: 0 },
+  });
+  const zusatz: Zeichnung[] = [];
+  if (entwurf) zusatz.push(immer(entwurf));
+  if (ersatz) zusatz.push(immer(ersatz));
+  return zusatz.length ? { zusatz, ausblenden: ersatz ? new Set([ersatz.id]) : undefined } : {};
+}
 
 function kontextAus(): RenderKontext {
   const g = useProgramm.getState();
@@ -80,6 +99,7 @@ export function Buehne({ quelle }: { quelle: Quelle | undefined }) {
         hoehe: c.height,
         modus: 'vorschau',
         kontext: kontextAus(),
+        ...zeichenVorschau(),
       });
   };
 
@@ -187,9 +207,11 @@ export function Buehne({ quelle }: { quelle: Quelle | undefined }) {
     const unsubZeit = usePlayer.subscribe((st, prev) => {
       if (st.zeit !== prev.zeit) zeichne(st.zeit);
     });
+    const unsubZeichnen = useZeichnen.subscribe(() => zeichne(usePlayer.getState().zeit));
     return () => {
       unsubProjekt();
       unsubZeit();
+      unsubZeichnen();
       spieler.pausiere();
     };
   }, [art, clipId, playlistId]);
@@ -222,6 +244,7 @@ export function Buehne({ quelle }: { quelle: Quelle | undefined }) {
           <button onClick={() => useProgramm.getState().zurQuelle()}>{t.programm.zurQuelle}</button>
         </div>
       )}
+      {art === 'clip' && <Werkzeugleiste />}
       <div ref={hostRef} className={s.host}>
         {!verknuepft && (
           <p className={s.leer}>
@@ -245,6 +268,12 @@ export function Buehne({ quelle }: { quelle: Quelle | undefined }) {
               height={Math.round((Math.min(1920, anzeige.breite) * anzeige.hoehe) / anzeige.breite)}
               data-testid="overlay"
               style={{ zIndex: 5 }}
+            />
+          )}
+          {art === 'clip' && anzeige && (
+            <ZeichenEbene
+              breite={Math.min(1920, anzeige.breite)}
+              hoehe={Math.round((Math.min(1920, anzeige.breite) * anzeige.hoehe) / anzeige.breite)}
             />
           )}
         </div>
