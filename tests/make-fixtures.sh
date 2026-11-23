@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Erzeugt kurze Testvideos (nicht eingecheckt). Braucht ffmpeg.
 set -euo pipefail
+mkdir -p "$(dirname "$0")/fixtures"
 cd "$(dirname "$0")/fixtures"
 SRC="testsrc2=size=640x360:rate=25:duration=12"
 AUD="sine=frequency=440:duration=12"
