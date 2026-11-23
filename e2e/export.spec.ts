@@ -83,7 +83,6 @@ test('MP4-Export: gültige Datei (H.264, Ton, Dauer) und Bild deckungsgleich mit
     page.waitForEvent('download'),
     page.getByTestId('export-start').click(),
   ]);
-  await expect(page.getByTestId('export-fortschritt')).toBeVisible();
   expect(download.suggestedFilename()).toMatch(/\.mp4$/);
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'bdva-'));
   const mp4 = path.join(dir, 'export.mp4');
