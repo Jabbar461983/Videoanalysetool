@@ -8,9 +8,13 @@ interface Props {
   dauer: number;
   spurRef: RefObject<HTMLDivElement | null>;
   top: number;
+  /** Höhe in Pixel (Standard 14) */
+  hoehe?: number;
   farbe: string;
   textfarbe?: string;
   label: string;
+  /** z. B. Wellenform hinter der Beschriftung */
+  children?: React.ReactNode;
   aria: string;
   ausgewaehlt?: boolean;
   testid: string;
@@ -86,6 +90,7 @@ export function ZeitBalken(p: Props) {
         left: pct(start),
         width: pct(ende - start),
         top: p.top,
+        ...(p.hoehe ? { height: p.hoehe, minHeight: p.hoehe } : {}),
         background: p.farbe,
         color: p.textfarbe ?? '#000',
       }}
@@ -94,7 +99,8 @@ export function ZeitBalken(p: Props) {
       onPointerUp={ende_}
       onPointerCancel={ende_}
     >
-      {p.label}
+      {p.children}
+      <span style={{ position: 'relative' }}>{p.label}</span>
       <span
         className={`${s.zKante} ${s.l}`}
         data-testid={`${p.kantenTestid}-links`}

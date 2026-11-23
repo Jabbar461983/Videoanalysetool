@@ -28,6 +28,16 @@ export interface VorlageRow {
   daten: unknown;
   standard: boolean;
 }
+export interface AudioRow {
+  id: string;
+  blob: Blob;
+  mime: string;
+  /** Länge in Sekunden */
+  dauer: number;
+  /** Wellenform-Spitzen (0–1), PEAKS_PRO_SEKUNDE je Sekunde */
+  peaks: Float32Array;
+  erstelltAm: number;
+}
 export interface MetaRow {
   key: string;
   value: unknown;
@@ -41,6 +51,7 @@ export class BdvaDb extends Dexie {
   wiederherstellung!: Table<WiederherstellungRow, string>;
   meta!: Table<MetaRow, string>;
   vorlagen!: Table<VorlageRow, string>;
+  audio!: Table<AudioRow, string>;
 
   constructor(name = 'bulldozers-videoanalyse') {
     super(name);
@@ -53,6 +64,7 @@ export class BdvaDb extends Dexie {
       meta: 'key',
     });
     this.version(2).stores({ vorlagen: 'id, typ' });
+    this.version(3).stores({ audio: 'id' });
   }
 }
 

@@ -23,7 +23,6 @@ export function neuesProjekt(name: string, jetzt = Date.now()): Projekt {
     zeichnungen: [],
     spielerObjekte: [],
     overlays: { scoreKorrekturen: [] },
-    audioSpuren: [{ id: neueId(), typ: 'original', lautstaerke: 1, stumm: false, segmente: [] }],
     taktik: { feld: {}, kalibrierungen: [], situationen: [], anzeige: [] },
     einstellungen: {
       trackingModus: 'auto',
@@ -96,6 +95,12 @@ export const migrationen: Migration[] = [
       ...(p.einstellungen as Record<string, unknown>),
     },
   }),
+  // 5 → 6: Audio – Tonspuren gehören zum Clip; das projektweite Platzhalterfeld entfällt
+  (p) => {
+    const rest = { ...p };
+    delete rest.audioSpuren;
+    return rest;
+  },
 ];
 
 export function migriere(roh: unknown): Projekt {

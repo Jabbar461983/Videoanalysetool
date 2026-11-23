@@ -4,11 +4,16 @@ export default defineConfig({
   testDir: 'e2e',
   timeout: 60_000,
   use: {
+    permissions: ['microphone'],
     baseURL: 'http://localhost:4173/Videoanalysetool/',
     trace: 'off',
     launchOptions: {
       executablePath: process.env.PW_CHROMIUM || undefined,
-      args: ['--autoplay-policy=no-user-gesture-required'],
+      args: [
+        '--autoplay-policy=no-user-gesture-required',
+        '--use-fake-device-for-media-stream',
+        '--use-fake-ui-for-media-stream',
+      ],
     },
   },
   webServer: {

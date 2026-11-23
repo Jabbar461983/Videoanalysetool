@@ -179,7 +179,7 @@ describe('Migration auf Version 2', () => {
       ],
     };
     const m = migriere(mitEigenem);
-    expect(m.version).toBe(5);
+    expect(m.version).toBe(6);
     expect(m.tagDefinitionen[0]).toMatchObject({ sichtbar: true, fest: false });
   });
 });

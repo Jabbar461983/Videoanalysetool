@@ -10,6 +10,9 @@ import { useZeichnen } from '../store/zeichnen';
 import { WERKZEUG_NAMEN } from '../zeichnen/geometrie';
 import { ausblendenVon } from '../overlay/ausblenden';
 import { ZeitBalken } from './ZeitBalken';
+import { KommentarBalken } from './KommentarBalken';
+import { OriginalWellenform } from './OriginalWellenform';
+import { holeAudio } from '../audio/modell';
 import s from './ProgrammTimeline.module.css';
 
 /** Zeitleiste für den Clip-Editor (eine Clip-Zeitachse) und die Playlist (alle Einträge hintereinander). */
@@ -26,6 +29,7 @@ export function ProgrammTimeline() {
   );
   const auswahlId = useZeichnen((z) => z.auswahlId);
   const clip = projekt?.clips.find((c) => c.id === clipId);
+  const quelle = projekt?.quellen.find((q) => q.id === clip?.quelleId);
   const alleZeichnungen = projekt?.zeichnungen;
   const zeichnungsListe = useMemo(
     () => (alleZeichnungen ?? []).filter((z) => z.clipId === clipId),
@@ -91,110 +95,155 @@ export function ProgrammTimeline() {
             </span>
           ))}
         </div>
-        {plan.segmente.map((seg, i) => {
-          const klasse =
-            seg.art === 'titel'
-              ? s.titel
-              : seg.art === 'freeze'
-                ? s.freeze
-                : seg.tempo !== 1
-                  ? s.zeitlupe
-                  : s.video;
-          const erstes = i === 0 || plan.segmente[i - 1]!.eintragIndex !== seg.eintragIndex;
-          const text =
-            seg.art === 'titel'
-              ? seg.titel?.titel
-              : seg.art === 'freeze'
-                ? t.clipEditor.standbild
-                : seg.tempo !== 1
-                  ? `${seg.tempo}×`
-                  : erstes && art === 'playlist'
-                    ? clipName(seg.clipId)
-                    : '';
-          return (
-            <div
-              key={i}
-              data-testid={`seg-${seg.art}`}
-              className={`${s.seg} ${klasse}`}
-              style={{ left: pct(seg.start), width: pct(seg.dauer) }}
-              title={text}
-            >
-              {text}
+        <div className={s.reihe} style={{ height: art === 'playlist' ? 62 : 46 }}>
+          {plan.segmente.map((seg, i) => {
+            const klasse =
+              seg.art === 'titel'
+                ? s.titel
+                : seg.art === 'freeze'
+                  ? s.freeze
+                  : seg.tempo !== 1
+                    ? s.zeitlupe
+                    : s.video;
+            const erstes = i === 0 || plan.segmente[i - 1]!.eintragIndex !== seg.eintragIndex;
+            const text =
+              seg.art === 'titel'
+                ? seg.titel?.titel
+                : seg.art === 'freeze'
+                  ? t.clipEditor.standbild
+                  : seg.tempo !== 1
+                    ? `${seg.tempo}×`
+                    : erstes && art === 'playlist'
+                      ? clipName(seg.clipId)
+                      : '';
+            return (
+              <div
+                key={i}
+                data-testid={`seg-${seg.art}`}
+                className={`${s.seg} ${klasse}`}
+                style={{
+                  left: pct(seg.start),
+                  width: pct(seg.dauer),
+                  bottom: art === 'playlist' ? 16 : 0,
+                }}
+                title={text}
+              >
+                {text}
+              </div>
+            );
+          })}
+          {plan.eintraege.slice(1).map((e) => (
+            <div key={e.eintrag.id}>
+              <div className={s.trenner} style={{ left: pct(e.start) }} />
+              {e.eintrag.uebergang === 'blende' && (
+                <span className={s.blende} style={{ left: pct(e.start) }}>
+                  {t.playlist.blende}
+                </span>
+              )}
             </div>
-          );
-        })}
-        {plan.eintraege.slice(1).map((e) => (
-          <div key={e.eintrag.id}>
-            <div className={s.trenner} style={{ left: pct(e.start) }} />
-            {e.eintrag.uebergang === 'blende' && (
-              <span className={s.blende} style={{ left: pct(e.start) }}>
-                {t.playlist.blende}
-              </span>
-            )}
-          </div>
-        ))}
+          ))}
+        </div>
         {art === 'clip' && clipId && clip && (
-          <div data-testid="overlay-spur">
-            {(['logo', 'scoreboard'] as const).map((k, reihe) =>
-              ausblendenVon(clip, k).map((ab, i) => (
+          <>
+            <div className={s.reihe} style={{ height: 32 }} data-testid="overlay-spur">
+              {(['logo', 'scoreboard'] as const).map((k, reihe) =>
+                ausblendenVon(clip, k).map((ab, i) => (
+                  <ZeitBalken
+                    key={`${k}${i}`}
+                    start={ab.start}
+                    ende={ab.ende}
+                    dauer={plan.dauer}
+                    spurRef={ref}
+                    top={reihe * 16}
+                    farbe="#8a2b2b"
+                    textfarbe="#fff"
+                    label={k === 'logo' ? t.overlay.spurLogo : t.overlay.spurScore}
+                    aria={k === 'logo' ? t.overlay.spurLogo : t.overlay.spurScore}
+                    testid={`overlay-balken-${k}`}
+                    kantenTestid={`overlay-${k}`}
+                    onCommit={(st, en) =>
+                      useProjekt.getState().aendere('Overlay-Abschnitt', (pr) => {
+                        const c = pr.clips.find((x) => x.id === clipId);
+                        const liste = c?.ausblenden?.[k];
+                        if (liste?.[i]) liste[i] = { start: st, ende: en };
+                      })
+                    }
+                  />
+                )),
+              )}
+            </div>
+            <div
+              className={`${s.reihe} ${s.audioLane}`}
+              style={{ height: 26 }}
+              data-testid="original-spur"
+            >
+              <span className={s.reiheLabel}>{t.ton.original_spur}</span>
+              <OriginalWellenform
+                clip={clip}
+                quelle={quelle}
+                segmente={plan.segmente}
+                dauer={plan.dauer}
+              />
+            </div>
+            {holeAudio(clip).spuren.map((sp) => (
+              <div
+                key={sp.id}
+                className={`${s.reihe} ${s.audioLane}`}
+                style={{ height: 26 }}
+                data-testid="kommentar-spur"
+              >
+                <span className={s.reiheLabel}>{sp.name}</span>
+                {sp.segmente.map((seg) => (
+                  <KommentarBalken
+                    key={seg.id}
+                    clipId={clip.id}
+                    spur={sp}
+                    seg={seg}
+                    dauer={plan.dauer}
+                    spurRef={ref}
+                  />
+                ))}
+              </div>
+            ))}
+            <div
+              className={s.reihe}
+              style={{ height: zeichnungsListe.length ? 66 : 0 }}
+              data-testid="zeichnungs-spur"
+            >
+              {zeichnungsListe.length > 0 && (
+                <span className={s.reiheLabel}>{t.zeichnen.spur}</span>
+              )}
+              {zeichnungsListe.map((z) => (
                 <ZeitBalken
-                  key={`${k}${i}`}
-                  start={ab.start}
-                  ende={ab.ende}
+                  key={z.id}
+                  start={z.start}
+                  ende={z.ende}
                   dauer={plan.dauer}
                   spurRef={ref}
-                  top={84 + reihe * 16}
-                  farbe="#8a2b2b"
-                  textfarbe="#fff"
-                  label={k === 'logo' ? t.overlay.spurLogo : t.overlay.spurScore}
-                  aria={k === 'logo' ? t.overlay.spurLogo : t.overlay.spurScore}
-                  testid={`overlay-balken-${k}`}
-                  kantenTestid={`overlay-${k}`}
+                  top={(bahnVon.get(z.id) ?? 0) * 16 + (zeichnungsListe.length ? 0 : 0)}
+                  farbe={z.stil.farbe}
+                  textfarbe={
+                    ['#000000', '#007057'].includes(z.stil.farbe.toLowerCase()) ? '#fff' : '#000'
+                  }
+                  label={WERKZEUG_NAMEN[z.werkzeug]}
+                  aria={WERKZEUG_NAMEN[z.werkzeug]}
+                  ausgewaehlt={auswahlId === z.id}
+                  testid="zeichnungs-balken"
+                  kantenTestid="zeit"
+                  onAuswahl={() => useZeichnen.getState().waehle(z.id)}
                   onCommit={(st, en) =>
-                    useProjekt.getState().aendere('Overlay-Abschnitt', (pr) => {
-                      const c = pr.clips.find((x) => x.id === clipId);
-                      const liste = c?.ausblenden?.[k];
-                      if (liste?.[i]) liste[i] = { start: st, ende: en };
+                    useProjekt.getState().aendere('Zeitspanne ändern', (pr) => {
+                      const zz = pr.zeichnungen.find((x) => x.id === z.id);
+                      if (zz) {
+                        zz.start = st;
+                        zz.ende = en;
+                      }
                     })
                   }
                 />
-              )),
-            )}
-          </div>
-        )}
-        {art === 'clip' && clipId && zeichnungsListe.length > 0 && (
-          <div data-testid="zeichnungs-spur">
-            <span className={s.zSpurLabel}>{t.zeichnen.spur}</span>
-            {zeichnungsListe.map((z) => (
-              <ZeitBalken
-                key={z.id}
-                start={z.start}
-                ende={z.ende}
-                dauer={plan.dauer}
-                spurRef={ref}
-                top={122 + (bahnVon.get(z.id) ?? 0) * 16}
-                farbe={z.stil.farbe}
-                textfarbe={
-                  ['#000000', '#007057'].includes(z.stil.farbe.toLowerCase()) ? '#fff' : '#000'
-                }
-                label={WERKZEUG_NAMEN[z.werkzeug]}
-                aria={WERKZEUG_NAMEN[z.werkzeug]}
-                ausgewaehlt={auswahlId === z.id}
-                testid="zeichnungs-balken"
-                kantenTestid="zeit"
-                onAuswahl={() => useZeichnen.getState().waehle(z.id)}
-                onCommit={(st, en) =>
-                  useProjekt.getState().aendere('Zeitspanne ändern', (pr) => {
-                    const zz = pr.zeichnungen.find((x) => x.id === z.id);
-                    if (zz) {
-                      zz.start = st;
-                      zz.ende = en;
-                    }
-                  })
-                }
-              />
-            ))}
-          </div>
+              ))}
+            </div>
+          </>
         )}
         <div
           className={s.kopf}

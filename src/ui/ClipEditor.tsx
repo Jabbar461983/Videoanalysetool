@@ -10,6 +10,7 @@ import {
   ZEITLUPE_TEMPI,
 } from '../schnitt/schnittLogik';
 import { ZeichnungenPanel } from './ZeichnungenPanel';
+import { TonPanel } from './TonPanel';
 import { fuegeAusblendenHinzu, ausblendenVon, type OverlayArt } from '../overlay/ausblenden';
 import { usePlayer } from '../store/player';
 import { mitZeichnungsAbgleich } from '../zeichnen/logik';
@@ -260,6 +261,7 @@ export function ClipEditor({ clipId }: { clipId: string }) {
           )),
         )}
       </ul>
+      <TonPanel clipId={clipId} />
       <ZeichnungenPanel clipId={clipId} />
     </section>
   );

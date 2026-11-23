@@ -15,6 +15,7 @@ import {
   speicherInfo,
   type SpeicherInfo,
 } from '../db/speicher';
+import { raeumeAudioAuf } from '../audio/speicher';
 import { warSauberBeendet } from '../store/autosave';
 import type { Projekt } from '../model/typen';
 import { Streifen } from './Streifen';
@@ -46,6 +47,7 @@ export function Startseite() {
         );
       }
       setSp(await speicherInfo());
+      void raeumeAudioAuf(); // verwaiste Aufnahmen entfernen
     } catch {
       setFehler(t.fehler.db);
     }

@@ -13,12 +13,14 @@ import {
   aktuellerPlan,
   bildSchritt,
   springeRelativ,
+  mixer,
   spieler,
   toggleWiedergabe,
 } from '../wiedergabe/transport';
 import { ProxyDialog } from './ProxyDialog';
 import { oeffneZeichnenFuerPosition } from '../schnitt/aktionen';
 import { Werkzeugleiste } from './Werkzeugleiste';
+import { useAufnahme } from '../store/aufnahme';
 import { beiLogoGeladen, holeLogo } from '../render/logo';
 import { schalteLogo, schalteScoreboard } from '../overlay/aktionen';
 import { ZeichenEbene } from './ZeichenEbene';
@@ -64,6 +66,8 @@ export function Buehne({ quelle }: { quelle: Quelle | undefined }) {
   const [groesse, setGroesse] = useState({ w: 0, h: 0 });
   const [proxyOffen, setProxyOffen] = useState(false);
   const { zeit, spielt, tempo, fehler } = usePlayer();
+  const aufnahmePhase = useAufnahme((a) => a.phase);
+  const countdown = useAufnahme((a) => a.countdown);
 
   // Quelle, nach der die Bühne dimensioniert wird (im Programm: die des aktuellen Segments)
   const anzeige =
@@ -116,6 +120,7 @@ export function Buehne({ quelle }: { quelle: Quelle | undefined }) {
     const v = videoRef.current;
     const vb = videoBRef.current;
     if (art !== 'quelle' || !v || !quelle) return;
+    mixer.quellModus();
     usePlayer.getState().setFehler(null);
     // Anzeige: Element A sichtbar, B versteckt
     v.style.opacity = '1';
@@ -192,7 +197,11 @@ export function Buehne({ quelle }: { quelle: Quelle | undefined }) {
     if (art === 'quelle') return;
     const plan0 = aktuellerPlan();
     if (!plan0) return;
+    if (videoRef.current && videoBRef.current) mixer.verbinde(videoRef.current, videoBRef.current);
     let letzterPlan = JSON.stringify(plan0.segmente);
+    const tonSignatur = () =>
+      JSON.stringify(useProjekt.getState().projekt?.clips.map((c) => c.audio) ?? []);
+    let letzterTon = tonSignatur();
     const g = useProgramm.getState();
     const start = g.startZeit;
     const autoplay = g.autoplay;
@@ -207,6 +216,11 @@ export function Buehne({ quelle }: { quelle: Quelle | undefined }) {
       const plan = aktuellerPlan();
       if (!plan) return;
       const j = JSON.stringify(plan.segmente);
+      const ton = tonSignatur();
+      if (ton !== letzterTon) {
+        letzterTon = ton;
+        if (spieler.laeuft) void mixer.spielt(usePlayer.getState().zeit);
+      }
       if (j !== letzterPlan) {
         letzterPlan = j;
         void spieler.aktualisiere(plan).then(() => zeichne(usePlayer.getState().zeit));
@@ -285,6 +299,16 @@ export function Buehne({ quelle }: { quelle: Quelle | undefined }) {
             />
           )}
         </div>
+        {aufnahmePhase === 'countdown' && (
+          <div className={s.countdown} role="status" data-testid="countdown-overlay">
+            {countdown}
+          </div>
+        )}
+        {aufnahmePhase === 'laeuft' && (
+          <div className={s.rec} data-testid="rec-anzeige">
+            ● REC
+          </div>
+        )}
         {(fehler || progFehler) && (
           <div
             role="alert"

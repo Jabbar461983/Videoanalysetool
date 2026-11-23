@@ -1,6 +1,31 @@
 # STATUS
 
-Stand: Ende Etappe 4 «Logo & Scoreboard» (Etappen 0–3 siehe unten, weiterhin gültig).
+Stand: Ende Etappe 5 «Audio & Vertonung» (Etappen 0–4 siehe unten, weiterhin gültig).
+
+## Erledigt (Etappe 5)
+
+- **Tonspuren pro Clip:** Originalton + beliebig viele Kommentarspuren, je Spur Lautstärke, Stumm, Solo. Im Clip-Editor (Abschnitt «Ton») und als Spuren mit **Wellenform** in der Clip-Zeitleiste (Original: Spitzen aus der Quelldatei nur für den Clipbereich; Kommentare: gespeicherte Spitzen).
+- **Mikrofonaufnahme:** Mikrofon wählen, Pegelanzeige, Countdown 3-2-1 (Bild steht), Aufnahme startet an der Abspielposition und läuft mit dem Video mit (`getUserMedia` + `MediaRecorder`). Stopp, Pause oder Ende der Wiedergabe beenden die Aufnahme; sie wird **sofort in IndexedDB** gesichert (inkl. Wellenform). Aufnahmen werden in Stücken à 250 ms gesammelt.
+- **Segmente:** verschieben und kürzen (Ziehen in der Zeitleiste oder Zahlenfelder, nie über die Aufnahme hinaus), löschen (Rückgängig geht), **neu aufnehmen** (ersetzt ab Segmentstart, gleiche Spur). Überlappt eine neue Aufnahme ein bestehendes Stück, entsteht automatisch eine weitere Spur.
+- **Ducking:** Originalton sinkt während hörbarer Kommentare (Standard −12 dB, 0.15 s ab / 0.25 s auf), pro Clip einstellbar oder abschaltbar.
+- **Standbilder:** Das Video steht, der Originalton ist dort stumm, Kommentare laufen weiter.
+- **Vorschau über Web Audio:** beide Video-Elemente laufen über einen gemeinsamen Gain (Original: Lautstärke/Stumm/Solo/Ducking als Kurve), Kommentare als zeitgenau geplante Puffer; Neusynchronisation bei Abweichung > 120 ms. Gilt für Clip-Editor und Playlist.
+- **Mixdown:** `mixdownRender()` (`OfflineAudioContext`) nutzt dieselbe Planung (`audioPlan`) wie die Vorschau; der Export in Etappe 6 reicht zusätzlich die Original-Puffer der Quelle herein (Schnittstelle `original`).
+- Zeitabgleich: Der Start eines Kommentars folgt dem Videobild beim Einfügen/Entfernen von Standbild/Zeitlupe und beim Trimmen (wie bei Zeichnungen).
+- Aufräumen: Aufnahmen, die in keinem Projekt mehr vorkommen, werden beim Öffnen der Startseite entfernt.
+- Zeitleiste in Reihen umgebaut (statt fester Pixelpositionen); sie scrollt bei vielen Spuren senkrecht.
+- Schema-Version 6 (`audioSpuren` am Projekt entfällt). Tests: 92 Unit-Tests (Hörplan inkl. Ducking/Solo/Playlist, Segment-Operationen, Zeitabgleich, Wellenform, Migration), 9 E2E-Tests (neu: Kommentar aufnehmen mit Fake-Mikrofon über ein Standbild hinweg, Ducking-Kurve, Stumm/Solo, Kürzen/Verschieben/Löschen/Rückgängig, Neu aufnehmen, Mixdown mit Pegelprüfung, Neuladen).
+
+## Etappe 5: Entscheide und Grenzen
+
+- **Nur in Clip- und Playlist-Wiedergabe** wirken Kommentare/Ducking; in der reinen Quell-Ansicht läuft der Originalton unverändert.
+- **Echo:** Spielt der Videoton über Lautsprecher, nimmt das Mikrofon ihn mit auf. Der Hinweis «Kopfhörer tragen» steht im Aufnahme-Bereich; Echo-/Rauschunterdrückung ist angefordert, aber geräteabhängig.
+- Die Latenz zwischen Aufnahmestart und Video (typisch 30–100 ms) wird nicht kompensiert.
+- Automatisch geprüft ist die Aufnahme mit einem **simulierten Mikrofon** und das Zeitverhalten der Planung. **Tatsächlicher Klang, Lippensynchronität und Ducking-Höreindruck sind nicht gehört** – bitte mit echtem Mikrofon und Kopfhörern prüfen (Chrome/Edge, Safari/iPad: Aufnahmeformat MP4/AAC statt WebM).
+- Original-Wellenform braucht die verknüpfte Videodatei und einen Audio-Codec, den der Browser dekodiert (AAC/Opus); sonst bleibt die Spur leer.
+- Lautstärke-Schieber starten die laufende Kommentar-Wiedergabe neu (kurzes Absetzen), statt live nachzuregeln.
+- Ein Hilfsschalter für Tests: `localStorage['bdva-test']='1'` lädt `window.__bdvaTest` (Mixdown/Hörplan abfragen); im Normalbetrieb inaktiv.
+- Nach dem Neuladen muss die Videodatei wieder verknüpft werden (wie bisher); ohne Datei startet der Programmspieler nicht und zeigt eine Meldung statt zu hängen (neu behoben).
 
 ## Erledigt (Etappe 4)
 

@@ -34,7 +34,17 @@ function bildBereit(v: HTMLVideoElement): Promise<void> {
  * Segment wird auf dem versteckten Element vorbereitet (Quelle laden, Position anfahren) und am
  * Übergang nur sichtbar geschaltet. Standbilder und Titelfolien laufen auf einer virtuellen Uhr.
  */
+export interface AudioHaken {
+  /** Wiedergabe läuft ab Programmzeit `zeit` (Start oder Sprung) */
+  spielt(zeit: number): void;
+  steht(): void;
+  takt(zeit: number): void;
+}
+
 export class Programmspieler {
+  /** Optionaler Ton-Mixer (Kommentare, Ducking) */
+  audio: AudioHaken | null = null;
+  private letzterAudioTakt = 0;
   private els: [HTMLVideoElement, HTMLVideoElement] | null = null;
   private aktiv: Slot = 0;
   private plan: Zeitplan | null = null;
@@ -111,6 +121,7 @@ export class Programmspieler {
   }
 
   private stoppe(): void {
+    this.audio?.steht();
     this.spielt = false;
     cancelAnimationFrame(this.raf);
     this.token++;
@@ -126,7 +137,9 @@ export class Programmspieler {
     const idx = findeSegmentIndex(plan.segmente, this.zeit);
     const seg = plan.segmente[idx]!;
     this.veroeffentliche();
-    await this.betrete(idx, Math.min(this.zeit - seg.start, seg.dauer), ++this.token);
+    const tok = ++this.token;
+    await this.betrete(idx, Math.min(this.zeit - seg.start, seg.dauer), tok);
+    if (this.spielt && tok === this.token) this.audio?.spielt(this.zeit);
   }
 
   private urlOderFehler(seg: Segment): string | undefined {
@@ -223,6 +236,9 @@ export class Programmspieler {
   async abspielen(): Promise<void> {
     const plan = this.plan;
     if (!plan || plan.segmente.length === 0 || this.spielt) return;
+    // Fehlt die Videodatei des aktuellen Abschnitts, nicht starten (Meldung statt Hängen)
+    const aktuell = this.aktuellesSegment;
+    if (aktuell && aktuell.art !== 'titel' && !this.urlOderFehler(aktuell)) return;
     if (this.zeit >= plan.dauer - 0.02) await this.springe(0);
     this.spielt = true;
     const seg = this.aktuellesSegment;
@@ -231,6 +247,7 @@ export class Programmspieler {
     this.uhrBasis = seg ? Math.max(0, this.zeit - seg.start) : 0;
     this.uhrStart = performance.now();
     this.veroeffentliche();
+    this.audio?.spielt(this.zeit);
     this.raf = requestAnimationFrame(this.takt);
   }
 
@@ -239,6 +256,7 @@ export class Programmspieler {
     this.spielt = false;
     cancelAnimationFrame(this.raf);
     this.els?.forEach((v) => v.pause());
+    this.audio?.steht();
     this.veroeffentliche();
   }
 
@@ -278,5 +296,9 @@ export class Programmspieler {
     }
     this.zeit = seg.start + Math.min(Math.max(0, lokal), seg.dauer);
     this.veroeffentliche();
+    if (jetzt - this.letzterAudioTakt > 250) {
+      this.letzterAudioTakt = jetzt;
+      this.audio?.takt(this.zeit);
+    }
   };
 }

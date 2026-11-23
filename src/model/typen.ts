@@ -1,5 +1,5 @@
 /** Datenmodell nach CLAUDE.md Abschnitt 5. Zeiten in Sekunden der jeweiligen Quelle. */
-export const SCHEMA_VERSION = 5;
+export const SCHEMA_VERSION = 6;
 
 export interface Quelle {
   id: string;
@@ -69,6 +69,8 @@ export interface Clip {
   zeitlupen: Zeitlupe[];
   /** Abschnitte (Clip-Zeit), in denen Logo bzw. Scoreboard ausgeblendet sind */
   ausblenden?: { logo: Abschnitt[]; scoreboard: Abschnitt[] };
+  /** Tonspuren des Clips (fehlt = Originalton unverändert) */
+  audio?: ClipAudio;
   /** Gesetzt, wenn der Clip automatisch aus einem Tag entstanden ist. */
   tagId?: string;
 }
@@ -149,12 +151,26 @@ export type SpielerObjekt = {
   ende: number;
   [k: string]: unknown;
 };
-export interface AudioSpur {
+/** Ein aufgenommenes Stück Kommentar. `start` in Clip-Zeit, `offset`/`dauer` in Sekunden des Blobs. */
+export interface AudioSegment {
   id: string;
-  typ: 'original' | 'kommentar';
+  blobId: string;
+  start: number;
+  offset: number;
+  dauer: number;
+}
+export interface KommentarSpur {
+  id: string;
+  name: string;
   lautstaerke: number;
   stumm: boolean;
-  segmente: { blobId: string; start: number; dauer: number }[];
+  solo: boolean;
+  segmente: AudioSegment[];
+}
+export interface ClipAudio {
+  original: { lautstaerke: number; stumm: boolean; solo: boolean };
+  ducking: { an: boolean; absenkungDb: number };
+  spuren: KommentarSpur[];
 }
 
 export interface Projekt {
@@ -176,7 +192,6 @@ export interface Projekt {
   zeichnungen: Zeichnung[];
   spielerObjekte: SpielerObjekt[];
   overlays: { scoreKorrekturen: ScoreKorrektur[] };
-  audioSpuren: AudioSpur[];
   taktik: {
     feld: Record<string, unknown>;
     kalibrierungen: unknown[];

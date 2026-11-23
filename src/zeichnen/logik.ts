@@ -219,6 +219,17 @@ export function mitZeichnungsAbgleich<T>(
       scoreboard: bildeAbschnitteAb(alt, clip, clip.ausblenden.scoreboard),
     };
   }
+  if (clip.audio?.spuren.length) {
+    const f = zeitAbbildung(alt, clip);
+    const gesamt = clipDauerVon(clip);
+    for (const sp of clip.audio.spuren) {
+      sp.segmente = sp.segmente.flatMap((seg) => {
+        const start = Math.round(f(seg.start) * 1000) / 1000;
+        const dauer = Math.min(seg.dauer, gesamt - start);
+        return dauer >= 0.1 ? [{ ...seg, start, dauer: Math.round(dauer * 1000) / 1000 }] : [];
+      });
+    }
+  }
   const meine = p.zeichnungen.filter((z) => z.clipId === clipId);
   if (meine.length) {
     const neu = new Map(abgleichZeitachse(alt, clip, meine).map((z) => [z.id, z]));
@@ -228,3 +239,5 @@ export function mitZeichnungsAbgleich<T>(
   }
   return r;
 }
+
+const clipDauerVon = (clip: Clip): number => segmenteDauer(clipSegmente(clip));

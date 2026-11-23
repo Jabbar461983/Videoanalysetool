@@ -3,6 +3,7 @@ import { usePlayer } from '../store/player';
 import { useProgramm } from '../store/programm';
 import { useProjekt } from '../store/projektStore';
 import { begrenze, frameZuZeit, schritt, zeitZuFrame } from '../video/bildmathe';
+import { Mixer } from '../audio/mixer';
 import { baueProgrammPlan } from './plan';
 import { Programmspieler } from './programmspieler';
 import { segmentZuQuellZeit, type Zeitplan } from './zeitachse';
@@ -15,6 +16,18 @@ export const spieler = new Programmspieler(
   },
   (m) => useProgramm.getState().setzeFehler(m),
 );
+
+/** Ton-Mixer: Kommentare, Ducking, Solo/Stumm in Clip- und Playlist-Wiedergabe. */
+export const mixer = new Mixer(() => {
+  const plan = aktuellerPlan();
+  const projekt = useProjekt.getState().projekt;
+  return plan && projekt ? { plan, projekt } : null;
+});
+spieler.audio = {
+  spielt: (z) => void mixer.spielt(z),
+  steht: () => mixer.steht(),
+  takt: (z) => mixer.takt(z),
+};
 
 export const istProgramm = (): boolean => useProgramm.getState().art !== 'quelle';
 
@@ -38,6 +51,7 @@ export function aktuelleFps(): number {
 export function toggleWiedergabe(): void {
   if (istProgramm()) return spieler.umschalten();
   const v = document.querySelector('video');
+  if (mixer.kontext) void mixer.resume();
   if (v) {
     if (v.paused) void v.play();
     else v.pause();

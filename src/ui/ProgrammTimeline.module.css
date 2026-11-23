@@ -1,7 +1,8 @@
 .wrap {
-  height: 250px;
   display: flex;
   flex-direction: column;
+  max-height: 42vh;
+  overflow-y: auto;
 }
 .bar {
   display: flex;
@@ -9,20 +10,52 @@
   gap: var(--bd-space-2);
   padding: var(--bd-space-1) var(--bd-space-3);
   border-bottom: 1px solid var(--bd-rule);
+  position: sticky;
+  top: 0;
+  background: var(--bd-surface-raised);
+  z-index: 3;
 }
 .spur {
   position: relative;
-  flex: 1;
-  margin: var(--bd-space-3);
+  margin: var(--bd-space-2) var(--bd-space-3) var(--bd-space-3);
   cursor: ew-resize;
   user-select: none;
   touch-action: none;
-  min-height: 120px;
+}
+.lineal {
+  position: relative;
+  height: 18px;
+  border-bottom: 1px solid var(--bd-rule);
+}
+.tick {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  border-left: 1px solid var(--bd-rule);
+  padding-left: 4px;
+  font-size: 11px;
+  color: var(--bd-ink-subtle);
+}
+.reihe {
+  position: relative;
+  margin-top: 4px;
+}
+.reiheLabel {
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  z-index: 2;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--bd-ink-subtle);
+  pointer-events: none;
+  text-shadow: 0 0 3px #000;
 }
 .seg {
   position: absolute;
-  top: 28px;
-  height: 70px;
+  top: 0;
+  bottom: 0;
   border: 1px solid var(--bd-black);
   overflow: hidden;
   font-size: 11px;
@@ -52,15 +85,15 @@
 }
 .trenner {
   position: absolute;
-  top: 20px;
-  height: 86px;
+  top: 0;
+  bottom: 0;
   width: 0;
   border-left: 2px solid var(--bd-ink);
   pointer-events: none;
 }
 .blende {
   position: absolute;
-  top: 108px;
+  bottom: 0;
   font-size: 10px;
   color: var(--bd-ink-subtle);
   transform: translateX(-50%);
@@ -73,6 +106,7 @@
   width: 2px;
   background: var(--bd-gold);
   pointer-events: none;
+  z-index: 4;
 }
 .kopf::before {
   content: '';
@@ -82,33 +116,9 @@
   border: 6px solid transparent;
   border-top-color: var(--bd-gold);
 }
-.lineal {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 18px;
-  border-bottom: 1px solid var(--bd-rule);
-}
-.tick {
-  position: absolute;
-  top: 0;
-  height: 100%;
-  border-left: 1px solid var(--bd-rule);
-  padding-left: 4px;
-  font-size: 11px;
-  color: var(--bd-ink-subtle);
-}
-
-.zSpurLabel {
-  position: absolute;
-  left: 0;
-  top: 108px;
-  font-size: 10px;
-  color: var(--bd-ink-subtle);
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  pointer-events: none;
+.audioLane {
+  background: var(--bd-surface);
+  border: 1px solid var(--bd-rule);
 }
 .zBalken {
   position: absolute;
@@ -136,6 +146,7 @@
   bottom: 0;
   width: 8px;
   cursor: ew-resize;
+  z-index: 3;
 }
 .zKante::after {
   content: '';

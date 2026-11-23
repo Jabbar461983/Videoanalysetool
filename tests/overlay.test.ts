@@ -135,7 +135,7 @@ describe('Migration auf Version 5', () => {
     p.overlays = { logo: [], scoreboard: [], scoreKorrekturen: [] };
     p.einstellungen = { trackingModus: 'auto', exportAufloesung: 1080, zeichnenAnhalten: false };
     const m = migriere(p);
-    expect(m.version).toBe(5);
+    expect(m.version).toBe(6);
     expect(m.einstellungen).toMatchObject({
       zeichnenAnhalten: false,
       logoAnzeigen: true,
