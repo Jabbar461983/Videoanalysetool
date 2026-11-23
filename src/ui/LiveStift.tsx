@@ -103,7 +103,8 @@ export function LiveStift() {
         vermerkeStift(e, palm.current, performance.now());
         if (!aktiv.current) return;
         const nativ = e.nativeEvent;
-        for (const ev of nativ.getCoalescedEvents?.() ?? [nativ]) {
+        const gesammelt = nativ.getCoalescedEvents?.();
+        for (const ev of gesammelt && gesammelt.length ? gesammelt : [nativ]) {
           const r = ref.current!.getBoundingClientRect();
           aktiv.current.punkte.push({
             x: (ev.clientX - r.left) / r.width,

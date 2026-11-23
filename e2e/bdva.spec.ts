@@ -22,6 +22,7 @@ test('Projektdatei: exportieren, importieren, fehlendes Video wird angefordert u
     v.currentTime = 3;
   });
   await expect.poll(() => video.evaluate((v: HTMLVideoElement) => v.seeking)).toBe(false);
+  await page.getByLabel('Projektname').blur(); // Tasten sollen nicht ins Namensfeld gehen
   await page.keyboard.press('g'); // Tor-Tag mit Auto-Clip
   await expect(page.getByTestId('tagmarke')).toHaveCount(1);
   await expect(page.getByRole('status').filter({ hasText: 'Gespeichert' })).toBeVisible({
