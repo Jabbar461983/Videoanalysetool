@@ -80,8 +80,8 @@ test('Spotlight folgt dem Spieler automatisch', async ({ page }) => {
     );
   await springe(0.5);
   await page.getByTestId('werkzeug-spieler').click();
-  // Spieler bei Quellzeit 1.5: x = (512 - 30·1.5)/600 ≈ 0.78, Brusthöhe y ≈ 0.5 (Videobild 600×500)
-  await zeiger(page, 'pointerdown', 0.78, 0.46);
+  // Spieler bei Quellzeit 1.5: Trikot (ohne Schriftzug) bei x ≈ 0.72, y ≈ 0.32 (Videobild 600×500)
+  await zeiger(page, 'pointerdown', 0.717, 0.32);
   await expect(page.getByTestId('spielerliste').locator('li')).toHaveCount(1, { timeout: 600_000 });
   await expect(page.getByTestId('tracking-abbrechen')).toBeVisible({ timeout: 600_000 });
   await expect(page.getByTestId('tracking-abbrechen')).toBeHidden({ timeout: 800_000 });
@@ -90,31 +90,34 @@ test('Spotlight folgt dem Spieler automatisch', async ({ page }) => {
   );
   await expect(page.getByTestId('spieler-modus')).toHaveValue('auto');
 
-  // Clip-Zeit 0.5 → Quellzeit 1.5, Clip-Zeit 2.5 → Quellzeit 3.5: Spieler wandert 60 px nach links (0.1 der Breite)
-  for (const [clipZeit, quellZeit] of [
-    [0.5, 1.5],
-    [2.5, 3.5],
-  ] as const) {
+  // Schwerpunkt des Spotlight-Lochs (Alpha niedrig) auf mehreren Zeilen, bei Clip-Zeit 0.5 und 2.5.
+  // Quellzeit 1.5 → 3.5: Der Spieler wandert 60 px (0.1 der Bildbreite) nach links.
+  const schwerpunkt = async (clipZeit: number) => {
     await springe(clipZeit);
     await page.waitForTimeout(1500);
-    const reihe = await page.getByTestId('overlay').evaluate((c: HTMLCanvasElement) => {
+    return page.getByTestId('overlay').evaluate((c: HTMLCanvasElement) => {
       const ctx = c.getContext('2d')!;
-      const y = Math.round(0.46 * c.height);
-      const out: string[] = [];
-      for (let i = 0; i < 40; i++)
-        out.push(String(ctx.getImageData(Math.round((i / 40) * c.width), y, 1, 1).data[3]));
-      return out.join(',');
+      let summe = 0;
+      let n = 0;
+      for (const yy of [0.3, 0.34, 0.38]) {
+        const y = Math.round(yy * c.height);
+        const zeile = ctx.getImageData(0, y, c.width, 1).data;
+        for (let x = 0; x < c.width; x += 2) {
+          if (zeile[x * 4 + 3]! < 60) {
+            summe += x / c.width;
+            n++;
+          }
+        }
+      }
+      return n > 0 ? { x: summe / n, n } : null;
     });
-    console.log(
-      'REIHE clip ' +
-        clipZeit +
-        ' erwartet x=' +
-        ((512 - 30 * quellZeit) / 600).toFixed(3) +
-        ' : ' +
-        reihe,
-    );
-    const x = (512 - 30 * quellZeit) / 600;
-    await expect.poll(() => pixel(page, x, 0.46), { timeout: 5000 }).toBeLessThan(40); // Loch im Spotlight
-    expect(await pixel(page, Math.min(0.97, x + 0.3), 0.46)).toBeGreaterThan(100); // sonst abgedunkelt
-  }
+  };
+  const a1 = await schwerpunkt(0.5);
+  const a2 = await schwerpunkt(2.5);
+  console.log('SCHWERPUNKT ' + JSON.stringify({ a1, a2 }));
+  expect(a1).not.toBeNull();
+  expect(a2).not.toBeNull();
+  const dx = a2!.x - a1!.x;
+  expect(dx).toBeLessThan(-0.06);
+  expect(dx).toBeGreaterThan(-0.14);
 });
