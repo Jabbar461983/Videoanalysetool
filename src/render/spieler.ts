@@ -64,9 +64,7 @@ export function zeichneSpielerObjekte(
     if (o.clipId !== clipId || !istSpielerSichtbar(o, t)) continue;
     const k = keyframeBei(o, t);
     if (!k || !bilder) continue;
-    const seit = t - o.start;
-    const bis = o.ende - t;
-    const alpha = Math.max(0, Math.min(1, seit / 0.2, bis / 0.2));
+    const alpha = 1;
     zeichneEinen(ctx, o, k.kf, k.index, alpha, t, breite, hoehe, bilder);
   }
 }
