@@ -96,6 +96,23 @@ test('Spotlight folgt dem Spieler automatisch', async ({ page }) => {
     [2.5, 3.5],
   ] as const) {
     await springe(clipZeit);
+    await page.waitForTimeout(1500);
+    const reihe = await page.getByTestId('overlay').evaluate((c: HTMLCanvasElement) => {
+      const ctx = c.getContext('2d')!;
+      const y = Math.round(0.46 * c.height);
+      const out: string[] = [];
+      for (let i = 0; i < 40; i++)
+        out.push(String(ctx.getImageData(Math.round((i / 40) * c.width), y, 1, 1).data[3]));
+      return out.join(',');
+    });
+    console.log(
+      'REIHE clip ' +
+        clipZeit +
+        ' erwartet x=' +
+        ((512 - 30 * quellZeit) / 600).toFixed(3) +
+        ' : ' +
+        reihe,
+    );
     const x = (512 - 30 * quellZeit) / 600;
     await expect.poll(() => pixel(page, x, 0.46), { timeout: 5000 }).toBeLessThan(40); // Loch im Spotlight
     expect(await pixel(page, Math.min(0.97, x + 0.3), 0.46)).toBeGreaterThan(100); // sonst abgedunkelt
