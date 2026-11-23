@@ -38,6 +38,7 @@ async function playlistVorbereiten(page: Page) {
 test('Präsentation: Vollbild-Bühne, Navigation per Tasten, Pause, Live-Stift, Steuerleiste blendet aus, Esc beendet', async ({
   page,
 }) => {
+  page.on('console', (m) => { if (m.text().startsWith('[live]')) console.log('LIVE', m.text()); });
   await playlistVorbereiten(page);
   await page.getByTestId('praesentation-start').click();
 
