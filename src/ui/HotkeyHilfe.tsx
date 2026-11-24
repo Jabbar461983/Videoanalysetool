@@ -2,14 +2,14 @@ import { useEffect, useState } from 'react';
 import { t } from '../i18n/de-CH';
 import { useProjekt } from '../store/projektStore';
 import { aufAllenFenstern } from '../layout/fenster';
+import { istEingabeFeld } from '../layout/eingabe';
 
 export function HotkeyHilfe() {
   const defs = useProjekt((x) => x.projekt?.tagDefinitionen ?? []);
   const [offen, setOffen] = useState(false);
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLElement && ['INPUT', 'TEXTAREA'].includes(e.target.tagName))
-        return;
+      if (istEingabeFeld(e.target)) return;
       if (e.key === '?') setOffen((o) => !o);
       if (e.key === 'Escape') setOffen(false);
     };

@@ -1,4 +1,5 @@
 import { aufAllenFenstern } from '../layout/fenster';
+import { istEingabeFeld } from '../layout/eingabe';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { t } from '../i18n/de-CH';
 import { neueId } from '../model/schema';
@@ -90,8 +91,7 @@ export function TafelEditor() {
   useEffect(() => {
     if (!offen) return;
     const h = (e: KeyboardEvent) => {
-      const el = e.target as HTMLElement | null;
-      const eingabe = el && ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName);
+      const eingabe = istEingabeFeld(e.target);
       if (e.key === 'Escape') useTaktik.getState().setze({ editorOffen: false });
       if ((e.key === 'Delete' || e.key === 'Backspace') && !eingabe && markerId && situationId) {
         e.preventDefault();

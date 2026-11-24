@@ -31,10 +31,9 @@ import {
 } from '../zeichnen/aktionen';
 import { naechstesTempo } from '../video/bildmathe';
 import { aufAllenFenstern } from '../layout/fenster';
+import { istEingabeFeld } from '../layout/eingabe';
 
-const istEingabe = (el: EventTarget | null) =>
-  el instanceof HTMLElement &&
-  (el.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName));
+const istEingabe = istEingabeFeld;
 
 /** Globale Tastatur: Undo/Redo, Player. Spielposition kommt aus dem Player-Store. */
 export function useEditorTasten() {
