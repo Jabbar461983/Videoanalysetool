@@ -8,13 +8,8 @@ import { aktuellesBild } from './bild';
 import { mittlereFarbe, trenneTeams, type Rgb } from './farben';
 import { wendeAn } from './homographie';
 import { neueSituation, neuerMarker } from './logik';
-import {
-  fussPunkt,
-  gruppeFuerTeam1,
-  imFeldBereich,
-  markerAusErkennungen,
-  type BildBox,
-} from './uebernehmen';
+import { fussPunkt, gruppeFuerTeam1, imFeldBereich } from './uebernehmen';
+import { MAX_SPIELER, baueAuswahl, markerAusPersonen, type Person } from './pruefung';
 
 const setze = (p: Parameters<ReturnType<typeof useTaktik.getState>['setze']>[0]) =>
   useTaktik.getState().setze(p);
@@ -64,50 +59,63 @@ export async function uebernimmAlleSpieler(): Promise<void> {
     const r = await lauf.erkenneAlle(bm);
     const fw = bild.frame.width;
     const fh = bild.frame.height;
-    const imFeld: BildBox[] = r.boxen.filter((b) => {
-      const m = wendeAn(kal.H, fussPunkt(b, fw, fh));
-      return m ? imFeldBereich(m, projekt.taktik.feld, projekt.taktik.feld.erkennungsRand) : false;
-    });
-    // Trikotfarbe: Oberkörper (20–50 % der Boxhöhe, mittlere Hälfte der Breite)
+    const feldPos = r.boxen.map((bx) => wendeAn(kal.H, fussPunkt(bx, fw, fh)));
+    const imFeldIdx = r.boxen
+      .map((_, i) => i)
+      .filter(
+        (i) =>
+          feldPos[i] &&
+          imFeldBereich(feldPos[i]!, projekt.taktik.feld, projekt.taktik.feld.erkennungsRand),
+      );
+    // Trikotfarbe: Oberkörper (20–50 % der Boxhöhe, mittlere Hälfte der Breite), nur für Personen im Feld
     const ctx = bild.frame.getContext('2d', { willReadFrequently: true })!;
-    const farben: (Rgb | null)[] = imFeld.map((b) => {
-      const x0 = b.cx - b.b * 0.25;
-      const y0 = b.cy - b.h / 2 + b.h * 0.2;
-      const bx = Math.max(0, Math.floor(x0));
-      const by = Math.max(0, Math.floor(y0));
+    const farben = new Map<number, Rgb>();
+    for (const i of imFeldIdx) {
+      const b = r.boxen[i]!;
+      const bx = Math.max(0, Math.floor(b.cx - b.b * 0.25));
+      const by = Math.max(0, Math.floor(b.cy - b.h / 2 + b.h * 0.2));
       const bw = Math.max(1, Math.min(fw - bx, Math.ceil(b.b * 0.5)));
       const bh = Math.max(1, Math.min(fh - by, Math.ceil(b.h * 0.3)));
-      const d = ctx.getImageData(bx, by, bw, bh);
-      return mittlereFarbe(d.data, bw, bh, 0, 0, bw, bh);
-    });
+      const f = mittlereFarbe(ctx.getImageData(bx, by, bw, bh).data, bw, bh, 0, 0, bw, bh);
+      if (f) farben.set(i, f);
+    }
     let teams: number[] | null = null;
-    let hinweis = '';
-    const gueltig = farben.map((f, i) => (f ? i : -1)).filter((i) => i >= 0);
-    if (gueltig.length >= 2) {
-      const t = trenneTeams(gueltig.map((i) => farben[i]!));
+    let farbHinweis = '';
+    const idxMitFarbe = [...farben.keys()];
+    if (idxMitFarbe.length >= 2) {
+      const t = trenneTeams(idxMitFarbe.map((i) => farben.get(i)!));
       if (t.mitten && t.abstand >= MIN_FARBABSTAND) {
         const gruppe1 = gruppeFuerTeam1(t.mitten, projekt.teams[0].farbe, projekt.teams[1].farbe);
-        teams = imFeld.map(() => 0);
-        gueltig.forEach((idx, k) => {
+        teams = r.boxen.map(() => 0);
+        idxMitFarbe.forEach((idx, k) => {
           teams![idx] = t.zuordnung[k] === gruppe1 ? 0 : 1;
         });
       } else {
-        hinweis =
-          ' Die Trikotfarben liessen sich nicht trennen: alle sind Team 1 (bitte im Editor zuordnen).';
+        farbHinweis =
+          ' Die Trikotfarben liessen sich nicht trennen: bitte die Teams im Dialog per Klick zuordnen.';
       }
     }
-    const marker = markerAusErkennungen(imFeld, teams, kal.H, projekt.taktik.feld, fw, fh);
+    const auswahl = baueAuswahl(r.boxen, feldPos, teams, projekt.taktik.feld);
     const quelle = projekt.quellen.find((q) => q.id === bild.quelleId);
-    const szene = neueSzene(bild.quellZeit, quelle?.fps ?? 25);
-    szene.marker = marker;
-    useProjekt
-      .getState()
-      .aendere('Situation übernehmen', (pr) => void pr.taktik.situationen.push(szene));
+    const teile = [
+      `${r.boxen.length} Personen erkannt`,
+      auswahl.ausserhalb ? `${auswahl.ausserhalb} ausserhalb des Feldes (Zuschauer, Bank)` : '',
+      auswahl.doppelt ? `${auswahl.doppelt} doppelt erkannt` : '',
+      auswahl.gekappt
+        ? `${auswahl.gekappt} unsichere abgewählt (mehr als ${MAX_SPIELER} Spieler sind nicht zu erwarten)`
+        : '',
+    ].filter(Boolean);
     setze({
-      situationId: szene.id,
-      markerId: null,
-      editorOffen: true,
-      meldung: `${marker.length} Spieler übernommen (${r.boxen.length} erkannt, ${r.boxen.length - imFeld.length} ausserhalb des Feldes). Bitte Nummern und Teams prüfen.${hinweis}`,
+      erkennung: {
+        frame: bild.frame,
+        quelleId: bild.quelleId,
+        quellZeit: bild.quellZeit,
+        fps: quelle?.fps ?? 25,
+        H: kal.H,
+        personen: auswahl.personen,
+        hinweis: `${teile.join(', ')}.${farbHinweis}`,
+      },
+      meldung: null,
     });
   } catch (e) {
     console.error(e);
@@ -177,4 +185,25 @@ export function klickInsVideo(pos: { x: number; y: number }): void {
     pr.taktik.situationen.find((s) => s.id === t.uebernahmeId)?.marker.push(marker);
   });
   setze({ meldung: null });
+}
+
+/** Prüfdialog bestätigt: aus den gewählten Personen entsteht die Situation, der Tafel-Editor öffnet sich. */
+export function bestaetigeErkennung(personen: Person[]): void {
+  const t = useTaktik.getState();
+  const projekt = useProjekt.getState().projekt;
+  const e = t.erkennung;
+  if (!projekt || !e) return;
+  const marker = markerAusPersonen(personen, projekt.taktik.feld);
+  const szene = neueSzene(e.quellZeit, e.fps);
+  szene.marker = marker;
+  useProjekt
+    .getState()
+    .aendere('Situation übernehmen', (pr) => void pr.taktik.situationen.push(szene));
+  setze({
+    erkennung: null,
+    situationId: szene.id,
+    markerId: null,
+    editorOffen: true,
+    meldung: `${marker.length} Spieler übernommen. Bitte Nummern zuordnen.`,
+  });
 }

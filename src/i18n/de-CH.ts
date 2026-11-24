@@ -576,6 +576,14 @@ export const t = {
     klickFertig: 'Fertig',
     klickHinweis: 'Klicken Sie auf die Füsse jedes Spielers.',
     teamsTauschen: 'Teams tauschen',
+    pruefen: 'Erkannte Personen prüfen',
+    uebernehmenN: (n: number) => `${n} Spieler übernehmen`,
+    nichtUebernommen: 'nicht übernommen',
+    zuViele: (n: number, max: number) =>
+      `${n} Spieler gewählt, erwartet sind höchstens ${max} (5 Feldspieler + Torhüter je Team): Zuschauer oder Schiedsrichter dabei?`,
+    zuVieleTeam: 'Ein Team hat mehr als 6 Spieler (5 + Torhüter): Teams prüfen.',
+    pruefHilfe:
+      'Klick auf einen Rahmen: Team 1 → Team 2 → nicht übernehmen. Gelb = berechnetes Feld (muss auf den echten Linien liegen), rot = Mittellinie, blau = blaue Linien. Grau gestrichelt = nicht übernommen (ausserhalb des Feldes, doppelt oder zu viele).',
   },
   spieler: {
     werkzeug: 'Spieler',

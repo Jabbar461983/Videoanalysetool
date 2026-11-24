@@ -6,14 +6,9 @@ import { useProjekt } from '../store/projektStore';
 import { useTaktik } from '../store/taktik';
 import { aktuellesBild, type StandbildInfo } from '../taktik/bild';
 import { referenzPunkte } from '../taktik/feld';
-import {
-  berechneKalibrierung,
-  bewerteKalibrierung,
-  invertiere,
-  wendeAn,
-  type PunktPaar,
-} from '../taktik/homographie';
+import { berechneKalibrierung, bewerteKalibrierung, type PunktPaar } from '../taktik/homographie';
 import { formatZeit } from '../video/bildmathe';
+import { zeichneFeldAufBild } from '../taktik/bildFeld';
 
 interface Paar extends PunktPaar {
   punktId: string;
@@ -53,50 +48,7 @@ export function KalibrierDialog() {
     c.height = H;
     const ctx = c.getContext('2d')!;
     ctx.drawImage(bild.frame, 0, 0, B, H);
-    if (ergebnis) {
-      const inv = invertiere(ergebnis.H);
-      if (inv) {
-        const lin = (pts: [number, number][], farbe: string) => {
-          ctx.strokeStyle = farbe;
-          ctx.lineWidth = 2;
-          ctx.beginPath();
-          pts.forEach(([x, y], i) => {
-            const p = wendeAn(inv, { x, y });
-            if (!p) return;
-            if (i === 0) ctx.moveTo(p.x * B, p.y * H);
-            else ctx.lineTo(p.x * B, p.y * H);
-          });
-          ctx.stroke();
-        };
-        const L = feld.laenge;
-        const Br = feld.breite;
-        lin(
-          [
-            [0, 0],
-            [L, 0],
-            [L, Br],
-            [0, Br],
-            [0, 0],
-          ],
-          '#BA990E',
-        );
-        lin(
-          [
-            [L / 2, 0],
-            [L / 2, Br],
-          ],
-          '#ffffff',
-        );
-        for (const lx of [feld.torLinieAbstand, L - feld.torLinieAbstand])
-          lin(
-            [
-              [lx, 0],
-              [lx, Br],
-            ],
-            'rgba(255,255,255,0.5)',
-          );
-      }
-    }
+    if (ergebnis) zeichneFeldAufBild(ctx, ergebnis.H, feld, B, H);
     paare.forEach((p, i) => {
       const x = p.bild.x * B;
       const y = p.bild.y * H;
