@@ -1,5 +1,6 @@
 import { usePlayer } from '../store/player';
-import { findeSegmentIndex, type Segment, type Zeitplan } from './zeitachse';
+import { vergleichHaelften } from '../render/vergleich';
+import { findeSegmentIndex, type Segment, type SeitenZustand, type Zeitplan } from './zeitachse';
 
 type Slot = 0 | 1;
 
@@ -75,6 +76,10 @@ export class Programmspieler {
     this.plan = null;
   }
 
+  /** Beide Videoelemente (links/rechts im Vergleich) */
+  get elemente(): [HTMLVideoElement, HTMLVideoElement] | null {
+    return this.els;
+  }
   get aktivesElement(): HTMLVideoElement | null {
     return this.els?.[this.aktiv] ?? null;
   }
@@ -96,6 +101,25 @@ export class Programmspieler {
     this.els.forEach((v, i) => {
       v.style.opacity = i === slot ? '1' : '0';
       v.style.zIndex = i === slot ? '1' : '0';
+      v.style.left = '';
+      v.style.right = '';
+      v.style.width = '';
+      v.style.objectFit = '';
+    });
+  }
+
+  /** Vergleich: beide Elemente sichtbar, links und rechts (gleiche Geometrie wie im Export). */
+  private zeigeVergleich(darstellung: 'einpassen' | 'fuellen'): void {
+    if (!this.els) return;
+    const g = vergleichHaelften(10000, 10000);
+    [g.links, g.rechts].forEach((r, i) => {
+      const v = this.els![i]!;
+      v.style.opacity = '1';
+      v.style.zIndex = '1';
+      v.style.left = `${r.x / 100}%`;
+      v.style.right = 'auto';
+      v.style.width = `${r.b / 100}%`;
+      v.style.objectFit = darstellung === 'fuellen' ? 'cover' : 'contain';
     });
   }
 
@@ -182,7 +206,7 @@ export class Programmspieler {
   private bereiteVor(idx: number): void {
     const seg = this.plan?.segmente[idx];
     this.bereit = null;
-    if (!seg || seg.art === 'titel' || !seg.quelleId) return;
+    if (!seg || seg.art === 'titel' || seg.art === 'vergleich' || !seg.quelleId) return;
     const url = this.urlFuer(seg.quelleId);
     if (!url) return;
     const slot: Slot = this.aktiv === 0 ? 1 : 0;
@@ -200,6 +224,8 @@ export class Programmspieler {
     try {
       if (seg.art === 'titel') {
         this.els.forEach((v) => v.pause());
+      } else if (seg.art === 'vergleich') {
+        if (!(await this.betreteVergleich(seg, lokal, tok))) return;
       } else {
         const url = this.urlOderFehler(seg);
         if (!url) return;
@@ -227,10 +253,66 @@ export class Programmspieler {
       if (tok !== this.token) return;
       this.uhrBasis = lokal;
       this.uhrStart = performance.now();
-      this.bereiteVor(idx + 1);
+      if (seg.art === 'vergleich') this.bereit = null;
+      else this.bereiteVor(idx + 1);
     } finally {
       if (tok === this.token) this.wechselt = false;
     }
+  }
+
+  /** Vergleich: beide Seiten auf ihre Bilder stellen; nur die laufende Seite spielt, die andere steht. */
+  private async betreteVergleich(seg: Segment, lokal: number, tok: number): Promise<boolean> {
+    const z = seg.vergleich;
+    const els = this.els;
+    if (!z || !els) return false;
+    const seiten: [SeitenZustand, SeitenZustand] = [z.links, z.rechts];
+    for (const sz of seiten) {
+      if (!this.urlFuer(sz.quelleId)) {
+        this.spielt = false;
+        cancelAnimationFrame(this.raf);
+        els.forEach((v) => v.pause());
+        this.beiFehler('Eine Videodatei dieses Programms ist nicht verknüpft.');
+        this.veroeffentliche();
+        return false;
+      }
+    }
+    const ziel = (sz: SeitenZustand) => (sz.laeuft ? sz.von + lokal * sz.tempo : sz.zeit);
+    const ok = await Promise.all(
+      seiten.map(async (sz, i) => {
+        const v = els[i]!;
+        const url = this.urlFuer(sz.quelleId)!;
+        const z0 = ziel(sz);
+        // Schon an der richtigen Stelle (z. B. Seite läuft im nächsten Abschnitt weiter): nichts anfassen
+        const passt =
+          v.dataset.quelle === sz.quelleId &&
+          v.dataset.url === url &&
+          v.readyState >= 2 &&
+          !v.seeking &&
+          Math.abs(v.currentTime - z0) < 0.06;
+        return passt ? true : this.setzeVideo(i as Slot, sz.quelleId, url, z0);
+      }),
+    );
+    if (tok !== this.token) return false;
+    if (ok.includes(false)) this.beiFehler('Das Video konnte nicht geladen werden.');
+    this.aktiv = 0;
+    this.zeigeVergleich(z.eintrag.darstellung);
+    seiten.forEach((sz, i) => {
+      const v = els[i]!;
+      v.playbackRate = sz.laeuft ? sz.tempo : 1;
+      if (this.spielt && sz.laeuft) void v.play().catch(() => {});
+      else v.pause();
+    });
+    return true;
+  }
+
+  /** Läuft im Vergleich eine Seite, ist deren Video die Uhr (links hat Vorrang). */
+  private vergleichUhr(seg: Segment): { v: HTMLVideoElement; sz: SeitenZustand } | null {
+    const z = seg.vergleich;
+    const els = this.els;
+    if (!z || !els) return null;
+    if (z.links.laeuft) return { v: els[0], sz: z.links };
+    if (z.rechts.laeuft) return { v: els[1], sz: z.rechts };
+    return null;
   }
 
   async abspielen(): Promise<void> {
@@ -244,6 +326,10 @@ export class Programmspieler {
     const seg = this.aktuellesSegment;
     const v = this.els?.[this.aktiv];
     if (seg?.art === 'video' && v) void v.play().catch(() => {});
+    if (seg?.art === 'vergleich' && seg.vergleich && this.els) {
+      if (seg.vergleich.links.laeuft) void this.els[0].play().catch(() => {});
+      if (seg.vergleich.rechts.laeuft) void this.els[1].play().catch(() => {});
+    }
     this.uhrBasis = seg ? Math.max(0, this.zeit - seg.start) : 0;
     this.uhrStart = performance.now();
     this.veroeffentliche();
@@ -273,7 +359,12 @@ export class Programmspieler {
     if (!plan || !seg || this.wechselt || !this.els) return;
     let lokal: number;
     let ende: boolean;
-    if (seg.art === 'video') {
+    const uhr = seg.art === 'vergleich' ? this.vergleichUhr(seg) : null;
+    if (uhr) {
+      if (uhr.v.seeking) return;
+      lokal = (uhr.v.currentTime - uhr.sz.von) / uhr.sz.tempo;
+      ende = uhr.v.currentTime >= uhr.sz.bis - 0.02 || uhr.v.ended;
+    } else if (seg.art === 'video') {
       const v = this.els[this.aktiv];
       if (v.seeking) return;
       lokal = (v.currentTime - seg.von!) / seg.tempo!;

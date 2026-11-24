@@ -148,6 +148,13 @@ export function Buehne({ quelle }: { quelle: Quelle | undefined }) {
     mixer.quellModus();
     usePlayer.getState().setFehler(null);
     // Anzeige: Element A sichtbar, B versteckt
+    for (const el of [v, vb]) {
+      if (!el) continue;
+      el.style.left = '';
+      el.style.right = '';
+      el.style.width = '';
+      el.style.objectFit = '';
+    }
     v.style.opacity = '1';
     v.style.zIndex = '1';
     if (vb) {

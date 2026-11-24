@@ -143,6 +143,8 @@ export const migrationen: Migration[] = [
       },
     };
   },
+  // 9 → 10: neuer Playlist-Eintrag «vergleich» (keine Datenänderung nötig)
+  (p) => p,
 ];
 
 export function migriere(roh: unknown): Projekt {

@@ -5,7 +5,7 @@ import { ladeLogo } from '../render/logo';
 import { useDateien } from '../store/dateien';
 import { useProjekt } from '../store/projektStore';
 import { baueProgrammPlan } from '../wiedergabe/plan';
-import type { Zeitplan } from '../wiedergabe/zeitachse';
+import { segmentQuellen, type Zeitplan } from '../wiedergabe/zeitachse';
 import {
   ausgabeGroesse,
   dateiName,
@@ -80,9 +80,7 @@ export async function pruefeExport(
   const { plan, name } = planFuer(ziel);
   if (!projekt || !plan || plan.dauer <= 0) return null;
   const dateien = useDateien.getState().dateien;
-  const benutzt = new Set(
-    plan.segmente.filter((s) => s.art !== 'titel' && s.quelleId).map((s) => s.quelleId!),
-  );
+  const benutzt = new Set(plan.segmente.flatMap((s) => segmentQuellen(s)));
   const fehlend = [...benutzt]
     .filter((id) => !dateien[id])
     .map((id) => projekt.quellen.find((q) => q.id === id)?.dateiname ?? id);

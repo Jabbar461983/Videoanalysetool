@@ -1,5 +1,5 @@
 /** Datenmodell nach CLAUDE.md Abschnitt 5. Zeiten in Sekunden der jeweiligen Quelle. */
-export const SCHEMA_VERSION = 9;
+export const SCHEMA_VERSION = 10;
 
 export interface Quelle {
   id: string;
@@ -77,6 +77,14 @@ export interface Clip {
   taktik?: { anzeige: TafelAnzeige; abschnitte: TaktikAbschnitt[] };
 }
 export type Uebergang = 'schnitt' | 'blende';
+/** Eine Seite eines Vergleichs: ein Clip mit Beschriftung und Ankerpunkt (Clip-Zeit in Sekunden, 0 = Clip-Anfang). */
+export interface VergleichSeite {
+  clipId: string;
+  beschriftung: string;
+  farbe: string;
+  anker: number;
+}
+export type VergleichAblauf = 'nacheinander' | 'gleichzeitig';
 /** `uebergang` gilt beim Wechsel vom vorherigen Eintrag in diesen. */
 export type PlaylistEintrag =
   | { id: string; typ: 'clip'; clipId: string; uebergang: Uebergang }
@@ -89,6 +97,23 @@ export type PlaylistEintrag =
       dauer: number;
       /** Logo auf der Titelfolie zeigen (Standard: ja) */
       logo?: boolean;
+      uebergang: Uebergang;
+    }
+  | {
+      id: string;
+      typ: 'vergleich';
+      links: VergleichSeite;
+      rechts: VergleichSeite;
+      /** nacheinander: erst links, dann rechts (die ruhende Seite ist abgedunkelt); gleichzeitig: beide laufen mit Ankern */
+      ablauf: VergleichAblauf;
+      /** Am Ende zusätzlich beide gleichzeitig laufen lassen (nur bei «nacheinander») */
+      zugabe: boolean;
+      /** Pause beim Wechsel der Seite, Sekunden */
+      pause: number;
+      /** Abdunklung der ruhenden Seite 0–0.8 */
+      abdunklung: number;
+      /** einpassen = ganzes Bild mit Rand; fuellen = Hälfte füllen, seitlich abschneiden */
+      darstellung: 'einpassen' | 'fuellen';
       uebergang: Uebergang;
     };
 export interface Playlist {

@@ -2,6 +2,7 @@ import type { Projekt } from '../model/typen';
 import { baueProgrammPlan } from '../wiedergabe/plan';
 import { blendeAlpha, findeSegmentIndex, type Zeitplan } from '../wiedergabe/zeitachse';
 import { zeichneTitelfolie } from './titelfolie';
+import { zeichneVergleich } from './vergleich';
 import { zeichneSpielerObjekte, type BilderMap } from './spieler';
 import { zeichneClipTafel } from './tafelOverlay';
 import { zeichneClipZeichnungen, zeichneZeichnung } from './zeichnungen';
@@ -65,7 +66,8 @@ function holePlan(projekt: Projekt, k: Exclude<RenderKontext, { art: 'quelle' }>
  */
 export function renderFrame(t: number, projekt: Projekt | null, ziel: RenderZiel): void {
   const { ctx, breite, hoehe } = ziel;
-  ctx.clearRect(0, 0, breite, hoehe);
+  // Vorschau: Overlay-Canvas über dem Video, jedes Bild neu. Export/PNG: Das Videobild ist schon gezeichnet und muss bleiben.
+  if (ziel.modus === 'vorschau') ctx.clearRect(0, 0, breite, hoehe);
   const k = ziel.kontext;
   if (!projekt || !k) return;
   const einst = projekt.einstellungen;
@@ -91,6 +93,10 @@ export function renderFrame(t: number, projekt: Projekt | null, ziel: RenderZiel
   if (seg?.art === 'titel' && seg.titel) {
     zeichneTitelfolie(ctx, breite, hoehe, seg.titel);
     logoZeichnen(seg.titel.logo !== false); // Scoreboard bleibt auf Titelfolien aus
+  }
+  if (seg?.art === 'vergleich' && seg.vergleich) {
+    zeichneVergleich(ctx, breite, hoehe, seg.vergleich);
+    logoZeichnen(true); // Scoreboard bleibt im Vergleich aus (zwei Spielstände verwirren)
   }
   // Clip-Zeit: im Clip-Editor = t, in der Playlist t − Start des Eintrags
   if (seg && seg.art !== 'titel' && seg.clipId) {

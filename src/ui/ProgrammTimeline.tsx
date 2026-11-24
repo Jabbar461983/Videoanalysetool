@@ -119,20 +119,26 @@ export function ProgrammTimeline() {
                 ? s.titel
                 : seg.art === 'freeze'
                   ? s.freeze
-                  : seg.tempo !== 1
-                    ? s.zeitlupe
-                    : s.video;
+                  : seg.art === 'vergleich'
+                    ? s.video
+                    : seg.tempo !== 1
+                      ? s.zeitlupe
+                      : s.video;
             const erstes = i === 0 || plan.segmente[i - 1]!.eintragIndex !== seg.eintragIndex;
             const text =
               seg.art === 'titel'
                 ? seg.titel?.titel
                 : seg.art === 'freeze'
                   ? t.clipEditor.standbild
-                  : seg.tempo !== 1
-                    ? `${seg.tempo}×`
-                    : erstes && art === 'playlist'
-                      ? clipName(seg.clipId)
-                      : '';
+                  : seg.art === 'vergleich'
+                    ? erstes
+                      ? `${t.vergleich.kurz}`
+                      : ''
+                    : seg.tempo !== 1
+                      ? `${seg.tempo}×`
+                      : erstes && art === 'playlist'
+                        ? clipName(seg.clipId)
+                        : '';
             return (
               <div
                 key={i}

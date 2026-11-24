@@ -8,7 +8,31 @@ import type { Clip, Playlist, PlaylistEintrag } from '../model/typen';
 export const BLENDE_DAUER = 0.3;
 const EPS = 1e-6;
 
-export type SegmentArt = 'video' | 'freeze' | 'titel';
+export type SegmentArt = 'video' | 'freeze' | 'titel' | 'vergleich';
+
+type VergleichEintrag = Extract<PlaylistEintrag, { typ: 'vergleich' }>;
+
+/** Zustand einer Vergleichsseite während eines Abschnitts: läuft von…bis oder steht auf einem Bild. */
+export interface SeitenZustand {
+  clipId: string;
+  quelleId: string;
+  laeuft: boolean;
+  /** steht: Quellzeit des Standbilds */
+  zeit: number;
+  /** läuft: Quellzeit-Bereich und Tempo */
+  von: number;
+  bis: number;
+  tempo: number;
+  /** Abdunklung 0–1 (0 = hell) */
+  dim: number;
+}
+export interface VergleichZustand {
+  links: SeitenZustand;
+  rechts: SeitenZustand;
+  /** welche Seite gerade «dran» ist */
+  aktiv: 'links' | 'rechts' | 'beide' | null;
+  eintrag: VergleichEintrag;
+}
 
 export interface Segment {
   art: SegmentArt;
@@ -28,6 +52,8 @@ export interface Segment {
   clipId?: string;
   /** titel: der Eintrag */
   titel?: Extract<PlaylistEintrag, { typ: 'titel' }>;
+  /** vergleich: Zustand beider Seiten (quelleId = Quelle der linken Seite) */
+  vergleich?: VergleichZustand;
 }
 
 /** Teilt einen Clip in Video- und Standbild-Segmente (clip-relative Zeit ab 0). */
@@ -88,6 +114,158 @@ export function clipSegmente(clip: Clip, eintragIndex = 0, offset = 0): Segment[
   }
   freezeBei(p[p.length - 1]!);
   return out;
+}
+
+// ---------- Vergleich ----------
+
+const stehtBei = (clip: Clip, zeit: number, dim: number): SeitenZustand => ({
+  clipId: clip.id,
+  quelleId: clip.quelleId,
+  laeuft: false,
+  zeit,
+  von: zeit,
+  bis: zeit,
+  tempo: 1,
+  dim,
+});
+
+const ausSegment = (clip: Clip, sg: Segment, dim: number): SeitenZustand =>
+  sg.art === 'freeze'
+    ? stehtBei(clip, sg.zeit!, dim)
+    : {
+        clipId: clip.id,
+        quelleId: clip.quelleId,
+        laeuft: true,
+        zeit: sg.von!,
+        von: sg.von!,
+        bis: sg.bis!,
+        tempo: sg.tempo!,
+        dim,
+      };
+
+function seiteZwischen(
+  clip: Clip,
+  subs: Segment[],
+  versatz: number,
+  dauer: number,
+  x: number,
+  y: number,
+): SeitenZustand {
+  const lokal = (x + y) / 2 - versatz;
+  if (lokal <= 0) return stehtBei(clip, clip.in, 0);
+  if (lokal >= dauer) return stehtBei(clip, clip.out, 0);
+  const sg =
+    subs.find((q) => lokal >= q.start && lokal < q.start + q.dauer) ?? subs[subs.length - 1]!;
+  if (sg.art === 'freeze') return stehtBei(clip, sg.zeit!, 0);
+  return {
+    clipId: clip.id,
+    quelleId: clip.quelleId,
+    laeuft: true,
+    zeit: sg.von!,
+    von: sg.von! + (x - versatz - sg.start) * sg.tempo!,
+    bis: sg.von! + (y - versatz - sg.start) * sg.tempo!,
+    tempo: sg.tempo!,
+    dim: 0,
+  };
+}
+
+/**
+ * Zeitachse eines Vergleichs. «Nacheinander»: links läuft (rechts steht abgedunkelt auf der Ausgangslage),
+ * Pause, rechts läuft (links steht abgedunkelt auf dem letzten Bild); optional als Zugabe beide gleichzeitig.
+ * «Gleichzeitig»: beide laufen, die Ankerpunkte fallen zusammen.
+ */
+export function vergleichSegmente(
+  e: VergleichEintrag,
+  a: Clip,
+  b: Clip,
+  eintragIndex = 0,
+  offset = 0,
+): Segment[] {
+  const sa = clipSegmente(a);
+  const sb = clipSegmente(b);
+  const da = segmenteDauer(sa);
+  const db = segmenteDauer(sb);
+  const dim = Math.min(0.8, Math.max(0, e.abdunklung));
+  const pause = Math.max(0, e.pause);
+  const out: Segment[] = [];
+  let t = offset;
+  const push = (
+    links: SeitenZustand,
+    rechts: SeitenZustand,
+    aktiv: VergleichZustand['aktiv'],
+    dauer: number,
+  ) => {
+    if (dauer < EPS) return;
+    out.push({
+      art: 'vergleich',
+      start: t,
+      dauer,
+      quelleId: links.quelleId,
+      eintragIndex,
+      vergleich: { links, rechts, aktiv, eintrag: e },
+    });
+    t += dauer;
+  };
+  const gleichzeitig = () => {
+    const ka = Math.min(da, Math.max(0, e.links.anker));
+    const kb = Math.min(db, Math.max(0, e.rechts.anker));
+    const oa = Math.max(0, kb - ka);
+    const ob = Math.max(0, ka - kb);
+    const gesamt = Math.max(oa + da, ob + db);
+    const punkte = new Set<number>([0, gesamt]);
+    for (const s of sa) {
+      punkte.add(oa + s.start);
+      punkte.add(oa + s.start + s.dauer);
+    }
+    for (const s of sb) {
+      punkte.add(ob + s.start);
+      punkte.add(ob + s.start + s.dauer);
+    }
+    const p = [...punkte].sort((x, y) => x - y);
+    for (let i = 0; i < p.length - 1; i++) {
+      const x = p[i]!;
+      const y = p[i + 1]!;
+      if (y - x < EPS) continue;
+      const links = seiteZwischen(a, sa, oa, da, x, y);
+      const rechts = seiteZwischen(b, sb, ob, db, x, y);
+      const aktiv =
+        links.laeuft && rechts.laeuft
+          ? 'beide'
+          : links.laeuft
+            ? 'links'
+            : rechts.laeuft
+              ? 'rechts'
+              : null;
+      push(links, rechts, aktiv, y - x);
+    }
+  };
+  if (e.ablauf === 'gleichzeitig') {
+    gleichzeitig();
+    return out;
+  }
+  for (const s of sa) push(ausSegment(a, s, 0), stehtBei(b, b.in, dim), 'links', s.dauer);
+  push(stehtBei(a, a.out, dim), stehtBei(b, b.in, 0), null, pause);
+  for (const s of sb) push(stehtBei(a, a.out, dim), ausSegment(b, s, 0), 'rechts', s.dauer);
+  if (e.zugabe) {
+    push(stehtBei(a, a.in, 0), stehtBei(b, b.in, 0), null, pause);
+    gleichzeitig();
+  }
+  return out;
+}
+
+/** Alle Quellen, die ein Abschnitt braucht (beim Vergleich beide Seiten). */
+export function segmentQuellen(seg: Segment): string[] {
+  if (seg.art === 'titel') return [];
+  if (seg.art === 'vergleich' && seg.vergleich)
+    return [...new Set([seg.vergleich.links.quelleId, seg.vergleich.rechts.quelleId])];
+  return seg.quelleId ? [seg.quelleId] : [];
+}
+
+/** Quellzeit einer Seite im Vergleichs-Abschnitt `seg` zur Programmzeit `t`. */
+export function vergleichSeitenZeit(seg: Segment, seite: 'links' | 'rechts', t: number): number {
+  const z = seg.vergleich?.[seite];
+  if (!z) return 0;
+  return z.laeuft ? z.von + Math.min(Math.max(0, t - seg.start), seg.dauer) * z.tempo : z.zeit;
 }
 
 export function segmenteDauer(segs: Segment[]): number {
@@ -175,6 +353,16 @@ export function playlistZeitplan(pl: Pick<Playlist, 'eintraege'>, clips: Clip[])
       if (!clip) return;
       const segs = clipSegmente(clip, index, t);
       const d = segmenteDauer(segs) - t;
+      segmente.push(...segs);
+      eintraege.push({ index, eintrag: e, start: t, dauer: d });
+      t += d;
+    } else if (e.typ === 'vergleich') {
+      const a = clips.find((c) => c.id === e.links.clipId);
+      const b = clips.find((c) => c.id === e.rechts.clipId);
+      if (!a || !b) return;
+      const segs = vergleichSegmente(e, a, b, index, t);
+      const d = segmenteDauer(segs) - t;
+      if (d <= 0) return;
       segmente.push(...segs);
       eintraege.push({ index, eintrag: e, start: t, dauer: d });
       t += d;

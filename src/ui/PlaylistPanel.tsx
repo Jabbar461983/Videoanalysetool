@@ -3,15 +3,18 @@ import { t } from '../i18n/de-CH';
 import { neueId } from '../model/schema';
 import type { Playlist, PlaylistEintrag } from '../model/typen';
 import { useProgramm } from '../store/programm';
+import { useSchnitt } from '../store/schnitt';
 import { useProjekt } from '../store/projektStore';
 import {
   aktivePlaylist,
   dupliziereClipListe,
   neueTitelfolie,
+  neuerVergleich,
   sichereAktivePlaylist,
   verschiebeEintrag,
 } from '../schnitt/schnittLogik';
 import { useAutoPlaylist } from '../store/autoPlaylist';
+import { VergleichEditor } from './VergleichEditor';
 import { startepraesentation } from '../praesentation/aktionen';
 import { playlistZeitplan } from '../wiedergabe/zeitachse';
 import { formatZeit } from '../video/bildmathe';
@@ -197,11 +200,15 @@ export function PlaylistPanel() {
                         {i + 1}
                       </span>
                       <strong
-                        style={{ color: e.typ === 'titel' ? 'var(--bd-gold)' : 'var(--bd-ink)' }}
+                        style={{
+                          color: e.typ === 'clip' ? 'var(--bd-ink)' : 'var(--bd-gold)',
+                        }}
                       >
                         {e.typ === 'titel'
                           ? e.titel || '(Titel)'
-                          : (clip?.name ?? t.playlist.clipFehlt)}
+                          : e.typ === 'vergleich'
+                            ? `${t.vergleich.kurz}: ${e.links.beschriftung} ⇄ ${e.rechts.beschriftung}`
+                            : (clip?.name ?? t.playlist.clipFehlt)}
                       </strong>
                       <span className="hinweis">{ez ? `${ez.dauer.toFixed(1)} s` : ''}</span>
                     </button>
@@ -303,6 +310,18 @@ export function PlaylistPanel() {
                           </label>
                         </div>
                       )}
+                      {e.typ === 'vergleich' && (
+                        <VergleichEditor
+                          e={e}
+                          index={i}
+                          projekt={projekt}
+                          plan={plan}
+                          imPlayer={programm.art === 'playlist' && programm.playlistId === pl.id}
+                          aendere={(fn) =>
+                            bearbeiteEintrag(e.id, (x) => x.typ === 'vergleich' && fn(x))
+                          }
+                        />
+                      )}
                       <div className={s.reihe}>
                         <label className="hinweis">
                           {t.playlist.uebergang}{' '}
@@ -323,7 +342,7 @@ export function PlaylistPanel() {
                         {ez && (
                           <button
                             className={s.mini}
-                            onClick={() => spieleAb(ez.start, e.typ === 'clip')}
+                            onClick={() => spieleAb(ez.start, e.typ !== 'titel')}
                           >
                             {e.typ === 'titel' ? t.playlist.vorschau : t.playlist.hierAbspielen}
                           </button>
@@ -360,6 +379,23 @@ export function PlaylistPanel() {
           }}
         >
           {t.playlist.titelfolie}
+        </button>
+        <button
+          data-testid="vergleich-neu"
+          disabled={projekt.clips.length === 0}
+          onClick={() => {
+            const gewaehlt = useSchnitt.getState().gewaehlterClipId;
+            const a = projekt.clips.find((c) => c.id === gewaehlt) ?? projekt.clips[0];
+            const b = projekt.clips.find((c) => c.id !== a?.id) ?? a;
+            if (!a || !b) return;
+            const neu = neuerVergleich(a.id, b.id);
+            useProjekt
+              .getState()
+              .aendere('Vergleich', (d) => void sichereAktivePlaylist(d).eintraege.push(neu));
+            setOffen(neu.id);
+          }}
+        >
+          {t.vergleich.hinzufuegen}
         </button>
         <button data-testid="auto-fuellen" onClick={() => useAutoPlaylist.getState().oeffne()}>
           {t.autoPlaylist.knopf}

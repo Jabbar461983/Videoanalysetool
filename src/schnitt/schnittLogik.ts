@@ -80,7 +80,11 @@ export function entferneClip(p: Projekt, clipId: string): void {
   p.clips = p.clips.filter((c) => c.id !== clipId);
   entferneZeichnungenVonClip(p, clipId);
   for (const pl of p.playlisten) {
-    pl.eintraege = pl.eintraege.filter((e) => !(e.typ === 'clip' && e.clipId === clipId));
+    pl.eintraege = pl.eintraege.filter(
+      (e) =>
+        !(e.typ === 'clip' && e.clipId === clipId) &&
+        !(e.typ === 'vergleich' && (e.links.clipId === clipId || e.rechts.clipId === clipId)),
+    );
   }
 }
 
@@ -115,6 +119,20 @@ export const neueTitelfolie = (): PlaylistEintrag => ({
   titel: 'Titel',
   untertitel: '',
   dauer: 3,
+  uebergang: 'schnitt',
+});
+
+/** Neuer Vergleich: «Schlecht» links, «Gut» rechts (erst der Fehler, dann die Lösung). */
+export const neuerVergleich = (linksClipId: string, rechtsClipId: string): PlaylistEintrag => ({
+  id: neueId(),
+  typ: 'vergleich',
+  links: { clipId: linksClipId, beschriftung: 'Schlecht', farbe: '#E53935', anker: 0 },
+  rechts: { clipId: rechtsClipId, beschriftung: 'Gut', farbe: '#43A047', anker: 0 },
+  ablauf: 'nacheinander',
+  zugabe: true,
+  pause: 1,
+  abdunklung: 0.45,
+  darstellung: 'einpassen',
   uebergang: 'schnitt',
 });
 

@@ -68,6 +68,25 @@ function psnrDb(a: string, b: string, crop?: string): number {
   return m ? (m[1] === 'inf' ? 99 : Number(m[1])) : NaN;
 }
 
+/** Mittlere Helligkeit (0–255) eines Bildausschnitts `b:h:x:y`. */
+function helligkeit(bild: string, ausschnitt: string): number {
+  const out = execFileSync('ffmpeg', [
+    '-hide_banner',
+    '-loglevel',
+    'error',
+    '-i',
+    bild,
+    '-vf',
+    `crop=${ausschnitt},scale=1:1`,
+    '-pix_fmt',
+    'gray',
+    '-f',
+    'rawvideo',
+    '-',
+  ]);
+  return out[0]!;
+}
+
 test('MP4-Export: gültige Datei (H.264, Ton, Dauer) und Bild deckungsgleich mit der Vorschau', async ({
   page,
 }) => {
@@ -131,8 +150,11 @@ test('MP4-Export: gültige Datei (H.264, Ton, Dauer) und Bild deckungsgleich mit
     '1',
     exportiert,
   ]);
-  expect(psnrDb(exportiert, erwartet)).toBeGreaterThan(26); // ganzes Bild (Videokompression)
-  expect(psnrDb(exportiert, erwartet, '230:50:0:0')).toBeGreaterThan(24); // Scoreboard-Bereich: Text, Streifen, Stand
+  // Das Videobild selbst ist im Export zu sehen (nicht nur Overlays auf Schwarz)
+  expect(helligkeit(exportiert, '320:180:160:90')).toBeGreaterThan(20);
+  expect(helligkeit(erwartet, '320:180:160:90')).toBeGreaterThan(20);
+  expect(psnrDb(exportiert, erwartet)).toBeGreaterThan(22); // ganzes Bild inkl. Videobild (Kompression, testsrc2 ist detailreich)
+  expect(psnrDb(exportiert, erwartet, '230:50:0:0')).toBeGreaterThan(21); // Scoreboard-Bereich: Text, Streifen, Stand
   // Auch das Logo (oben rechts) stimmt
   // (das detailreiche Vereinslogo wird bei 640×360 stärker komprimiert als der Platzhalter)
   expect(psnrDb(exportiert, erwartet, '120:70:520:0')).toBeGreaterThan(21);

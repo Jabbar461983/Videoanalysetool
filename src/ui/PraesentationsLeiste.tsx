@@ -48,8 +48,10 @@ export function PraesentationsLeiste() {
   const titel =
     e?.eintrag.typ === 'titel'
       ? e.eintrag.titel
-      : (projekt?.clips.find((c) => e?.eintrag.typ === 'clip' && c.id === e.eintrag.clipId)?.name ??
-        '');
+      : e?.eintrag.typ === 'vergleich'
+        ? `${e.eintrag.links.beschriftung} ⇄ ${e.eintrag.rechts.beschriftung}`
+        : (projekt?.clips.find((c) => e?.eintrag.typ === 'clip' && c.id === e.eintrag.clipId)
+            ?.name ?? '');
 
   return (
     <div

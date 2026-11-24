@@ -15,8 +15,9 @@ import {
 import { renderFrame, type RenderKontext } from '../render/renderFrame';
 import { ladeSpielerBilder } from '../render/spielerBilder';
 import type { BilderMap } from '../render/spieler';
+import { passeEin, vergleichHaelften } from '../render/vergleich';
 import { baueProgrammPlan } from '../wiedergabe/plan';
-import type { Segment } from '../wiedergabe/zeitachse';
+import type { Segment, SeitenZustand } from '../wiedergabe/zeitachse';
 import { frameAnzahl, quellZeitFuerFrame } from './format';
 import type { ExportAuftrag, WorkerBefehl, WorkerNachricht } from './typen';
 
@@ -149,6 +150,66 @@ async function laufe(a: ExportAuftrag): Promise<void> {
       }
       return out;
     };
+
+    // Vergleich: jede Seite hat ihren eigenen Decoder-Strom bzw. ihr Standbild
+    interface SeitenStatus {
+      seg: number;
+      gen: AsyncGenerator<{ canvas: CanvasImageSource } | null, void, unknown> | null;
+      letztes: CanvasImageSource | null;
+      stand: OffscreenCanvas | null;
+      standKey: string;
+    }
+    const neueSeite = (): SeitenStatus => ({
+      seg: -1,
+      gen: null,
+      letztes: null,
+      stand: null,
+      standKey: '',
+    });
+    const seitenStatus = { links: neueSeite(), rechts: neueSeite() };
+    const seitenBild = async (
+      name: 'links' | 'rechts',
+      si: number,
+      seg: Segment,
+      sz: SeitenZustand,
+      i: number,
+    ): Promise<CanvasImageSource | null> => {
+      const st = seitenStatus[name];
+      const senke = await holeSenke(sz.quelleId);
+      if (sz.laeuft) {
+        if (st.seg !== si) {
+          const zeiten: number[] = [];
+          for (let k = i; k < gesamt && k / a.fps < seg.start + seg.dauer - 1e-9; k++) {
+            zeiten.push(
+              quellZeitFuerFrame(k, a.fps, {
+                start: seg.start,
+                von: sz.von,
+                bis: sz.bis,
+                tempo: sz.tempo,
+              }),
+            );
+          }
+          st.gen = senke.canvasesAtTimestamps(zeiten) as unknown as SeitenStatus['gen'];
+          st.seg = si;
+        }
+        const r = await st.gen!.next();
+        if (!r.done && r.value) st.letztes = r.value.canvas;
+        return st.letztes;
+      }
+      st.seg = -1;
+      const key = `${sz.quelleId}:${sz.zeit}`;
+      if (st.standKey !== key) {
+        const w =
+          (await senke.getCanvas(sz.zeit)) ??
+          (await senke.getCanvas(Math.max(0, sz.zeit - 1 / a.fps)));
+        st.stand = new OffscreenCanvas(a.breite, a.hoehe);
+        if (w) st.stand.getContext('2d')!.drawImage(w.canvas, 0, 0, a.breite, a.hoehe);
+        st.standKey = key;
+      }
+      st.letztes = st.stand;
+      return st.stand;
+    };
+
     for (let i = 0; i < gesamt; i++) {
       if (abbruch) throw new Abbruch();
       const t = i / a.fps;
@@ -166,6 +227,18 @@ async function laufe(a: ExportAuftrag): Promise<void> {
         const r = await gen!.next();
         if (!r.done && r.value) letztes = r.value.canvas;
         if (letztes) ctx.drawImage(letztes, 0, 0, a.breite, a.hoehe);
+      } else if (seg.art === 'vergleich' && seg.vergleich) {
+        const h = vergleichHaelften(a.breite, a.hoehe);
+        const paare: ['links' | 'rechts', SeitenZustand][] = [
+          ['links', seg.vergleich.links],
+          ['rechts', seg.vergleich.rechts],
+        ];
+        for (const [name, sz] of paare) {
+          const bild = await seitenBild(name, si, seg, sz, i);
+          if (!bild) continue;
+          const f = passeEin(a.breite, a.hoehe, h[name], seg.vergleich.eintrag.darstellung);
+          ctx.drawImage(bild, f.sx, f.sy, f.sb, f.sh, f.dx, f.dy, f.db, f.dh);
+        }
       } else if (seg.art === 'freeze') {
         if (standbildSeg !== si) {
           const senke = await holeSenke(seg.quelleId!);

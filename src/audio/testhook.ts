@@ -73,7 +73,7 @@ hook.vorschauBild = (breite: number, hoehe: number): string => {
     ctx,
     breite,
     hoehe,
-    modus: 'vorschau',
+    modus: 'export', // Videobild ist schon gezeichnet (wie im Export): nicht löschen
     kontext,
     logo: holeLogo(),
     bilder: vorschauBilder,
