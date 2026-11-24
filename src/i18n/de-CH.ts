@@ -517,6 +517,9 @@ export const t = {
     trackingKorrektur:
       'Verfolgung ungenau? Auf den Spieler klicken, wo er verloren ging: Das Verfolgen setzt dort neu an.',
     nurFreeze: 'Kontur, Lupe und Verschieben gehen nur im Freeze-Frame.',
+    schnelltest: 'Geschwindigkeit des Geräts prüfen',
+    automatikErzwingen:
+      'Automatisches Mitführen immer versuchen (auch wenn der Geschwindigkeitstest «zu langsam» meldet)',
     trackingStellen: 'Unsichere Stellen:',
     fehlerMaske: 'Hier wurde kein Spieler erkannt. Klicken Sie mitten auf den Spieler.',
     ausserhalb:

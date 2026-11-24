@@ -4,7 +4,7 @@ import ortWasm from 'onnxruntime-web/ort-wasm-simd-threaded.jsep.wasm?url';
 import { ALL_FORMATS, BlobSource, CanvasSink, Input } from 'mediabunny';
 import { ZielVerfolger, type Box, type Erkennung } from './tracker';
 import type { SpurPunkt, TrackingAntwort, TrackingBefehl } from './trackingTypen';
-import { DETEKTOR_DTYPE, DETEKTOR_REPO, ausschnittFuerBox } from './detektor';
+import { DETEKTOR_DTYPE, DETEKTOR_DTYPE_GPU, DETEKTOR_REPO, ausschnittFuerBox } from './detektor';
 
 /**
  * Tracking im Worker: Bilder der Clipspanne mit Mediabunny decodieren, um die vorhergesagte Position einen
@@ -18,6 +18,8 @@ let model: any = null;
 let processor: any = null;
 let geraetGeladen: 'webgpu' | 'wasm' | null = null;
 let abbruch = false;
+/** Fehlertext, wenn WebGPU nicht geladen werden konnte (für die Diagnose in der Oberfläche) */
+let fehlerGpu = '';
 
 const senden = (a: TrackingAntwort) => (self as unknown as Worker).postMessage(a);
 
@@ -58,7 +60,7 @@ async function ladeDetektor(geraet: 'auto' | 'wasm' | 'webgpu'): Promise<'webgpu
   for (const device of geraete) {
     try {
       model = await tf.AutoModelForObjectDetection.from_pretrained(DETEKTOR_REPO, {
-        dtype: DETEKTOR_DTYPE as never,
+        dtype: (device === 'webgpu' ? DETEKTOR_DTYPE_GPU : DETEKTOR_DTYPE) as never,
         device,
         progress_callback,
       });
@@ -68,6 +70,7 @@ async function ladeDetektor(geraet: 'auto' | 'wasm' | 'webgpu'): Promise<'webgpu
       return device;
     } catch (err) {
       letzter = err;
+      fehlerGpu = device === 'webgpu' ? String((err as Error)?.message ?? err) : fehlerGpu;
     }
   }
   throw letzter instanceof Error ? letzter : new Error(String(letzter));
@@ -221,7 +224,7 @@ async function schnelltest(geraet: 'auto' | 'wasm' | 'webgpu') {
     const { ms } = await erkenneImBild(c, { cx: 625, cy: 365, b: 50, h: 130 });
     if (i > 0) zeiten.push(ms); // erster Lauf zählt nicht (Aufwärmen)
   }
-  senden({ typ: 'schnelltest', medianMs: mitte(zeiten), geraet: g });
+  senden({ typ: 'schnelltest', medianMs: mitte(zeiten), geraet: g, gpuFehler: fehlerGpu });
 }
 
 self.onmessage = async (e: MessageEvent<TrackingBefehl>) => {

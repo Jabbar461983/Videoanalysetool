@@ -59,7 +59,7 @@ export class TrackingLauf {
   async schnelltest(geraet: 'auto' | 'wasm' | 'webgpu' = 'auto') {
     try {
       const a = await this.warte({ typ: 'schnelltest', geraet }, 'schnelltest');
-      return { medianMs: a.medianMs, geraet: a.geraet };
+      return { medianMs: a.medianMs, geraet: a.geraet, gpuFehler: a.gpuFehler };
     } finally {
       this.beende();
     }

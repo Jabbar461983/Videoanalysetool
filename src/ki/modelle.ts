@@ -6,6 +6,8 @@ export interface SamModellInfo {
   art: 'sam' | 'sam2';
   /** dtype-Angaben für transformers.js (quantisiert = klein und schnell) */
   dtype: Record<string, string> | string;
+  /** dtype auf WebGPU: unquantisiert (Quantisierung läuft auf der Grafikkarte oft nicht oder langsam) */
+  dtypeGpu?: string;
   /** ungefähre Ladegrösse in MB (Summe der geladenen Dateien) */
   mb: number;
   lizenz: string;
@@ -18,6 +20,7 @@ export const SAM_MODELLE: SamModellInfo[] = [
     repo: 'Xenova/slimsam-77-uniform',
     art: 'sam',
     dtype: 'q8',
+    dtypeGpu: 'fp32',
     mb: 14,
     lizenz: 'Apache-2.0',
   },
@@ -27,6 +30,7 @@ export const SAM_MODELLE: SamModellInfo[] = [
     repo: 'Xenova/slimsam-50-uniform',
     art: 'sam',
     dtype: 'q8',
+    dtypeGpu: 'fp32',
     mb: 35,
     lizenz: 'Apache-2.0',
   },

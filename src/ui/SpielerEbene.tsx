@@ -190,7 +190,7 @@ export function SpielerEbene() {
               {t.spieler.trackingAbbrechen}
             </button>
           )}
-          {status === 'fehler' && detail && (
+          {detail && (status === 'fehler' || (meldung && meldung.startsWith('tracking'))) && (
             <div data-testid="spieler-detail" style={{ marginTop: 4, fontSize: 11, opacity: 0.8 }}>
               {t.spieler.technisch}: {detail.slice(0, 300)}
             </div>

@@ -160,10 +160,14 @@ export async function klickAufSpieler(
     const klickZeit = quellZeitFuer(projektOderNull(), clipId, usePlayer.getState().zeit);
     let auto = false;
     let grund: string | null = null;
+    let grundInfo: string | null = null;
     if (projektOderNull()?.einstellungen.trackingModus === 'auto') {
       const pr = await pruefeAutomatik();
       auto = pr.ok;
-      if (!pr.ok) grund = pr.grund === 'keinWebgpu' ? 'trackingKeinWebgpu' : 'trackingZuLangsam';
+      if (!pr.ok) {
+        grund = pr.grund === 'keinWebgpu' ? 'trackingKeinWebgpu' : 'trackingZuLangsam';
+        grundInfo = pr.info;
+      }
     }
     await stelleModellSicher();
     const clipDauer = (() => {
@@ -208,7 +212,7 @@ export async function klickAufSpieler(
     sitzung = { objId: id, frame, crop, punkte };
     // Abspielkopf sicher in das Standbild setzen (dessen Beginn liegt auf der Bildgrenze, ggf. nach der Klickposition)
     if (!auto) usePlayer.getState().suche(span.start + 0.001);
-    setze({ status: 'bereit', auswahlId: id, meldung: grund });
+    setze({ status: 'bereit', auswahlId: id, meldung: grund, detail: grundInfo });
     if (auto) void starteTracking(id);
     return span.neu ? 'standbildEingefuegt' : null;
   } catch (e) {

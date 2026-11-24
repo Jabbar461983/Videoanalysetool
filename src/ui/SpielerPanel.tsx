@@ -26,6 +26,7 @@ export function SpielerPanel({ clipId }: { clipId: string }) {
   const status = useSpielerKi((x) => x.status);
   const tracking = useSpielerKi((x) => x.tracking);
   const meldung = useSpielerKi((x) => x.meldung);
+  const detail = useSpielerKi((x) => x.detail);
   const o = liste.find((x) => x.id === auswahlId);
   const auto = o?.trackingModus === 'auto';
   const verschoben = !!o && Math.abs(o.versatz.x) + Math.abs(o.versatz.y) > 1e-6;
@@ -42,6 +43,7 @@ export function SpielerPanel({ clipId }: { clipId: string }) {
         typeof t.spieler[meldung as keyof typeof t.spieler] === 'string' && (
           <p role="status" className="hinweis" style={{ color: 'var(--bd-gold)' }}>
             {t.spieler[meldung as keyof typeof t.spieler] as string}
+            {detail && meldung.startsWith('tracking') ? ` ${detail}` : ''}
           </p>
         )}
       <ul style={{ listStyle: 'none', padding: 0, margin: 0 }} data-testid="spielerliste">

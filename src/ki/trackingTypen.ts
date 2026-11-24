@@ -30,5 +30,5 @@ export type TrackingAntwort =
   | { typ: 'bereit'; geraet: 'webgpu' | 'wasm'; ladeMs: number }
   | { typ: 'lauf'; anteil: number; zeit: number; punkt: SpurPunkt; ms: number }
   | { typ: 'fertig'; punkte: SpurPunkt[]; abgebrochen: boolean; medianMs: number }
-  | { typ: 'schnelltest'; medianMs: number; geraet: 'webgpu' | 'wasm' }
+  | { typ: 'schnelltest'; medianMs: number; geraet: 'webgpu' | 'wasm'; gpuFehler: string }
   | { typ: 'fehler'; meldung: string };

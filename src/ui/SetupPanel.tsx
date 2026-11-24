@@ -2,10 +2,19 @@ import { TeamEditor } from './TeamEditor';
 import { TagDefEditor } from './TagDefEditor';
 import { OverlayEinstellungen } from './OverlayEinstellungen';
 import { useProjekt } from '../store/projektStore';
+import { useState } from 'react';
 import { t } from '../i18n/de-CH';
+import {
+  automatikErzwungen,
+  erzwingeAutomatik,
+  wiederholeSchnelltest,
+} from '../ki/trackingAktionen';
 
 export function SetupPanel() {
   const projekt = useProjekt((x) => x.projekt);
+  const [erzwungen, setErzwungen] = useState(automatikErzwungen());
+  const [pruefung, setPruefung] = useState<string | null>(null);
+  const [laeuft, setLaeuft] = useState(false);
   if (!projekt) return null;
   return (
     <>
@@ -28,6 +37,42 @@ export function SetupPanel() {
         </select>
       </label>
       <p className="hinweis">{t.spieler.freeze}</p>
+      <p>
+        <button
+          type="button"
+          disabled={laeuft}
+          data-testid="schnelltest-wiederholen"
+          onClick={() => {
+            setLaeuft(true);
+            setPruefung(t.spieler.trackingPruefung);
+            wiederholeSchnelltest()
+              .then((r) => setPruefung(`${r.ok ? 'Bestanden. ' : 'Nicht bestanden. '}${r.info}`))
+              .catch((e) =>
+                setPruefung(`Fehlgeschlagen: ${e instanceof Error ? e.message : String(e)}`),
+              )
+              .finally(() => setLaeuft(false));
+          }}
+        >
+          {t.spieler.schnelltest}
+        </button>
+      </p>
+      {pruefung && (
+        <p className="hinweis" role="status" data-testid="schnelltest-ergebnis">
+          {pruefung}
+        </p>
+      )}
+      <label>
+        <input
+          type="checkbox"
+          checked={erzwungen}
+          data-testid="automatik-erzwingen"
+          onChange={(e) => {
+            erzwingeAutomatik(e.target.checked);
+            setErzwungen(e.target.checked);
+          }}
+        />{' '}
+        {t.spieler.automatikErzwingen}
+      </label>
       <div style={{ height: 24 }} />
       <TeamEditor index={0} />
       <TeamEditor index={1} />

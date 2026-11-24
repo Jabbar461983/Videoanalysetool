@@ -16,7 +16,8 @@ export const SCHNELLTEST_SCHWELLE_MS = 600;
 /** Mehr als dieser Anteil «verloren» in der Spur → Freeze-Frame vorschlagen/verwenden. */
 export const MAX_VERLOREN_ANTEIL = 0.3;
 const SCHRITT = 1 / 12;
-const TEST_SCHLUESSEL = 'bdva-tracking-schnelltest';
+const TEST_SCHLUESSEL = 'bdva-tracking-schnelltest-v2';
+const ERZWINGEN_SCHLUESSEL = 'bdva-tracking-erzwingen';
 
 const setze = (p: Parameters<ReturnType<typeof useSpielerKi.getState>['setze']>[0]) =>
   useSpielerKi.getState().setze(p);
@@ -25,7 +26,48 @@ const projektOderNull = (): Projekt | null => useProjekt.getState().projekt;
 let lauf: TrackingLauf | null = null;
 
 export type AutomatikGrund = 'keinWebgpu' | 'zuLangsam';
-export type AutomatikPruefung = { ok: true } | { ok: false; grund: AutomatikGrund };
+export type AutomatikPruefung = { ok: true } | { ok: false; grund: AutomatikGrund; info: string };
+
+export const automatikErzwungen = (): boolean => {
+  try {
+    return localStorage.getItem(ERZWINGEN_SCHLUESSEL) === '1';
+  } catch {
+    return false;
+  }
+};
+export function erzwingeAutomatik(an: boolean): void {
+  try {
+    if (an) localStorage.setItem(ERZWINGEN_SCHLUESSEL, '1');
+    else localStorage.removeItem(ERZWINGEN_SCHLUESSEL);
+  } catch {
+    /* egal */
+  }
+}
+
+const infoText = (ms: number, geraet: string, gpuFehler: string): string =>
+  geraet === 'webgpu'
+    ? `Gemessen: ${Math.round(ms)} ms je Erkennung auf der Grafikkarte (Schwelle ${SCHNELLTEST_SCHWELLE_MS} ms).`
+    : `WebGPU liess sich für die Erkennung nicht nutzen${gpuFehler ? ` (${gpuFehler.slice(0, 160)})` : ''}; auf dem Prozessor: ${Math.round(ms)} ms je Erkennung.`;
+
+/** Misst die Erkennungszeit neu (verwirft das gemerkte Ergebnis). */
+export async function wiederholeSchnelltest(): Promise<{ ok: boolean; info: string }> {
+  try {
+    localStorage.removeItem(TEST_SCHLUESSEL);
+  } catch {
+    /* egal */
+  }
+  if (!(await hatGpuAdapter())) return { ok: false, info: 'Dieser Browser bietet kein WebGPU.' };
+  const r = await new TrackingLauf().schnelltest('webgpu');
+  const ok = r.geraet === 'webgpu' && r.medianMs <= SCHNELLTEST_SCHWELLE_MS;
+  if (r.geraet === 'webgpu') {
+    try {
+      localStorage.setItem(TEST_SCHLUESSEL, JSON.stringify({ ms: r.medianMs, geraet: r.geraet }));
+    } catch {
+      /* egal */
+    }
+  }
+  return { ok, info: infoText(r.medianMs, r.geraet, r.gpuFehler) };
+}
 
 async function hatGpuAdapter(): Promise<boolean> {
   try {
@@ -42,12 +84,9 @@ async function hatGpuAdapter(): Promise<boolean> {
  * `localStorage['bdva-tracking-erzwingen'] = '1'` die Automatik (auch ohne WebGPU).
  */
 export async function pruefeAutomatik(): Promise<AutomatikPruefung> {
-  try {
-    if (localStorage.getItem('bdva-tracking-erzwingen') === '1') return { ok: true };
-  } catch {
-    /* kein localStorage */
-  }
-  if (!(await hatGpuAdapter())) return { ok: false, grund: 'keinWebgpu' };
+  if (automatikErzwungen()) return { ok: true };
+  if (!(await hatGpuAdapter()))
+    return { ok: false, grund: 'keinWebgpu', info: 'Dieser Browser bietet kein WebGPU.' };
   let ms: number | null = null;
   try {
     const s = JSON.parse(localStorage.getItem(TEST_SCHLUESSEL) ?? 'null') as { ms: number } | null;
@@ -55,27 +94,37 @@ export async function pruefeAutomatik(): Promise<AutomatikPruefung> {
   } catch {
     ms = null;
   }
-  if (ms === null) {
-    setze({ tracking: { objId: '', anteil: 0, phase: 'pruefung', prozent: 0 } });
-    try {
-      const r = await new TrackingLauf({
-        beiFortschritt: (p) =>
-          setze({ tracking: { objId: '', anteil: 0, phase: 'modell', prozent: p } }),
-      }).schnelltest('webgpu');
-      ms = r.geraet === 'webgpu' ? r.medianMs : Infinity;
+  if (ms !== null)
+    return ms <= SCHNELLTEST_SCHWELLE_MS
+      ? { ok: true }
+      : { ok: false, grund: 'zuLangsam', info: infoText(ms, 'webgpu', '') };
+  setze({ tracking: { objId: '', anteil: 0, phase: 'pruefung', prozent: 0 } });
+  try {
+    const r = await new TrackingLauf({
+      beiFortschritt: (p) =>
+        setze({ tracking: { objId: '', anteil: 0, phase: 'modell', prozent: p } }),
+    }).schnelltest('webgpu');
+    // Nur eine echte Messung auf der Grafikkarte wird gemerkt; ein Rückfall auf die CPU nicht
+    if (r.geraet === 'webgpu') {
       try {
-        localStorage.setItem(TEST_SCHLUESSEL, JSON.stringify({ ms, geraet: r.geraet }));
+        localStorage.setItem(TEST_SCHLUESSEL, JSON.stringify({ ms: r.medianMs, geraet: r.geraet }));
       } catch {
         /* egal */
       }
-    } catch (e) {
-      console.error(e);
-      ms = Infinity;
-    } finally {
-      setze({ tracking: null });
     }
+    return r.geraet === 'webgpu' && r.medianMs <= SCHNELLTEST_SCHWELLE_MS
+      ? { ok: true }
+      : { ok: false, grund: 'zuLangsam', info: infoText(r.medianMs, r.geraet, r.gpuFehler) };
+  } catch (e) {
+    console.error(e);
+    return {
+      ok: false,
+      grund: 'zuLangsam',
+      info: `Der Geschwindigkeitstest ist fehlgeschlagen: ${e instanceof Error ? e.message.slice(0, 160) : String(e)}`,
+    };
+  } finally {
+    setze({ tracking: null });
   }
-  return ms <= SCHNELLTEST_SCHWELLE_MS ? { ok: true } : { ok: false, grund: 'zuLangsam' };
 }
 
 function pixelDaten(p: Projekt, o: SpielerObjekt) {

@@ -3,6 +3,8 @@ import type { Box } from './tracker';
 /** Personendetektor fürs Tracking: RT-DETR v2 (r18vd), Apache-2.0, quantisiert ca. 21 MB. */
 export const DETEKTOR_REPO = 'onnx-community/rtdetr_v2_r18vd-ONNX';
 export const DETEKTOR_DTYPE = 'q8';
+/** Auf WebGPU unquantisiert (ca. 81 MB), auf der CPU die kleine quantisierte Variante */
+export const DETEKTOR_DTYPE_GPU = 'fp32';
 export const DETEKTOR_MB = 21;
 
 /**

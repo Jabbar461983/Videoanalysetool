@@ -83,7 +83,9 @@ async function init(b: Extract<KiBefehl, { typ: 'init' }>) {
     try {
       const Klasse = b.modell.art === 'sam2' ? tf.Sam2Model : tf.SamModel;
       model = await Klasse.from_pretrained(b.modell.repo, {
-        dtype: b.modell.dtype as never,
+        dtype: (device === 'webgpu' && b.modell.dtypeGpu
+          ? b.modell.dtypeGpu
+          : b.modell.dtype) as never,
         device,
         progress_callback,
       });
