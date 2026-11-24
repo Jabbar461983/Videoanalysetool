@@ -3,6 +3,7 @@ import { usePlayer } from '../store/player';
 import { useTagging } from '../store/tagging';
 import { entferneTag, findeSpieler, fuegeTagHinzu } from './tagLogik';
 import { verarbeiteTaste } from './zuordnung';
+import { holeHauptVideo } from '../layout/bildquelle';
 
 export function aktiveQuelle() {
   const p = useProjekt.getState().projekt;
@@ -11,7 +12,7 @@ export function aktiveQuelle() {
 
 /** Aktuelle Abspielposition: bevorzugt direkt vom Video-Element. */
 export function aktuelleZeit(): number {
-  const v = document.querySelector('video');
+  const v = holeHauptVideo();
   return v ? v.currentTime : usePlayer.getState().zeit;
 }
 

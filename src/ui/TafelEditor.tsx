@@ -1,3 +1,4 @@
+import { aufAllenFenstern } from '../layout/fenster';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { t } from '../i18n/de-CH';
 import { neueId } from '../model/schema';
@@ -97,8 +98,7 @@ export function TafelEditor() {
         loescheMarker(situationId, markerId);
       }
     };
-    window.addEventListener('keydown', h);
-    return () => window.removeEventListener('keydown', h);
+    return aufAllenFenstern('keydown', h);
   }, [offen, markerId, situationId]);
 
   if (!offen || !projekt || !feld) return null;

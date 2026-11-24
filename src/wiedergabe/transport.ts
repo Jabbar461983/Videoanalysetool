@@ -7,6 +7,7 @@ import { Mixer } from '../audio/mixer';
 import { baueProgrammPlan } from './plan';
 import { Programmspieler } from './programmspieler';
 import { segmentZuQuellZeit, type Zeitplan } from './zeitachse';
+import { holeHauptVideo } from '../layout/bildquelle';
 
 /** Ein gemeinsamer Programmspieler für Clip- und Playlist-Wiedergabe. */
 export const spieler = new Programmspieler(
@@ -50,7 +51,7 @@ export function aktuelleFps(): number {
 
 export function toggleWiedergabe(): void {
   if (istProgramm()) return spieler.umschalten();
-  const v = document.querySelector('video');
+  const v = holeHauptVideo();
   if (mixer.kontext) void mixer.resume();
   if (v) {
     if (v.paused) void v.play();
@@ -60,7 +61,7 @@ export function toggleWiedergabe(): void {
 
 export function pausiereAlles(): void {
   if (istProgramm()) spieler.pausiere();
-  else document.querySelector('video')?.pause();
+  else holeHauptVideo()?.pause();
 }
 
 export function springeZu(t: number): void {
@@ -94,7 +95,7 @@ export function aktuelleQuellPosition(): {
 } | null {
   if (!istProgramm()) {
     const q = aktiveQuelleObjekt();
-    const v = document.querySelector('video');
+    const v = holeHauptVideo();
     return q
       ? { quelleId: q.id, quellZeit: v ? v.currentTime : usePlayer.getState().zeit, freeze: false }
       : null;

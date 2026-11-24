@@ -10,6 +10,7 @@ import { useProjekt } from '../store/projektStore';
 import { spieler } from '../wiedergabe/transport';
 import { dateiName } from './format';
 import { ladeHerunter } from './exportieren';
+import { holeHauptVideo } from '../layout/bildquelle';
 
 /**
  * Das aktuelle Bild als PNG inkl. aller Overlays (dieselbe `renderFrame()`-Funktion wie Vorschau und Export).
@@ -24,7 +25,7 @@ export async function exportiereAktuellesBild(): Promise<string | null> {
       ? (projekt.aktiveQuelleId ?? projekt.quellen[0]?.id)
       : (g.anzeigeQuelleId ?? projekt.quellen[0]?.id);
   const quelle = projekt.quellen.find((q) => q.id === quelleId);
-  const video = g.art === 'quelle' ? document.querySelector('video') : spieler.aktivesElement;
+  const video = g.art === 'quelle' ? holeHauptVideo() : spieler.aktivesElement;
   if (!quelle || !video) return null;
   const breite = Math.min(1920, quelle.breite);
   const hoehe = Math.round((breite * quelle.hoehe) / quelle.breite);

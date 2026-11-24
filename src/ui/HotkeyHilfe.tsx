@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { t } from '../i18n/de-CH';
 import { useProjekt } from '../store/projektStore';
+import { aufAllenFenstern } from '../layout/fenster';
 
 export function HotkeyHilfe() {
   const defs = useProjekt((x) => x.projekt?.tagDefinitionen ?? []);
@@ -12,8 +13,7 @@ export function HotkeyHilfe() {
       if (e.key === '?') setOffen((o) => !o);
       if (e.key === 'Escape') setOffen(false);
     };
-    window.addEventListener('keydown', h);
-    return () => window.removeEventListener('keydown', h);
+    return aufAllenFenstern('keydown', h);
   }, []);
   if (!offen) return null;
   return (

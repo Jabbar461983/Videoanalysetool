@@ -30,6 +30,7 @@ import {
   schliesseZone,
 } from '../zeichnen/aktionen';
 import { naechstesTempo } from '../video/bildmathe';
+import { aufAllenFenstern } from '../layout/fenster';
 
 const istEingabe = (el: EventTarget | null) =>
   el instanceof HTMLElement &&
@@ -186,7 +187,6 @@ export function useEditorTasten() {
           break;
       }
     };
-    window.addEventListener('keydown', h);
-    return () => window.removeEventListener('keydown', h);
+    return aufAllenFenstern('keydown', h);
   }, []);
 }

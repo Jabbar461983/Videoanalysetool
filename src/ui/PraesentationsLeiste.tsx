@@ -1,3 +1,4 @@
+import { aufAllenFenstern } from '../layout/fenster';
 import { useEffect, useRef, useState } from 'react';
 import { t } from '../i18n/de-CH';
 import { aktuellerEintragIndex } from '../praesentation/navigation';
@@ -31,14 +32,14 @@ export function PraesentationsLeiste() {
       timer.current = window.setTimeout(() => setSichtbar(false), AUSBLENDEN_NACH_MS);
     };
     zeigen();
-    window.addEventListener('pointermove', zeigen);
-    window.addEventListener('pointerdown', zeigen);
-    window.addEventListener('keydown', zeigen);
+    const aus = [
+      aufAllenFenstern('pointermove', zeigen),
+      aufAllenFenstern('pointerdown', zeigen),
+      aufAllenFenstern('keydown', zeigen),
+    ];
     return () => {
       window.clearTimeout(timer.current);
-      window.removeEventListener('pointermove', zeigen);
-      window.removeEventListener('pointerdown', zeigen);
-      window.removeEventListener('keydown', zeigen);
+      aus.forEach((f) => f());
     };
   }, []);
 

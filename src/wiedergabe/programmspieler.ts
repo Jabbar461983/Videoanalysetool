@@ -1,4 +1,5 @@
 import { usePlayer } from '../store/player';
+import { fensterVon } from '../layout/fenster';
 import { vergleichHaelften } from '../render/vergleich';
 import type { PlaylistEintrag } from '../model/typen';
 import {
@@ -66,6 +67,8 @@ export class Programmspieler {
   private uhrStart = 0;
   private uhrBasis = 0;
   private raf = 0;
+  /** Fenster, in dem der laufende Takt angefordert wurde (zum Abbrechen im selben Fenster) */
+  private rafFenster: Window = window;
   private token = 0;
   private wechselt = false;
   private bereit: { idx: number; slot: Slot; fertig: Promise<boolean> } | null = null;
@@ -75,6 +78,12 @@ export class Programmspieler {
     private beiSegment: (seg: Segment | undefined) => void = () => {},
     private beiFehler: (meldung: string) => void = () => {},
   ) {}
+
+  /** rAF des Fensters, in dem die Bühne liegt: wird nicht gedrosselt, wenn nur das Hauptfenster verdeckt ist. */
+  private fensterRaf(): Window {
+    this.rafFenster = fensterVon(this.els?.[0]);
+    return this.rafFenster;
+  }
 
   attach(a: HTMLVideoElement, b: HTMLVideoElement): void {
     this.els = [a, b];
@@ -166,7 +175,7 @@ export class Programmspieler {
   private stoppe(): void {
     this.audio?.steht();
     this.spielt = false;
-    cancelAnimationFrame(this.raf);
+    this.rafFenster.cancelAnimationFrame(this.raf);
     this.token++;
     this.bereit = null;
     this.els?.forEach((v) => v.pause());
@@ -189,7 +198,7 @@ export class Programmspieler {
     const url = seg.quelleId ? this.urlFuer(seg.quelleId) : undefined;
     if (!url) {
       this.spielt = false;
-      cancelAnimationFrame(this.raf);
+      this.rafFenster.cancelAnimationFrame(this.raf);
       this.els?.forEach((v) => v.pause());
       this.beiFehler('Eine Videodatei dieses Programms ist nicht verknüpft.');
       this.veroeffentliche();
@@ -288,7 +297,7 @@ export class Programmspieler {
     for (const sz of seiten) {
       if (!this.urlFuer(sz.quelleId)) {
         this.spielt = false;
-        cancelAnimationFrame(this.raf);
+        this.rafFenster.cancelAnimationFrame(this.raf);
         els.forEach((v) => v.pause());
         this.beiFehler('Eine Videodatei dieses Programms ist nicht verknüpft.');
         this.veroeffentliche();
@@ -354,13 +363,13 @@ export class Programmspieler {
     this.uhrStart = performance.now();
     this.veroeffentliche();
     this.audio?.spielt(this.zeit);
-    this.raf = requestAnimationFrame(this.takt);
+    this.raf = this.fensterRaf().requestAnimationFrame(this.takt);
   }
 
   pausiere(): void {
     if (!this.spielt) return;
     this.spielt = false;
-    cancelAnimationFrame(this.raf);
+    this.rafFenster.cancelAnimationFrame(this.raf);
     this.els?.forEach((v) => v.pause());
     this.audio?.steht();
     this.veroeffentliche();
@@ -373,7 +382,7 @@ export class Programmspieler {
 
   private takt = (jetzt: number): void => {
     if (!this.spielt) return;
-    this.raf = requestAnimationFrame(this.takt);
+    this.raf = this.fensterRaf().requestAnimationFrame(this.takt);
     const plan = this.plan;
     const seg = this.aktuellesSegment;
     if (!plan || !seg || this.wechselt || !this.els) return;
