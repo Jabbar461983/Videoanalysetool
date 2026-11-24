@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import fs from 'node:fs';
+import { unzipSync } from 'fflate';
 import os from 'node:os';
 import path from 'node:path';
 
@@ -43,7 +44,10 @@ test('Projektdatei: exportieren, importieren, fehlendes Video wird angefordert u
   await download.saveAs(datei);
   const kopf = fs.readFileSync(datei).subarray(0, 2).toString('latin1');
   expect(kopf).toBe('PK'); // ZIP
-  expect(fs.statSync(datei).size).toBeLessThan(200_000); // ohne Quellvideo (das hat ~500 KB)
+  // ohne Quellvideo: im Archiv liegt keine Videodatei (Projekt, Aufnahmen und Logo sind drin)
+  const eintraege = Object.keys(unzipSync(new Uint8Array(fs.readFileSync(datei))));
+  expect(eintraege).toContain('projekt.json');
+  expect(eintraege.some((n) => /\.(webm|mp4|mov|mkv|m4v)$/i.test(n))).toBe(false);
 
   // Importieren (Startseite): gleiche Id existiert → Kopie
   await page.getByRole('link', { name: 'Projekte' }).click();

@@ -53,10 +53,8 @@ test('Link-Fehler werden verständlich gemeldet (kein CORS, Webseite statt Video
   page,
 }) => {
   await neuesProjekt(page);
-  // Server ohne CORS-Erlaubnis
-  await page.route('https://ohne-cors.test/v.mp4', (route) =>
-    route.fulfill({ status: 200, body: 'x', headers: { 'content-type': 'video/mp4' } }),
-  );
+  // Server nicht erreichbar bzw. ohne CORS-Erlaubnis: Der Browser meldet in beiden Fällen nur einen Netzfehler
+  await page.route('https://ohne-cors.test/v.mp4', (route) => route.abort('failed'));
   await page.getByTestId('link-eingabe').fill('https://ohne-cors.test/v.mp4');
   await page.getByTestId('link-laden').click();
   await expect(page.getByTestId('link-fehler')).toContainText('CORS');
@@ -70,7 +68,7 @@ test('Link-Fehler werden verständlich gemeldet (kein CORS, Webseite statt Video
   );
   await page.getByTestId('link-eingabe').fill('https://seite.test/film');
   await page.getByTestId('link-laden').click();
-  await expect(page.getByTestId('link-fehler')).toContainText('keine Videodatei');
+  await expect(page.getByTestId('link-fehler')).toContainText('nicht zu einer Videodatei');
   // http
   await page.getByTestId('link-eingabe').fill('http://unsicher.test/v.mp4');
   await page.getByTestId('link-laden').click();

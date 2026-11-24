@@ -26,6 +26,7 @@ export function ladeLogo(): Promise<LogoBild | null> {
   laedt ??= (async () => {
     for (const [datei, platzhalter] of [
       ['brand/logo-bulldozers.png', false],
+      ['brand/logo-bulldozers_farbig.png', false],
       ['brand/logo-platzhalter.svg', true],
     ] as const) {
       try {

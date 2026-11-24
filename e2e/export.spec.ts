@@ -134,7 +134,8 @@ test('MP4-Export: gültige Datei (H.264, Ton, Dauer) und Bild deckungsgleich mit
   expect(psnrDb(exportiert, erwartet)).toBeGreaterThan(26); // ganzes Bild (Videokompression)
   expect(psnrDb(exportiert, erwartet, '230:50:0:0')).toBeGreaterThan(24); // Scoreboard-Bereich: Text, Streifen, Stand
   // Auch das Logo (oben rechts) stimmt
-  expect(psnrDb(exportiert, erwartet, '120:70:520:0')).toBeGreaterThan(24);
+  // (das detailreiche Vereinslogo wird bei 640×360 stärker komprimiert als der Platzhalter)
+  expect(psnrDb(exportiert, erwartet, '120:70:520:0')).toBeGreaterThan(21);
 });
 
 test('PNG-Export enthält Overlays; Abbrechen stoppt den Export und meldet es', async ({ page }) => {

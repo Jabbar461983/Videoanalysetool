@@ -35,7 +35,11 @@ const endung = (mime: string): string =>
 /** Logo für die Projektdatei (PNG, sonst Platzhalter); Fehler werden ignoriert. */
 async function holeLogoDatei(): Promise<{ name: string; daten: Uint8Array } | null> {
   const basis = (typeof import.meta !== 'undefined' ? import.meta.env.BASE_URL : '/') as string;
-  for (const name of ['logo-bulldozers.png', 'logo-platzhalter.svg']) {
+  for (const name of [
+    'logo-bulldozers.png',
+    'logo-bulldozers_farbig.png',
+    'logo-platzhalter.svg',
+  ]) {
     try {
       const r = await fetch(`${basis}brand/${name}`);
       const ct = r.headers.get('content-type') ?? '';
