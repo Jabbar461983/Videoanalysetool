@@ -108,7 +108,8 @@ test('Freies Layout: Standardansicht, Grösse ändern, merken, zurücksetzen', a
   );
   await expect.poll(async () => Math.abs((await hoehe()) - h1), { timeout: 5000 }).toBeLessThan(6);
 
-  // Zurücksetzen
+  // Zurücksetzen (im Menü «Ansicht»)
+  await page.getByTestId('ansicht-menue').click();
   await page.getByTestId('layout-reset').click();
   await expect.poll(async () => Math.abs((await hoehe()) - h0)).toBeLessThan(6);
 });
@@ -188,4 +189,59 @@ test('Zweites Fenster: Video läuft im ausgelagerten Fenster, Tasten gelten dort
       timeout: 8000,
     })
     .toBeGreaterThan(zeitImPopup - 0.6);
+});
+
+test('Ansicht-Menü: Module ausblenden/einblenden, Layout speichern, wechseln, löschen', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await projektOeffnen(page);
+  await page.getByTestId('ansicht-menue').click();
+
+  // Modul ausblenden und wieder einblenden
+  await expect(page.getByRole('tab', { name: 'Export', exact: true })).toHaveCount(1);
+  await page.getByTestId('modul-export').uncheck();
+  await expect(page.getByRole('tab', { name: 'Export', exact: true })).toHaveCount(0);
+  await page.getByTestId('modul-export').check();
+  await expect(page.getByRole('tab', { name: 'Export', exact: true })).toHaveCount(1);
+  // Pflichtmodule lassen sich nicht ausblenden
+  await expect(page.getByTestId('modul-buehne')).toBeDisabled();
+  await expect(page.getByTestId('modul-zeit')).toBeDisabled();
+
+  // Layout «Analyse» speichern (Export ausgeblendet), danach Standard, danach wieder «Analyse»
+  await page.getByTestId('modul-export').uncheck();
+  await page.getByTestId('layout-name').fill('Analyse');
+  await page.getByTestId('layout-speichern').click();
+  await expect(page.getByTestId('layout-laden-Analyse')).toBeVisible();
+  // doppelter Name wird abgelehnt
+  await page.getByTestId('layout-name').fill('analyse');
+  await page.getByTestId('layout-speichern').click();
+  await expect(page.getByTestId('layout-fehler')).toContainText('vergeben');
+  await page.getByTestId('layout-name').fill('');
+
+  await page.getByTestId('layout-reset').click(); // Standard (schliesst das Menü)
+  await expect(page.getByRole('tab', { name: 'Export', exact: true })).toHaveCount(1);
+  await page.getByTestId('ansicht-menue').click();
+  await page.getByTestId('layout-laden-Analyse').click();
+  await expect(page.getByRole('tab', { name: 'Export', exact: true })).toHaveCount(0);
+
+  // Löschen (mit Bestätigung)
+  await page.getByTestId('ansicht-menue').click();
+  page.once('dialog', (d) => void d.accept());
+  await page.getByRole('button', { name: 'Löschen: Analyse' }).click();
+  await expect(page.getByTestId('layout-laden-Analyse')).toHaveCount(0);
+
+  // Fertiges Layout «Video gross» ist schmäler in der Seitenleiste
+  const breite = () =>
+    page.evaluate(() => {
+      const a = (
+        window as unknown as { __bdvaLayout: { getPanel(id: string): { api: { width: number } } } }
+      ).__bdvaLayout;
+      return a.getPanel('quellen').api.width;
+    });
+  await page.getByTestId('layout-reset').click();
+  const standard = await breite();
+  await page.getByTestId('ansicht-menue').click();
+  await page.getByTestId('layout-fertig-Video gross').click();
+  await expect.poll(breite).toBeLessThan(standard - 40);
 });

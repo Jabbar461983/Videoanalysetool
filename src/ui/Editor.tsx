@@ -22,9 +22,8 @@ import { AutoPlaylistDialog } from './AutoPlaylistDialog';
 import { ErkennungsDialog } from './ErkennungsDialog';
 import { useEditorTasten } from './tasten';
 import { Arbeitsflaeche } from '../layout/Arbeitsflaeche';
+import { Fenstermenue } from '../layout/Fenstermenue';
 import { useLayout } from '../store/layout';
-import { baueStandardLayout } from '../layout/standard';
-import { loescheLayout } from '../layout/speicher';
 import s from './Editor.module.css';
 import ls from '../layout/layout.module.css';
 
@@ -58,7 +57,6 @@ export function Editor({ projektId }: { projektId: string }) {
   const praesi = useUi((u) => u.praesentation);
   const [fehlt, setFehlt] = useState(false);
   const frei = useFreiesLayout();
-  const layoutApi = useLayout((l) => l.api);
   const layoutMeldung = useLayout((l) => l.meldung);
   const [zeitHoehe, setZeitHoehe] = useState<number | null>(ladeHoehe);
   const [seitenBreite, setSeitenBreite] = useState<number | null>(leseSeitenBreite);
@@ -125,18 +123,7 @@ export function Editor({ projektId }: { projektId: string }) {
         }
       />
       <UndoRedo />
-      {frei && layoutApi && (
-        <button
-          data-testid="layout-reset"
-          title={t.layout.zuruecksetzenHinweis}
-          onClick={() => {
-            loescheLayout();
-            baueStandardLayout(layoutApi, layoutApi.width, layoutApi.height);
-          }}
-        >
-          {t.layout.zuruecksetzen}
-        </button>
-      )}
+      {frei && <Fenstermenue />}
       <span className={s.status} role="status">
         {status === 'ausstehend'
           ? t.editor.speichert
