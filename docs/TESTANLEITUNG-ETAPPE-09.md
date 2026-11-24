@@ -25,3 +25,13 @@ Unter «Feldmasse (Meter)» die echten Werte eures Platzes eintragen (Länge, Br
 **Abnahme:** Aus einem Standbild mit einem Klick (bzw. «Alle Spieler erkennen») die Spielsituation auf die Tafel übertragen, im Bild-im-Bild einblenden und mit dem Clip exportieren. Bitte die **Feldmasse** prüfen und die Stimmigkeit der übertragenen Positionen (stehen die Marker dort, wo die Spieler stehen?).
 
 Automatische Tests: `npm test`, `npm run e2e` (Taktik: `e2e/taktik.spec.ts`).
+
+## Nachtrag: Kalibrierung mit Vorschlag
+
+1. Standbild wählen, Tab «Taktik» → «Neu kalibrieren …».
+2. «Punkte vorschlagen» klicken: Das Tool sucht den farbigen Boden, berechnet die Feldecken und legt 9 Punkte (Bullypunkte, Mitte, Zonenpunkte) als **orange «≈»-Vorschläge** ins Bild.
+3. Stimmt die Seite nicht (links/rechts, oben/unten vertauscht, Feld quer), die Schalter «Links ↔ rechts», «Oben ↔ unten», «Feld 90° drehen» benutzen.
+4. Jeden Punkt mit der Maus (oder dem Finger) **auf die echte Markierung ziehen**. Gezogene Punkte werden rot (bestätigt). Ab 4 bestätigten Punkten zählen nur noch diese.
+5. Wird der Boden nicht erkannt, einmal auf die Spielfläche klicken; sonst Punkte wie bisher von Hand setzen.
+
+Grenzen: Ist das Feld im Bild angeschnitten oder von Zuschauern/Banden verdeckt, liegen die Vorschläge daneben und müssen korrigiert werden. Auf dem synthetischen Test stimmen die Ecken auf wenige Pixel, auf einem echten Spielbild nur grob.

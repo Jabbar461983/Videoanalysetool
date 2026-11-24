@@ -601,6 +601,16 @@ export const t = {
       'Es gibt kein Videobild: Spielen Sie ein Video ab, halten Sie es an einer Szene an und öffnen Sie den Dialog erneut.',
     kalibrierHilfe:
       'Wählen Sie rechts einen Feldpunkt und klicken Sie im Bild genau dorthin. Gelb zeigt nach 4 Punkten die berechneten Feldlinien: Sie sollten auf den echten Linien liegen. Mit 5 oder mehr Punkten wird auch der Fehler berechnet.',
+    vorschlagen: 'Punkte vorschlagen',
+    tauscheX: 'Links ↔ rechts',
+    tauscheY: 'Oben ↔ unten',
+    quer: 'Feld 90° drehen',
+    vorschlagSaat:
+      'Der Boden wurde nicht erkannt. Klicken Sie einmal auf die Spielfläche (Boden), dann versucht es das Tool erneut.',
+    vorschlagNichts:
+      'Der Boden konnte nicht abgegrenzt werden. Setzen Sie die Punkte von Hand (Klick ins Bild).',
+    vorschlagHinweis:
+      'Orange «≈»-Punkte sind nur Vorschläge. Ziehen Sie sie mit der Maus genau auf die echte Markierung; ab 4 bestätigten Punkten zählen nur noch diese. Passt die Seite nicht, nutzen Sie die Schalter.',
     kalibrierName: 'Name (z. B. Kamera Haupttribüne)',
     punkte: 'Feldpunkte',
     punktEntfernen: 'Punkt entfernen',

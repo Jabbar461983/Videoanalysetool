@@ -240,3 +240,8 @@ Stand: Ende Etappe 9 (Taktiktafel). Frühere Stände: Ende Etappe 6 «Export, Pr
 - Wiederherstellung (`wiederherstellung`-Tabelle) wird bei jedem Speichern aktualisiert; sie greift nur, wenn der Hauptspeicher einmal fehlschlägt. Reicht für Etappe 0.
 - iPad/Safari: kein File-System-Access → Videos nach Neuladen erneut wählen (werden über Name/Grösse/Hash erkannt, aber noch ohne automatische Zuordnung beim Auswählen eines beliebigen Files – kommt mit der Projektdatei in Etappe 6).
 - Branch-Konvention angepasst: alles auf `claude/magical-cerf-nxizu6`, Etappenende per Tag `etappe-00-fertig`.
+
+### Nachtrag Etappe 9: Kalibrier-Vorschlag
+- `src/taktik/feldVorschlag.ts`: Boden über Farbe finden, Ecken schätzen, 9 Referenzpunkte vorschlagen (Unit-Tests in `tests/feldVorschlag.test.ts`).
+- Kalibrierdialog: «Punkte vorschlagen», Ausrichtungs-Schalter, Vorschläge ziehbar (orange = Vorschlag, rot = bestätigt).
+- Grenze: bei angeschnittenem Feld / verdeckten Banden ungenau; Korrektur von Hand nötig.

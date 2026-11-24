@@ -330,3 +330,21 @@ test('Kalibrierung: über Kreuz vertauschte Punkte ergeben keine Abbildung und l
   await expect(page.getByTestId('kalibrier-guete')).toContainText('keine eindeutige Abbildung');
   await expect(page.getByTestId('kalibrierung-speichern')).toBeDisabled();
 });
+
+test('Kalibrierung: «Punkte vorschlagen» liefert Vorschläge oder bittet um einen Klick auf den Boden', async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  await clipOeffnen(page);
+  await springe(page, 1.0);
+  await page.getByRole('tab', { name: 'Taktik' }).click();
+  await page.getByTestId('neu-kalibrieren').click();
+  await expect(page.getByTestId('kalibrier-dialog')).toBeVisible();
+  await page.getByTestId('punkte-vorschlagen').click();
+  // Das Testbild hat keinen einheitlichen Boden: entweder Vorschlag (orange ≈) oder Hinweis zum Boden-Klick
+  await expect(
+    page.getByTestId('vorschlag-hinweis').or(page.getByTestId('vorschlag-status')),
+  ).toBeVisible();
+  await page.getByTestId('tausche-x').click();
+  await expect(page.getByTestId('kalibrier-dialog')).toBeVisible();
+});

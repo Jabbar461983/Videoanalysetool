@@ -10,10 +10,22 @@ import { berechneKalibrierung, bewerteKalibrierung, type PunktPaar } from '../ta
 import { formatZeit } from '../video/bildmathe';
 import { pruefePlausibilitaet } from '../taktik/homographie';
 import { zeichneFeldAufBild } from '../taktik/bildFeld';
+import {
+  STANDARD_AUSRICHTUNG,
+  schlageFeldVor,
+  VORSCHLAG_IDS,
+  type Ausrichtung,
+} from '../taktik/feldVorschlag';
+import type { Pt } from '../taktik/homographie';
 
 interface Paar extends PunktPaar {
   punktId: string;
+  /** automatisch vorgeschlagen und noch nicht vom Nutzer bestätigt/verschoben */
+  vorschlag?: boolean;
 }
+
+const ANALYSE_BREITE = 480;
+const GREIF_RADIUS = 0.025; // Anteil der Bildbreite
 
 /** Dialog: im Standbild mindestens 4 Feldpunkte anklicken → Homographie, Qualität und Kontrolllinien. */
 export function KalibrierDialog() {
@@ -24,6 +36,10 @@ export function KalibrierDialog() {
   const [paare, setPaare] = useState<Paar[]>([]);
   const [aktuell, setAktuell] = useState<string>('bully-ol');
   const [name, setName] = useState('');
+  const [ausrichtung, setAusrichtung] = useState<Ausrichtung>(STANDARD_AUSRICHTUNG);
+  const [vorschlagStatus, setVorschlagStatus] = useState<'' | 'nichtGefunden' | 'saat'>('');
+  const saatRef = useRef<Pt | undefined>(undefined);
+  const zieheRef = useRef<string | null>(null);
   const feld = projekt?.taktik.feld;
   const punkte = useMemo(() => (feld ? referenzPunkte(feld) : []), [feld]);
 
@@ -33,11 +49,20 @@ export function KalibrierDialog() {
     setBild(b);
     setPaare([]);
     setAktuell('bully-ol');
+    setAusrichtung(STANDARD_AUSRICHTUNG);
+    setVorschlagStatus('');
+    saatRef.current = undefined;
     const q = projekt?.quellen.find((x) => x.id === b?.quelleId);
     setName(b && q ? `${q.dateiname} – ${formatZeit(b.quellZeit, q.fps)}` : 'Kamera');
   }, [offen]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const ergebnis = useMemo(() => (paare.length >= 4 ? berechneKalibrierung(paare) : null), [paare]);
+  // Bestätigte Punkte haben Vorrang; erst wenn es davon weniger als 4 gibt, zählen auch Vorschläge mit.
+  const basis = useMemo(() => {
+    const fest = paare.filter((p) => !p.vorschlag);
+    return fest.length >= 4 ? fest : paare;
+  }, [paare]);
+  const nurVorschlag = basis.some((p) => p.vorschlag);
+  const ergebnis = useMemo(() => (basis.length >= 4 ? berechneKalibrierung(basis) : null), [basis]);
 
   // Standbild + Marken + Kontrolllinien (Feld auf das Bild zurückprojiziert)
   useEffect(() => {
@@ -53,7 +78,7 @@ export function KalibrierDialog() {
     paare.forEach((p, i) => {
       const x = p.bild.x * B;
       const y = p.bild.y * H;
-      ctx.strokeStyle = '#E53935';
+      ctx.strokeStyle = p.vorschlag ? '#FB8C00' : '#E53935';
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(x - 9, y);
@@ -61,6 +86,11 @@ export function KalibrierDialog() {
       ctx.moveTo(x, y - 9);
       ctx.lineTo(x, y + 9);
       ctx.stroke();
+      if (p.vorschlag) {
+        ctx.beginPath();
+        ctx.arc(x, y, 12, 0, Math.PI * 2);
+        ctx.stroke();
+      }
       ctx.fillStyle = '#ffffff';
       ctx.font = 'bold 14px Arial';
       ctx.fillText(String(i + 1), x + 8, y - 8);
@@ -75,17 +105,94 @@ export function KalibrierDialog() {
     ? bewerteKalibrierung(ergebnis, Math.hypot(feld.laenge, feld.breite))
     : null;
 
-  const klick = (e: React.PointerEvent<HTMLCanvasElement>) => {
+  const posImBild = (e: React.PointerEvent<HTMLCanvasElement>): Pt => {
     const r = e.currentTarget.getBoundingClientRect();
-    const bildPos = { x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height };
+    return { x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height };
+  };
+
+  /** Vorschlag berechnen; bestätigte Punkte bleiben, übrige Punkte werden ersetzt. */
+  const schlageVor = (a: Ausrichtung, saat?: Pt) => {
+    if (!bild || !feld) return;
+    const B = ANALYSE_BREITE;
+    const H = Math.round((B * bild.frame.height) / bild.frame.width);
+    const c = document.createElement('canvas');
+    c.width = B;
+    c.height = H;
+    const ctx = c.getContext('2d', { willReadFrequently: true })!;
+    ctx.drawImage(bild.frame, 0, 0, B, H);
+    const img = ctx.getImageData(0, 0, B, H);
+    const s = saat ?? saatRef.current;
+    const v = schlageFeldVor(img, feld, a, s ? { x: s.x * B, y: s.y * H } : undefined);
+    if (!v) {
+      setVorschlagStatus(s ? 'nichtGefunden' : 'saat');
+      return;
+    }
+    setVorschlagStatus('');
+    const ids = new Set(VORSCHLAG_IDS);
+    setPaare((alt) => {
+      const fest = alt.filter((p) => !p.vorschlag);
+      const festIds = new Set(fest.map((p) => p.punktId));
+      const neu: Paar[] = v.punkte
+        .filter((p) => ids.has(p.id) && !festIds.has(p.id))
+        .map((p) => ({ punktId: p.id, bild: p.bild, feld: { x: p.x, y: p.y }, vorschlag: true }));
+      return [...fest, ...neu];
+    });
+  };
+
+  const aendereAusrichtung = (teil: Partial<Ausrichtung>) => {
+    const a = { ...ausrichtung, ...teil };
+    setAusrichtung(a);
+    if (paare.some((p) => p.vorschlag)) schlageVor(a);
+  };
+
+  const zeigerUnten = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    const pos = posImBild(e);
+    const r = e.currentTarget.getBoundingClientRect();
+    const asp = r.height / r.width;
+    // Vorhandenen Punkt anfassen und ziehen (Korrektur des Vorschlags)
+    let nah: Paar | null = null;
+    let d0 = GREIF_RADIUS;
+    for (const p of paare) {
+      const d = Math.hypot(p.bild.x - pos.x, (p.bild.y - pos.y) * asp);
+      if (d < d0) {
+        d0 = d;
+        nah = p;
+      }
+    }
+    if (nah) {
+      zieheRef.current = nah.punktId;
+      e.currentTarget.setPointerCapture(e.pointerId);
+      setAktuell(nah.punktId);
+      return;
+    }
+    if (vorschlagStatus && !saatRef.current) {
+      saatRef.current = pos;
+      schlageVor(ausrichtung, pos);
+      return;
+    }
     const ref = punkte.find((p) => p.id === aktuell);
     if (!ref) return;
     const neu = [
       ...paare.filter((p) => p.punktId !== ref.id),
-      { punktId: ref.id, bild: bildPos, feld: { x: ref.x, y: ref.y } },
+      { punktId: ref.id, bild: pos, feld: { x: ref.x, y: ref.y } },
     ];
     setPaare(neu);
     setAktuell(naechster(new Set(neu.map((p) => p.punktId))));
+  };
+
+  const zeigerBewegt = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    const id = zieheRef.current;
+    if (!id) return;
+    const pos = posImBild(e);
+    const x = Math.min(1, Math.max(0, pos.x));
+    const y = Math.min(1, Math.max(0, pos.y));
+    setPaare((alt) =>
+      alt.map((p) => (p.punktId === id ? { ...p, bild: { x, y }, vorschlag: false } : p)),
+    );
+  };
+
+  const zeigerOben = () => {
+    zieheRef.current = null;
   };
 
   const speichern = () => {
@@ -95,7 +202,7 @@ export function KalibrierDialog() {
       name: name.trim() || 'Kalibrierung',
       quelleId: bild.quelleId,
       zeit: bild.quellZeit,
-      paare: paare.map((p) => ({ punktId: p.punktId, bild: p.bild, feld: p.feld })),
+      paare: basis.map((p) => ({ punktId: p.punktId, bild: p.bild, feld: p.feld })),
       H: ergebnis.H,
       rms: ergebnis.rms,
     };
@@ -161,8 +268,16 @@ export function KalibrierDialog() {
               <canvas
                 ref={canvasRef}
                 data-testid="kalibrier-bild"
-                style={{ width: '100%', cursor: 'crosshair', border: '1px solid var(--bd-rule)' }}
-                onPointerDown={klick}
+                style={{
+                  width: '100%',
+                  cursor: 'crosshair',
+                  border: '1px solid var(--bd-rule)',
+                  touchAction: 'none',
+                }}
+                onPointerDown={zeigerUnten}
+                onPointerMove={zeigerBewegt}
+                onPointerUp={zeigerOben}
+                onPointerCancel={zeigerOben}
               />
               <p className="hinweis">{t.taktik.kalibrierHilfe}</p>
             </div>
@@ -176,8 +291,50 @@ export function KalibrierDialog() {
                   style={{ width: '100%' }}
                 />
               </label>
+              <div style={{ marginTop: 8 }}>
+                <button
+                  className="primaer"
+                  data-testid="punkte-vorschlagen"
+                  onClick={() => schlageVor(ausrichtung)}
+                >
+                  {t.taktik.vorschlagen}
+                </button>
+                <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 4 }}>
+                  <button
+                    aria-pressed={ausrichtung.tauscheX}
+                    data-testid="tausche-x"
+                    onClick={() => aendereAusrichtung({ tauscheX: !ausrichtung.tauscheX })}
+                  >
+                    {t.taktik.tauscheX}
+                  </button>
+                  <button
+                    aria-pressed={ausrichtung.tauscheY}
+                    data-testid="tausche-y"
+                    onClick={() => aendereAusrichtung({ tauscheY: !ausrichtung.tauscheY })}
+                  >
+                    {t.taktik.tauscheY}
+                  </button>
+                  <button
+                    aria-pressed={ausrichtung.quer}
+                    data-testid="quer"
+                    onClick={() => aendereAusrichtung({ quer: !ausrichtung.quer })}
+                  >
+                    {t.taktik.quer}
+                  </button>
+                </div>
+                {vorschlagStatus && (
+                  <p role="status" className="hinweis" data-testid="vorschlag-status">
+                    {vorschlagStatus === 'saat' ? t.taktik.vorschlagSaat : t.taktik.vorschlagNichts}
+                  </p>
+                )}
+                {nurVorschlag && paare.length > 0 && (
+                  <p className="hinweis" data-testid="vorschlag-hinweis">
+                    {t.taktik.vorschlagHinweis}
+                  </p>
+                )}
+              </div>
               <p className="kicker" style={{ marginTop: 8 }}>
-                {t.taktik.punkte} ({paare.length}/4+)
+                {t.taktik.punkte} ({basis.length}/4+)
               </p>
               <ul
                 style={{
@@ -204,7 +361,7 @@ export function KalibrierDialog() {
                         }}
                         onClick={() => setAktuell(p.id)}
                       >
-                        {gesetzt ? '✓ ' : ''}
+                        {gesetzt ? (gesetzt.vorschlag ? '≈ ' : '✓ ') : ''}
                         {p.name}
                       </button>
                       {gesetzt && (
@@ -220,10 +377,10 @@ export function KalibrierDialog() {
                 })}
               </ul>
               <div style={{ marginTop: 8 }} data-testid="kalibrier-guete" role="status">
-                {paare.length < 4 && (
-                  <span className="hinweis">{t.taktik.nochPunkte(4 - paare.length)}</span>
+                {basis.length < 4 && (
+                  <span className="hinweis">{t.taktik.nochPunkte(4 - basis.length)}</span>
                 )}
-                {paare.length >= 4 && !ergebnis && (
+                {basis.length >= 4 && !ergebnis && (
                   <span style={{ color: '#E53935' }}>{t.taktik.entartet}</span>
                 )}
                 {plaus && !plaus.ok && (
