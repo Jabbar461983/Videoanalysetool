@@ -348,3 +348,25 @@ test('Kalibrierung: «Punkte vorschlagen» liefert Vorschläge oder bittet um ei
   await page.getByTestId('tausche-x').click();
   await expect(page.getByTestId('kalibrier-dialog')).toBeVisible();
 });
+
+test('Taktik-Abschnitt in der Zeitleiste: anklicken und mit Entf löschen (rückgängig machbar)', async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  await clipOeffnen(page);
+  await page.getByRole('tab', { name: 'Taktik' }).click();
+  await page.getByTestId('neue-situation').click();
+  await page.getByTestId('tafel-schliessen').click();
+  await springe(page, 1.0);
+  await page.keyboard.press('t'); // Tafel ab hier einblenden
+  const balken = page.getByTestId('taktik-balken');
+  await expect(balken).toHaveCount(1);
+
+  await balken.click();
+  await expect(balken).toHaveAttribute('aria-pressed', 'true');
+  await page.keyboard.press('Delete');
+  await expect(balken).toHaveCount(0);
+  // Rückgängig macht es wieder
+  await page.keyboard.press('Control+z');
+  await expect(balken).toHaveCount(1);
+});

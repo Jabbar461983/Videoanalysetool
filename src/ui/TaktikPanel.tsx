@@ -197,6 +197,7 @@ export function TaktikPanel() {
             {t.taktik.einblenden}
           </button>
           <p className="hinweis">{t.taktik.abschnitte}</p>
+          <p className="hinweis">{t.taktik.abschnittLoeschenHinweis}</p>
           {(clip.taktik?.abschnitte.length ?? 0) === 0 && (
             <p className="hinweis">{t.taktik.keineAbschnitte}</p>
           )}

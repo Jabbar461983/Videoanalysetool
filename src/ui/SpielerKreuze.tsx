@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { t } from '../i18n/de-CH';
 import { entferneSpieler, sichereHintergrund } from '../ki/spielerAktionen';
+import { wechsleModus } from '../ki/trackingAktionen';
 import { quellZeitFuer, spielerGeo } from '../render/perspektive';
 import { istSpielerSichtbar, keyframeBei } from '../render/spieler';
 import { usePlayer } from '../store/player';
@@ -149,6 +150,30 @@ export function SpielerKreuze() {
             >
               ×
             </button>
+            {!kannVerschieben && (
+              <button
+                type="button"
+                data-testid="spieler-hand-freeze"
+                aria-label={t.spieler.handFreeze}
+                title={t.spieler.handFreeze}
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  wechsleModus(o.id, 'freeze', t.spieler.zuFreezeUmgestellt);
+                }}
+                style={{
+                  ...KNOPF,
+                  cursor: 'pointer',
+                  borderStyle: 'dashed',
+                  opacity: 0.85,
+                  left: `${bx.x * 100}%`,
+                  top: `${bx.y * 100}%`,
+                  transform: 'translate(calc(-50% - 20px), calc(-50% - 20px))',
+                }}
+              >
+                <HandSymbol />
+              </button>
+            )}
             {kannVerschieben && (
               <button
                 type="button"

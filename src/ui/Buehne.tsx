@@ -333,7 +333,7 @@ export function Buehne({ quelle }: { quelle: Quelle | undefined }) {
               width={Math.min(1920, anzeige.breite)}
               height={Math.round((Math.min(1920, anzeige.breite) * anzeige.hoehe) / anzeige.breite)}
               data-testid="overlay"
-              style={{ zIndex: 5 }}
+              style={{ zIndex: 5, width: 'calc(100% + 1px)', height: 'calc(100% + 1px)' }}
             />
           )}
           {praesi && <LiveStift interaktiv={!praesiFenster} />}

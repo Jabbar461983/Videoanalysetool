@@ -30,6 +30,8 @@ import {
   schliesseZone,
 } from '../zeichnen/aktionen';
 import { naechstesTempo } from '../video/bildmathe';
+import { entferneAbschnitt } from '../taktik/logik';
+import { useTaktik } from '../store/taktik';
 import { aufAllenFenstern } from '../layout/fenster';
 import { istEingabeFeld } from '../layout/eingabe';
 
@@ -121,13 +123,29 @@ export function useEditorTasten() {
           loescheAuswahl();
           return;
         }
+        // Gewählter Tafel-Abschnitt in der Zeitleiste (kein Zeichnen ausgewählt): Entf löscht ihn
+        const abschnittId = useTaktik.getState().abschnittId;
+        if ((e.key === 'Delete' || e.key === 'Backspace') && abschnittId && !z.auswahlId) {
+          const clipId = useProgramm.getState().clipId;
+          const clip = useProjekt.getState().projekt?.clips.find((c) => c.id === clipId);
+          if (clip?.taktik?.abschnitte.some((a) => a.id === abschnittId)) {
+            e.preventDefault();
+            useProjekt.getState().aendere('Tafel-Abschnitt löschen', (pr) => {
+              const c = pr.clips.find((x) => x.id === clipId);
+              if (c) entferneAbschnitt(c, abschnittId);
+            });
+            useTaktik.getState().setze({ abschnittId: null });
+            return;
+          }
+        }
         if (e.key === 'Enter' && z.entwurf?.werkzeug === 'zone') {
           e.preventDefault();
           schliesseZone();
           return;
         }
         if (e.key === 'Escape') {
-          if (z.entwurf) z.setzeEntwurf(null);
+          if (useTaktik.getState().abschnittId) useTaktik.getState().setze({ abschnittId: null });
+          else if (z.entwurf) z.setzeEntwurf(null);
           else if (z.auswahlId) z.waehle(null);
           else if (z.werkzeug !== 'auswahl') z.setzeWerkzeug('auswahl');
           return;

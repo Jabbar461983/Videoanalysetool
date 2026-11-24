@@ -122,6 +122,8 @@ test('Spieler freistellen, hervorheben, verschieben; Export deckt sich mit der V
   // Spotlight: Umgebung abgedunkelt, Spieler ausgespart
   const ecke = await pixel(page, 0.1, 0.1);
   expect(ecke[3]).toBeGreaterThan(100);
+  const rechts = await pixel(page, 0.997, 0.1); // letzte Spalte: Abdunklung reicht bis zum Rand
+  expect(rechts[3]).toBeGreaterThan(100);
   const mitte = await pixel(page, 0.503, 0.49);
   expect(mitte[3]).toBeLessThan(20);
 

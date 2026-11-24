@@ -76,7 +76,7 @@ export class Programmspieler {
   constructor(
     private urlFuer: (quelleId: string) => string | undefined,
     private beiSegment: (seg: Segment | undefined) => void = () => {},
-    private beiFehler: (meldung: string) => void = () => {},
+    private beiFehler: (meldung: string | null) => void = () => {},
   ) {}
 
   /** rAF des Fensters, in dem die Bühne liegt: wird nicht gedrosselt, wenn nur das Hauptfenster verdeckt ist. */
@@ -225,7 +225,9 @@ export class Programmspieler {
     if (Math.abs(v.currentTime - zeit) > 0.001 || v.seeking) {
       const fertig = einmal(v, 'seeked', 4000);
       v.currentTime = zeit;
-      if (!(await fertig)) return false;
+      // Kein «seeked» gemeldet, das Bild steht aber schon an der Stelle: gilt als geladen (nicht als Fehler)
+      if (!(await fertig) && !(Math.abs(v.currentTime - zeit) < 0.25 && v.readyState >= 2))
+        return false;
     }
     await bildBereit(v);
     return true;
@@ -260,12 +262,13 @@ export class Programmspieler {
         const quellZeit = seg.art === 'freeze' ? seg.zeit! : seg.von! + lokal * seg.tempo!;
         let slot = this.aktiv;
         const b = this.bereit;
+        let geladen: boolean;
         if (b && b.idx === idx && lokal < 0.05) {
           slot = b.slot;
-          if (!(await b.fertig)) this.beiFehler('Das Video konnte nicht geladen werden.');
-        } else if (!(await this.setzeVideo(slot, seg.quelleId!, url, quellZeit))) {
-          this.beiFehler('Das Video konnte nicht geladen werden.');
-        }
+          geladen = await b.fertig;
+        } else geladen = await this.setzeVideo(slot, seg.quelleId!, url, quellZeit);
+        // Eine frühere Fehlermeldung verschwindet, sobald das Video wieder läuft
+        this.beiFehler(geladen ? null : 'Das Video konnte nicht geladen werden.');
         if (tok !== this.token) return;
         if (slot !== this.aktiv) {
           const alt = this.els[this.aktiv];

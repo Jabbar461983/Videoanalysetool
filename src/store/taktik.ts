@@ -26,6 +26,8 @@ interface TaktikState {
   situationId: string | null;
   werkzeug: TafelWerkzeug;
   markerId: string | null;
+  /** In der Zeitleiste gewählter Tafel-Abschnitt (Entf löscht ihn) */
+  abschnittId: string | null;
   kalibrierungOffen: boolean;
   /** Klick-Modus: Füsse im Video anklicken → Marker auf der Tafel */
   klickModus: 'team1' | 'team2' | 'ball' | null;
@@ -43,6 +45,7 @@ export const useTaktik = create<TaktikState>((set) => ({
   situationId: null,
   werkzeug: 'auswahl',
   markerId: null,
+  abschnittId: null,
   kalibrierungOffen: false,
   klickModus: null,
   uebernahmeId: null,

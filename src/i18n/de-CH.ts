@@ -653,6 +653,7 @@ export const t = {
     team1Standard: 'Team 1 als «BUL – SHC Bulldozers» speichern',
   },
   taktik: {
+    abschnittLoeschenHinweis: 'Zum Löschen den Balken anklicken und Entf drücken.',
     tab: 'Taktik',
     titel: 'Taktiktafel',
     editorTitel: 'Taktiktafel',
@@ -836,6 +837,10 @@ export const t = {
     titel: 'Spieler',
     leer: 'Noch keine Spieler markiert.',
     handVerschieben: 'Spieler verschieben (an der Hand ziehen)',
+    handFreeze:
+      'Zum Verschieben auf Freeze-Frame umstellen (der Spieler steht dann im Standbild und lässt sich an der Hand ziehen)',
+    zuFreezeUmgestellt:
+      'Auf Freeze-Frame umgestellt: Jetzt lässt sich der Spieler an der Hand verschieben.',
     verschiebenHilfe:
       'Zum Verschieben: das Handsymbol über dem Spieler ziehen (im Freeze-Frame), oder hier «Verschieben» anhaken und den Spieler im Bild ziehen.',
     objekt: (n: number) => `Spieler ${n}`,

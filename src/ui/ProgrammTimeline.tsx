@@ -15,6 +15,7 @@ import { ZeitBalken } from './ZeitBalken';
 import { KommentarBalken } from './KommentarBalken';
 import { OriginalWellenform } from './OriginalWellenform';
 import { holeAudio } from '../audio/modell';
+import { useTaktik } from '../store/taktik';
 import s from './ProgrammTimeline.module.css';
 
 /** Zeitleiste für den Clip-Editor (eine Clip-Zeitachse) und die Playlist (alle Einträge hintereinander). */
@@ -24,6 +25,7 @@ export function ProgrammTimeline() {
   const clipId = useProgramm((g) => g.clipId);
   const playlistId = useProgramm((g) => g.playlistId);
   const zeit = usePlayer((p) => p.zeit);
+  const tafelAuswahl = useTaktik((x) => x.abschnittId);
   const ref = useRef<HTMLDivElement>(null);
   const plan = useMemo(
     () => baueProgrammPlan(projekt, art, clipId, playlistId),
@@ -221,6 +223,8 @@ export function ProgrammTimeline() {
                     aria={t.taktik.spur}
                     testid="taktik-balken"
                     kantenTestid="taktik-zeit"
+                    ausgewaehlt={tafelAuswahl === a.id}
+                    onAuswahl={() => useTaktik.getState().setze({ abschnittId: a.id })}
                     onCommit={(st, en) =>
                       useProjekt.getState().aendere('Tafel-Abschnitt', (pr) => {
                         const x = pr.clips
