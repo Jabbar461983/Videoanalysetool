@@ -38,6 +38,7 @@ export function Editor({ projektId }: { projektId: string }) {
   const praesi = useUi((u) => u.praesentation);
   const [fehlt, setFehlt] = useState(false);
   const [zeitHoehe, setZeitHoehe] = useState<number | null>(ladeHoehe);
+  const [seitenBreite, setSeitenBreite] = useState<number | null>(leseSeitenBreite);
 
   useEffect(() => {
     let aktiv = true;
@@ -85,7 +86,13 @@ export function Editor({ projektId }: { projektId: string }) {
   const q = projekt.quellen.find((x) => x.id === projekt.aktiveQuelleId) ?? projekt.quellen[0];
 
   return (
-    <div className={`${s.app} ${praesi ? s.praesi : ''}`} data-praesentation={praesi}>
+    <div
+      className={`${s.app} ${praesi ? s.praesi : ''}`}
+      data-praesentation={praesi}
+      style={
+        seitenBreite ? ({ '--seite-b': `${seitenBreite}px` } as React.CSSProperties) : undefined
+      }
+    >
       <header className={s.kopf}>
         <Streifen hoehe={20} />
         <a href="#/" style={{ color: 'var(--bd-ink)' }}>
@@ -116,6 +123,7 @@ export function Editor({ projektId }: { projektId: string }) {
         {art === 'quelle' && !praesi && <TagLeiste />}
       </section>
       <aside className={s.seite} aria-label={t.editor.seitenleiste}>
+        <SeitenTeiler breite={seitenBreite} setze={setSeitenBreite} />
         <Seitenleiste />
       </aside>
       <section
@@ -193,6 +201,73 @@ function Teiler({ hoehe, setze }: { hoehe: number | null; setze: (h: number | nu
           e.stopPropagation();
           speichere(begrenze(aktuell + 24));
         } else if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          e.stopPropagation();
+          speichere(begrenze(aktuell - 24));
+        } else if (e.key === 'Home') speichere(null);
+      }}
+    />
+  );
+}
+
+const SEITE_KEY = 'bdva-seite-breite';
+export function leseSeitenBreite(): number | null {
+  try {
+    const v = Number(localStorage.getItem(SEITE_KEY));
+    return v >= 280 && v <= 900 ? v : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Griff am linken Rand der Seitenleiste: Ziehen (oder Pfeil links/rechts) ändert die Breite, Doppelklick = Standard. */
+function SeitenTeiler({
+  breite,
+  setze,
+}: {
+  breite: number | null;
+  setze: (b: number | null) => void;
+}) {
+  const speichere = (b: number | null) => {
+    setze(b);
+    try {
+      if (b) localStorage.setItem(SEITE_KEY, String(Math.round(b)));
+      else localStorage.removeItem(SEITE_KEY);
+    } catch {
+      /* egal */
+    }
+  };
+  const begrenze = (b: number) => Math.round(Math.min(window.innerWidth * 0.7, Math.max(280, b)));
+  return (
+    <div
+      className={s.seitenTeiler}
+      role="separator"
+      aria-orientation="vertical"
+      aria-label={t.editor.seitenBreite}
+      title={t.editor.seitenBreiteHinweis}
+      tabIndex={0}
+      data-testid="seiten-teiler"
+      onPointerDown={(e) => {
+        const start = e.currentTarget.parentElement!.getBoundingClientRect().width;
+        const x0 = e.clientX;
+        const el = e.currentTarget;
+        el.setPointerCapture(e.pointerId);
+        const move = (ev: PointerEvent) => speichere(begrenze(start + (x0 - ev.clientX)));
+        const ende = () => {
+          el.removeEventListener('pointermove', move);
+          el.removeEventListener('pointerup', ende);
+        };
+        el.addEventListener('pointermove', move);
+        el.addEventListener('pointerup', ende);
+      }}
+      onDoubleClick={() => speichere(null)}
+      onKeyDown={(e) => {
+        const aktuell = breite ?? e.currentTarget.parentElement!.getBoundingClientRect().width;
+        if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          e.stopPropagation();
+          speichere(begrenze(aktuell + 24));
+        } else if (e.key === 'ArrowRight') {
           e.preventDefault();
           e.stopPropagation();
           speichere(begrenze(aktuell - 24));

@@ -25,6 +25,8 @@ export const t = {
       'Der Browser kann den Speicher bei Platzmangel leeren. Exportiere wichtige Projekte als Datei (ab Etappe 6).',
   },
   editor: {
+    seitenBreite: 'Breite der Seitenleiste',
+    seitenBreiteHinweis: 'Ziehen: Breite ändern · Doppelklick: Standard',
     zurueck: 'Projekte',
     gespeichert: 'Gespeichert',
     speichert: 'Speichert …',
@@ -629,8 +631,9 @@ export const t = {
     zumStandbild: 'Springen Sie zuerst in das Standbild dieses Spielers.',
     titel: 'Spieler',
     leer: 'Noch keine Spieler markiert.',
+    handVerschieben: 'Spieler verschieben (an der Hand ziehen)',
     verschiebenHilfe:
-      'Zum Verschieben: Spieler wählen, «Verschieben» anhaken, dann im Bild ziehen.',
+      'Zum Verschieben: das Handsymbol über dem Spieler ziehen (im Freeze-Frame), oder hier «Verschieben» anhaken und den Spieler im Bild ziehen.',
     objekt: (n: number) => `Spieler ${n}`,
     effekte: 'Effekte',
     spotlight: 'Spotlight',

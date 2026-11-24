@@ -152,6 +152,39 @@ test('Spieler freistellen, hervorheben, verschieben; Export deckt sich mit der V
   expect(zurueck[0]).toBeLessThan(80);
   await page.keyboard.press('Control+y');
 
+  // Hand-Griff über dem Spieler: ziehen verschiebt ihn um 10 % der Bildbreite nach rechts
+  const hand = page.getByTestId('spieler-hand');
+  await expect(hand).toBeVisible();
+  const hb = (await hand.boundingBox())!;
+  const flaeche = (await page.getByTestId('spielerkreuze').boundingBox())!;
+  const ereignis = (typ: string, x: number, y: number) =>
+    hand.evaluate(
+      (el, a) =>
+        el.dispatchEvent(
+          new PointerEvent(a.typ, {
+            bubbles: true,
+            clientX: a.x,
+            clientY: a.y,
+            pointerId: 9,
+            pointerType: 'mouse',
+            button: 0,
+            buttons: 1,
+            isPrimary: true,
+          }),
+        ),
+      { typ, x, y },
+    );
+  const cx = hb.x + hb.width / 2;
+  const cy = hb.y + hb.height / 2;
+  await ereignis('pointerdown', cx, cy);
+  await page.waitForTimeout(300); // Hintergrund ist schon gefüllt: der Spieler folgt gleich dem Zeiger
+  await ereignis('pointermove', cx + flaeche.width * 0.05, cy);
+  await ereignis('pointermove', cx + flaeche.width * 0.1, cy);
+  await ereignis('pointerup', cx + flaeche.width * 0.1, cy);
+  await expect
+    .poll(async () => (await pixel(page, 0.3, 0.49))[0], { timeout: 10_000 })
+    .toBeGreaterThan(150);
+
   // Export: gleiches Bild wie die Vorschau (im Standbild bei Clip-Zeit 1.5 s)
   await springe(page, 1.5);
   const url = await page.evaluate(() =>
