@@ -146,3 +146,46 @@ test('Freies Layout: Modul per Ziehen in andere Position (Register trennen)', as
   await page.getByRole('tab', { name: 'Export', exact: true }).click();
   await expect(page.getByTestId('export-panel')).toBeVisible();
 });
+
+test('Zweites Fenster: Video läuft im ausgelagerten Fenster, Tasten gelten dort, Zurückholen behält die Position', async ({
+  page,
+}) => {
+  test.setTimeout(120_000);
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await projektOeffnen(page);
+  const video = page.getByTestId('video');
+  await expect
+    .poll(() => video.evaluate((v: HTMLVideoElement) => v.readyState))
+    .toBeGreaterThanOrEqual(2);
+  await video.evaluate((v: HTMLVideoElement) => (v.currentTime = 3));
+  await expect.poll(() => video.evaluate((v: HTMLVideoElement) => v.seeking)).toBe(false);
+
+  // Auslagern
+  const popupP = page.context().waitForEvent('page');
+  await page.getByTestId('fenster-popout-buehne').click();
+  const pop = await popupP;
+  await pop.waitForLoadState();
+  const popVideo = pop.getByTestId('video');
+  await expect(popVideo).toBeVisible();
+  // Im Hauptfenster ist das Video weg, im Popup ist es das gleiche (Zeit ≈ 3 s)
+  await expect(page.getByTestId('video')).toHaveCount(0);
+  await expect
+    .poll(() => popVideo.evaluate((v: HTMLVideoElement) => v.currentTime), { timeout: 8000 })
+    .toBeGreaterThan(2.5);
+
+  // Leertaste im Popup startet die Wiedergabe (Tastenkürzel gelten in allen Fenstern)
+  await pop.keyboard.press('Space');
+  await expect.poll(() => popVideo.evaluate((v: HTMLVideoElement) => !v.paused)).toBe(true);
+  await pop.keyboard.press('Space');
+  await expect.poll(() => popVideo.evaluate((v: HTMLVideoElement) => v.paused)).toBe(true);
+  const zeitImPopup = await popVideo.evaluate((v: HTMLVideoElement) => v.currentTime);
+
+  // Zurückholen: Position bleibt
+  await pop.getByTestId('fenster-zurueck-buehne').click();
+  await expect(page.getByTestId('video')).toBeVisible();
+  await expect
+    .poll(() => page.getByTestId('video').evaluate((v: HTMLVideoElement) => v.currentTime), {
+      timeout: 8000,
+    })
+    .toBeGreaterThan(zeitImPopup - 0.6);
+});

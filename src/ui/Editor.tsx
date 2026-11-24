@@ -26,6 +26,7 @@ import { useLayout } from '../store/layout';
 import { baueStandardLayout } from '../layout/standard';
 import { loescheLayout } from '../layout/speicher';
 import s from './Editor.module.css';
+import ls from '../layout/layout.module.css';
 
 const ZEIT_KEY = 'bdva-zeit-hoehe';
 const ladeHoehe = (): number | null => {
@@ -58,6 +59,7 @@ export function Editor({ projektId }: { projektId: string }) {
   const [fehlt, setFehlt] = useState(false);
   const frei = useFreiesLayout();
   const layoutApi = useLayout((l) => l.api);
+  const layoutMeldung = useLayout((l) => l.meldung);
   const [zeitHoehe, setZeitHoehe] = useState<number | null>(ladeHoehe);
   const [seitenBreite, setSeitenBreite] = useState<number | null>(leseSeitenBreite);
 
@@ -144,6 +146,14 @@ export function Editor({ projektId }: { projektId: string }) {
       </span>
     </header>
   );
+  const hinweis = layoutMeldung && frei && (
+    <div role="alert" className={ls.meldung} data-testid="layout-meldung">
+      <span>{layoutMeldung}</span>
+      <button onClick={() => useLayout.getState().setzeMeldung(null)}>
+        {t.layout.meldungSchliessen}
+      </button>
+    </div>
+  );
 
   if (frei)
     return (
@@ -153,6 +163,7 @@ export function Editor({ projektId }: { projektId: string }) {
       >
         {kopf}
         <div className={s.arbeit}>
+          {hinweis}
           <Arbeitsflaeche />
         </div>
         <HotkeyHilfe />

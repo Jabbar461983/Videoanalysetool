@@ -4,7 +4,11 @@ import 'dockview-react/dist/styles/dockview.css';
 import { useLayout } from '../store/layout';
 import { useProgramm } from '../store/programm';
 import { useUi, type SeitenTab } from '../store/ui';
+import { KopfAktionen } from './KopfAktionen';
+import { aufAllenFenstern, registriereFenster } from './fenster';
+import { merkeWiedergabe } from './fensterwechsel';
 import { KOMPONENTEN, ModulTab } from './panels';
+import { t } from '../i18n/de-CH';
 import { ladeLayout, speichereLayout } from './speicher';
 import { baueStandardLayout, SEITEN_MODULE } from './standard';
 import './layout.css';
@@ -38,8 +42,34 @@ export function Arbeitsflaeche() {
     let timer = 0;
     api.onDidLayoutChange(() => {
       window.clearTimeout(timer);
-      timer = window.setTimeout(() => speichereLayout(api.toJSON()), 400);
+      timer = window.setTimeout(() => {
+        // Mit ausgelagerten Fenstern bleibt der zuletzt gespeicherte Stand (alles im Hauptfenster) gültig
+        if (api.getPopouts().length === 0) speichereLayout(api.toJSON());
+      }, 400);
     });
+
+    // Ausgelagerte Fenster: Tasten gelten dort auch; beim Schliessen die Wiedergabeposition wiederherstellen
+    const abmelden = new Map<string, () => void>();
+    let wiederherstellen: (() => void) | null = null;
+    api.onDidAddPopoutGroup((pg) => {
+      abmelden.set(pg.id, registriereFenster(pg.window));
+      useLayout.getState().setzeFenster(api.getPopouts().length);
+      useLayout.getState().setzeMeldung(null);
+    });
+    api.onWillClosePopoutWindow(() => {
+      wiederherstellen = merkeWiedergabe();
+    });
+    api.onDidRemovePopoutGroup((pg) => {
+      abmelden.get(pg.id)?.();
+      abmelden.delete(pg.id);
+      useLayout.getState().setzeFenster(api.getPopouts().length);
+      const w = wiederherstellen;
+      wiederherstellen = null;
+      if (w) window.setTimeout(w, 300);
+    });
+    api.onDidOpenPopoutWindowFail(() => useLayout.getState().setzeMeldung(t.layout.popupBlockiert));
+    // Schliesst das Hauptfenster, sollen auch die ausgelagerten Fenster zugehen
+    aufAllenFenstern('pagehide', () => api.getPopouts().forEach((p) => p.window.close()));
     // Aktives Register ↔ Zustand der Anwendung (andere Stellen schalten Register per `setzeTab`)
     api.onDidActivePanelChange((e) => {
       const p = e.panel;
@@ -108,6 +138,8 @@ export function Arbeitsflaeche() {
         className="dockview-theme-dark bd-dock"
         components={KOMPONENTEN}
         defaultTabComponent={ModulTab}
+        rightHeaderActionsComponent={KopfAktionen}
+        popoutUrl={`${import.meta.env.BASE_URL}popout.html`}
         onReady={bereit}
         singleTabMode="default"
       />

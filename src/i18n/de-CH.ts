@@ -445,6 +445,16 @@ export const t = {
       'Die Tag-Leiste gibt es in der Quellansicht (nicht im Clip- oder Playlist-Modus).',
     zuruecksetzen: 'Layout zurücksetzen',
     zuruecksetzenHinweis: 'Alle Module wieder an ihren Standardplatz',
+    eigenesFenster: 'In eigenem Fenster öffnen',
+    zweiterBildschirm: 'Auf zweitem Bildschirm öffnen',
+    zweiterBildschirmKurz: '2. Bildschirm',
+    zurueckHolen: 'Zurück ins Hauptfenster',
+    vollbild: 'Vollbild',
+    popupBlockiert:
+      'Das Fenster wurde vom Browser blockiert. Erlauben Sie Pop-ups für diese Seite (Symbol in der Adressleiste) und klicken Sie erneut.',
+    keinZweiterBildschirm:
+      'Der zweite Bildschirm konnte nicht erkannt werden (oder die Erlaubnis fehlt). Das Fenster öffnet sich normal, ziehen Sie es selbst auf den zweiten Bildschirm.',
+    meldungSchliessen: 'Hinweis schliessen',
   },
   vergleich: {
     kurz: 'Vergleich',

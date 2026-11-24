@@ -40,3 +40,31 @@
   color: var(--bd-gold);
   border-bottom-color: var(--bd-gold);
 }
+.aktionen {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 100%;
+  padding: 0 6px;
+}
+.aktion {
+  min-height: 24px;
+  padding: 0 8px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.meldung {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  background: var(--bd-surface-raised);
+  border-bottom: 1px solid var(--bd-gold);
+  color: var(--bd-ink);
+  font-size: 13px;
+}

@@ -1,4 +1,4 @@
-import { setzeHauptVideo } from '../layout/bildquelle';
+import { loescheHauptVideo, setzeHauptVideo } from '../layout/bildquelle';
 import { useEffect, useRef, useState } from 'react';
 import { t } from '../i18n/de-CH';
 import type { Quelle } from '../model/typen';
@@ -72,9 +72,10 @@ export function Buehne({ quelle }: { quelle: Quelle | undefined }) {
   const videoBRef = useRef<HTMLVideoElement>(null);
   // Das Videoelement der Bühne bei der Anwendung anmelden (die Bühne kann in einem anderen Fenster liegen)
   useEffect(() => {
-    setzeHauptVideo(videoRef.current);
-    return () => setzeHauptVideo(null);
-  }, []);
+    const el = videoRef.current;
+    setzeHauptVideo(el);
+    return () => loescheHauptVideo(el);
+  }, [quelle?.id]); // die Elemente gibt es erst, wenn eine Quelle da ist
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [groesse, setGroesse] = useState({ w: 0, h: 0 });
   const [proxyOffen, setProxyOffen] = useState(false);
