@@ -536,6 +536,41 @@ export const t = {
     keinZiel: '(keine Animation)',
     entfernen: 'Entfernen',
     spur: 'Taktik',
+    kalibrierung: 'Kalibrierung',
+    kalibrierErklaerung:
+      'Damit Positionen im Video aufs Feld übertragen werden können, einmal pro Kameraeinstellung im Standbild mindestens 4 Feldpunkte anklicken (Bullypunkte, Pfosten, Mittellinie …).',
+    neuKalibrieren: 'Neu kalibrieren …',
+    abbrechen: 'Abbrechen',
+    speichern: 'Speichern',
+    keinBild:
+      'Es gibt kein Videobild: Spielen Sie ein Video ab, halten Sie es an einer Szene an und öffnen Sie den Dialog erneut.',
+    kalibrierHilfe:
+      'Wählen Sie rechts einen Feldpunkt und klicken Sie im Bild genau dorthin. Gelb zeigt nach 4 Punkten die berechneten Feldlinien: Sie sollten auf den echten Linien liegen. Mit 5 oder mehr Punkten wird auch der Fehler berechnet.',
+    kalibrierName: 'Name (z. B. Kamera Haupttribüne)',
+    punkte: 'Feldpunkte',
+    punktEntfernen: 'Punkt entfernen',
+    nochPunkte: (n: number) => `Noch ${n} Punkt${n === 1 ? '' : 'e'} nötig.`,
+    entartet:
+      'Diese Punkte ergeben keine eindeutige Abbildung (z. B. drei auf einer Linie). Bitte andere Punkte wählen.',
+    guete4:
+      'Berechnet aus genau 4 Punkten (keine Fehlerkontrolle möglich). Prüfen Sie die gelben Linien im Bild.',
+    guete4Kurz: '4 Punkte (ungeprüft)',
+    fehler: 'Fehler',
+    gueteStufen: {
+      gut: 'gut',
+      mittel: 'mittel',
+      schlecht: 'schlecht – Punkte prüfen',
+      ungeprueft: 'ungeprüft',
+    },
+    uebernehmen: 'Situation übernehmen',
+    uebernehmenErklaerung:
+      'Im Standbild: Alle Spieler erkennen (Teams per Trikotfarbe) oder Füsse einzeln anklicken. Es entsteht eine Situation auf der Tafel.',
+    uebernehmenAuto: 'Alle Spieler erkennen',
+    uebernehmenKlick: 'Per Klick übernehmen',
+    erkenneLaeuft: 'Erkenne …',
+    klickFertig: 'Fertig',
+    klickHinweis: 'Klicken Sie auf die Füsse jedes Spielers.',
+    teamsTauschen: 'Teams tauschen',
   },
   spieler: {
     werkzeug: 'Spieler',

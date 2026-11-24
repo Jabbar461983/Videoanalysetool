@@ -52,7 +52,7 @@ export class TrackingLauf {
         else if (a.typ === ende) ok(a as Extract<TrackingAntwort, { typ: T }>);
       };
       w.onerror = (e) => fehler(new Error(e.message || 'Der Tracking-Worker ist abgestürzt.'));
-      w.postMessage(befehl);
+      w.postMessage(befehl, befehl.typ === 'erkenneAlle' ? [befehl.bild] : []);
     });
   }
 
@@ -90,6 +90,16 @@ export class TrackingLauf {
         'fertig',
       );
       return { punkte: a.punkte, abgebrochen: a.abgebrochen, medianMs: a.medianMs };
+    } finally {
+      this.beende();
+    }
+  }
+
+  /** Alle Personen im Bild erkennen (Boxen in Pixeln des Bildes). Der Worker wird danach beendet. */
+  async erkenneAlle(bild: ImageBitmap, geraet: 'auto' | 'wasm' | 'webgpu' = leseKiGeraet()) {
+    try {
+      const a = await this.warte({ typ: 'erkenneAlle', bild, geraet }, 'erkannt');
+      return { boxen: a.boxen, ms: a.ms, kacheln: a.kacheln, geraet: a.geraet };
     } finally {
       this.beende();
     }

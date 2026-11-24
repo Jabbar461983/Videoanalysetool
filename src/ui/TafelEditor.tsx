@@ -302,6 +302,19 @@ export function TafelEditor() {
               >
                 {t.taktik.duplizieren}
               </button>
+              <button
+                data-testid="tafel-tauschen"
+                onClick={() =>
+                  aendereSit('Teams tauschen', (s2) => {
+                    for (const m of s2.marker) {
+                      if (m.art === 'team1') m.art = 'team2';
+                      else if (m.art === 'team2') m.art = 'team1';
+                    }
+                  })
+                }
+              >
+                {t.taktik.teamsTauschen}
+              </button>
               <button onClick={() => void exportiereTafelPng(situation.id)} data-testid="tafel-png">
                 {t.taktik.png}
               </button>

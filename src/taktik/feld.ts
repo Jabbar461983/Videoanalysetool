@@ -33,14 +33,15 @@ export function referenzPunkte(f: FeldMasse): FeldPunkt[] {
   const { laenge: L, breite: B } = f;
   const a = f.torLinieAbstand;
   const ph = f.torBreite / 2;
+  // Reihenfolge: die ersten vier bilden ein Rechteck (gut konditioniert, nie drei auf einer Linie)
   return [
+    { id: 'bully-ol', name: 'Bullypunkt links oben', x: L / 2 - f.bullyX, y: B / 2 - f.bullyY },
+    { id: 'bully-or', name: 'Bullypunkt rechts oben', x: L / 2 + f.bullyX, y: B / 2 - f.bullyY },
+    { id: 'bully-ul', name: 'Bullypunkt links unten', x: L / 2 - f.bullyX, y: B / 2 + f.bullyY },
+    { id: 'bully-ur', name: 'Bullypunkt rechts unten', x: L / 2 + f.bullyX, y: B / 2 + f.bullyY },
     { id: 'mitte', name: 'Anstosspunkt (Mitte)', x: L / 2, y: B / 2 },
     { id: 'mittellinie-oben', name: 'Mittellinie an der oberen Bande', x: L / 2, y: 0 },
     { id: 'mittellinie-unten', name: 'Mittellinie an der unteren Bande', x: L / 2, y: B },
-    { id: 'bully-ol', name: 'Bullypunkt links oben', x: L / 2 - f.bullyX, y: B / 2 - f.bullyY },
-    { id: 'bully-ul', name: 'Bullypunkt links unten', x: L / 2 - f.bullyX, y: B / 2 + f.bullyY },
-    { id: 'bully-or', name: 'Bullypunkt rechts oben', x: L / 2 + f.bullyX, y: B / 2 - f.bullyY },
-    { id: 'bully-ur', name: 'Bullypunkt rechts unten', x: L / 2 + f.bullyX, y: B / 2 + f.bullyY },
     { id: 'tor-l-oben', name: 'Pfosten links oben', x: a, y: B / 2 - ph },
     { id: 'tor-l-unten', name: 'Pfosten links unten', x: a, y: B / 2 + ph },
     { id: 'tor-r-oben', name: 'Pfosten rechts oben', x: L - a, y: B / 2 - ph },

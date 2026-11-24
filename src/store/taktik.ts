@@ -11,6 +11,13 @@ interface TaktikState {
   werkzeug: TafelWerkzeug;
   markerId: string | null;
   kalibrierungOffen: boolean;
+  /** Klick-Modus: Füsse im Video anklicken → Marker auf der Tafel */
+  klickModus: 'team1' | 'team2' | 'ball' | null;
+  /** Situation, die im Klick-Modus gerade aufgebaut wird */
+  uebernahmeId: string | null;
+  /** Rückmeldung zur Übernahme (Erkennung läuft, Ergebnis, Fehler) */
+  meldung: string | null;
+  beschaeftigt: boolean;
   setze: (patch: Partial<Omit<TaktikState, 'setze'>>) => void;
 }
 
@@ -20,5 +27,9 @@ export const useTaktik = create<TaktikState>((set) => ({
   werkzeug: 'auswahl',
   markerId: null,
   kalibrierungOffen: false,
+  klickModus: null,
+  uebernahmeId: null,
+  meldung: null,
+  beschaeftigt: false,
   setze: (patch) => set(patch),
 }));

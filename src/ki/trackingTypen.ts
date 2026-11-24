@@ -23,6 +23,7 @@ export type TrackingBefehl =
       geraet: 'auto' | 'wasm' | 'webgpu';
     }
   | { typ: 'abbrechen' }
+  | { typ: 'erkenneAlle'; bild: ImageBitmap; geraet: 'auto' | 'wasm' | 'webgpu' }
   | { typ: 'schnelltest'; geraet: 'auto' | 'wasm' | 'webgpu' };
 
 export type TrackingAntwort =
@@ -31,4 +32,11 @@ export type TrackingAntwort =
   | { typ: 'lauf'; anteil: number; zeit: number; punkt: SpurPunkt; ms: number }
   | { typ: 'fertig'; punkte: SpurPunkt[]; abgebrochen: boolean; medianMs: number }
   | { typ: 'schnelltest'; medianMs: number; geraet: 'webgpu' | 'wasm'; gpuFehler: string }
+  | {
+      typ: 'erkannt';
+      boxen: { cx: number; cy: number; b: number; h: number; score: number }[];
+      ms: number;
+      kacheln: number;
+      geraet: 'webgpu' | 'wasm';
+    }
   | { typ: 'fehler'; meldung: string };

@@ -30,6 +30,7 @@ import { schalteLogo, schalteScoreboard } from '../overlay/aktionen';
 import { ZeichenEbene } from './ZeichenEbene';
 import { SpielerEbene } from './SpielerEbene';
 import { SpielerKreuze } from './SpielerKreuze';
+import { TaktikKlickEbene } from './TaktikKlickEbene';
 import { useZeichnen } from '../store/zeichnen';
 import type { Zeichnung } from '../model/typen';
 import s from './Buehne.module.css';
@@ -319,6 +320,7 @@ export function Buehne({ quelle }: { quelle: Quelle | undefined }) {
           {praesi && <LiveStift />}
           {art === 'clip' && anzeige && werkzeugModus === 'spieler' && <SpielerEbene />}
           {art === 'clip' && anzeige && !praesi && <SpielerKreuze />}
+          {anzeige && !praesi && <TaktikKlickEbene />}
           {art === 'clip' && anzeige && werkzeugModus !== 'spieler' && (
             <ZeichenEbene
               breite={Math.min(1920, anzeige.breite)}

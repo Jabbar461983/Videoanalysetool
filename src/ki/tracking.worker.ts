@@ -3,6 +3,7 @@ import { ORT_PFADE } from './ortPfade';
 import { ALL_FORMATS, BlobSource, CanvasSink, Input } from 'mediabunny';
 import { ZielVerfolger, type Box, type Erkennung } from './tracker';
 import type { SpurPunkt, TrackingAntwort, TrackingBefehl } from './trackingTypen';
+import { unterdrueckeDoppelte } from '../taktik/uebernehmen';
 import { DETEKTOR_DTYPE, DETEKTOR_DTYPE_GPU, DETEKTOR_REPO, ausschnittFuerBox } from './detektor';
 
 /**
@@ -211,6 +212,56 @@ async function lauf(b: Extract<TrackingBefehl, { typ: 'start' }>) {
   }
 }
 
+/**
+ * Alle Personen im Bild: Das Bild (höchstens 1920 px breit) wird in 640-px-Kacheln mit Überlappung zerlegt,
+ * damit auch kleine Spieler gross genug erkannt werden. Doppelte an den Kachelrändern werden zusammengefasst.
+ * Boxen in Pixeln des Originalbildes.
+ */
+async function erkenneAlle(bild: ImageBitmap, geraet: 'auto' | 'wasm' | 'webgpu') {
+  const g = await ladeDetektor(geraet);
+  const t0 = performance.now();
+  const faktor = Math.min(1, 1920 / bild.width);
+  const W = Math.max(1, Math.round(bild.width * faktor));
+  const H = Math.max(1, Math.round(bild.height * faktor));
+  const canvas = new OffscreenCanvas(W, H);
+  canvas.getContext('2d')!.drawImage(bild, 0, 0, W, H);
+  bild.close();
+  const seite = Math.min(640, W, H);
+  const schritt = Math.max(1, Math.round(seite * 0.75));
+  const xs: number[] = [];
+  const ys: number[] = [];
+  for (let x = 0; ; x += schritt) {
+    xs.push(Math.min(x, W - seite));
+    if (x + seite >= W) break;
+  }
+  for (let y = 0; ; y += schritt) {
+    ys.push(Math.min(y, H - seite));
+    if (y + seite >= H) break;
+  }
+  const alle: { cx: number; cy: number; b: number; h: number; score: number }[] = [];
+  let kacheln = 0;
+  for (const y of ys)
+    for (const x of xs) {
+      kacheln++;
+      const { dets } = await erkenneImBild(
+        canvas,
+        { cx: x + seite / 2, cy: y + seite / 2, b: 10, h: 10 },
+        seite,
+      );
+      for (const d of dets)
+        if (d.score >= 0.35)
+          alle.push({ cx: d.box.cx, cy: d.box.cy, b: d.box.b, h: d.box.h, score: d.score });
+    }
+  const boxen = unterdrueckeDoppelte(alle).map((d) => ({
+    cx: d.cx / faktor,
+    cy: d.cy / faktor,
+    b: d.b / faktor,
+    h: d.h / faktor,
+    score: d.score,
+  }));
+  senden({ typ: 'erkannt', boxen, ms: Math.round(performance.now() - t0), kacheln, geraet: g });
+}
+
 async function schnelltest(geraet: 'auto' | 'wasm' | 'webgpu') {
   const g = await ladeDetektor(geraet);
   const c = new OffscreenCanvas(1280, 720);
@@ -233,6 +284,7 @@ self.onmessage = async (e: MessageEvent<TrackingBefehl>) => {
     if (b.typ === 'abbrechen') abbruch = true;
     else if (b.typ === 'start') await lauf(b);
     else if (b.typ === 'schnelltest') await schnelltest(b.geraet);
+    else if (b.typ === 'erkenneAlle') await erkenneAlle(b.bild, b.geraet);
   } catch (err) {
     senden({ typ: 'fehler', meldung: err instanceof Error ? err.message : String(err) });
   }

@@ -52,6 +52,8 @@ hook.springe = async (t: number) => {
  * Erwartetes Bild an der aktuellen Programmposition aus der Vorschau: Videobild + frisch mit `renderFrame()` gezeichnete Overlays
  * (Grösse wie im Export). Rückgabe: PNG als Data-URL.
  */
+/** Aktueller Projektstand als JSON (nur für Tests). */
+hook.projekt = (): unknown => JSON.parse(JSON.stringify(useProjekt.getState().projekt));
 hook.vorschauBild = (breite: number, hoehe: number): string => {
   const v = spieler.aktivesElement;
   const projekt = useProjekt.getState().projekt;

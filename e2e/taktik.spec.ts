@@ -190,3 +190,105 @@ test('Taktiktafel: Situation zeichnen, per T einblenden, im Export enthalten', a
   await page.keyboard.press('t');
   await expect.poll(() => alphaBei(page, 0.9, 0.9)).toBe(0);
 });
+
+test('Kalibrierung und «Per Klick übernehmen»: Klick im Video landet am richtigen Feldpunkt', async ({
+  page,
+}) => {
+  test.setTimeout(90_000);
+  await clipOeffnen(page);
+  await springe(page, 1.0);
+  await page.getByRole('tab', { name: 'Taktik' }).click();
+  await page.getByTestId('neu-kalibrieren').click();
+  await expect(page.getByTestId('kalibrier-dialog')).toBeVisible();
+
+  // Die ersten vier Referenzpunkte (Bullypunkte, Rechteck) im Bild anklicken
+  const klickBild = async (x: number, y: number) =>
+    page.getByTestId('kalibrier-bild').evaluate(
+      (el, a) => {
+        const r = el.getBoundingClientRect();
+        el.dispatchEvent(
+          new PointerEvent('pointerdown', {
+            bubbles: true,
+            clientX: r.left + r.width * a.x,
+            clientY: r.top + r.height * a.y,
+            pointerId: 6,
+            pointerType: 'mouse',
+            button: 0,
+            buttons: 1,
+            isPrimary: true,
+          }),
+        );
+      },
+      { x, y },
+    );
+  await expect(page.getByTestId('kalibrierung-speichern')).toBeDisabled();
+  await klickBild(0.3, 0.4); // links oben
+  await klickBild(0.7, 0.4); // rechts oben
+  await klickBild(0.25, 0.8); // links unten
+  await expect(page.getByTestId('kalibrier-guete')).toContainText('Noch 1 Punkt nötig');
+  await klickBild(0.75, 0.8); // rechts unten
+  await expect(page.getByTestId('kalibrier-guete')).toContainText('4 Punkten');
+  await page.getByTestId('kalibrierung-speichern').click();
+  await expect(page.getByTestId('kalibrier-dialog')).toBeHidden();
+  await expect(page.getByTestId('kalibrierungen')).toContainText('4 Punkte');
+
+  // Klick-Modus: ein Klick genau auf den Punkt «links oben» → Marker bei (10 m, 5 m)
+  await page.getByTestId('uebernehmen-klick').click();
+  await expect(page.getByTestId('taktik-klickebene')).toBeVisible();
+  const klickVideo = (x: number, y: number) =>
+    page.getByTestId('taktik-klickebene').evaluate(
+      (el, a) => {
+        const r = el.getBoundingClientRect();
+        el.dispatchEvent(
+          new PointerEvent('pointerdown', {
+            bubbles: true,
+            clientX: r.left + r.width * a.x,
+            clientY: r.top + r.height * a.y,
+            pointerId: 7,
+            pointerType: 'mouse',
+            button: 0,
+            buttons: 1,
+            isPrimary: true,
+          }),
+        );
+      },
+      { x, y },
+    );
+  await klickVideo(0.3, 0.4);
+  await page.getByTestId('klick-team2').click();
+  await klickVideo(0.75, 0.8); // rechts unten → (30 m, 15 m)
+  await page.getByTestId('klick-fertig').click();
+  await expect(page.getByTestId('tafel-editor')).toBeVisible();
+  const projekt = await page.evaluate(() =>
+    (
+      window as unknown as {
+        __bdvaTest: {
+          projekt(): {
+            taktik: {
+              situationen: { name: string; marker: { art: string; x: number; y: number }[] }[];
+            };
+          };
+        };
+      }
+    ).__bdvaTest.projekt(),
+  );
+  const szene = projekt.taktik.situationen.at(-1)!;
+  expect(szene.marker).toHaveLength(2);
+  expect(szene.marker[0]).toMatchObject({ art: 'team1' });
+  expect(szene.marker[0]!.x).toBeCloseTo(10, 1);
+  expect(szene.marker[0]!.y).toBeCloseTo(5, 1);
+  expect(szene.marker[1]).toMatchObject({ art: 'team2' });
+  expect(szene.marker[1]!.x).toBeCloseTo(30, 1);
+  expect(szene.marker[1]!.y).toBeCloseTo(15, 1);
+
+  // Teams tauschen
+  await page.getByTestId('tafel-tauschen').click();
+  const nachher = await page.evaluate(() =>
+    (
+      window as unknown as {
+        __bdvaTest: { projekt(): { taktik: { situationen: { marker: { art: string }[] }[] } } };
+      }
+    ).__bdvaTest.projekt(),
+  );
+  expect(nachher.taktik.situationen.at(-1)!.marker.map((m) => m.art)).toEqual(['team2', 'team1']);
+});
