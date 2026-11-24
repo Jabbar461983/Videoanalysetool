@@ -20,6 +20,7 @@ import { useTagging } from '../store/tagging';
 import { useUi } from '../store/ui';
 import { beendePraesentation, naechsterEintrag } from '../praesentation/aktionen';
 import { schalteLogo, schalteScoreboard } from '../overlay/aktionen';
+import { schalteTafel } from '../taktik/aktionen';
 import { useProgramm } from '../store/programm';
 import { useZeichnen } from '../store/zeichnen';
 import {
@@ -87,6 +88,18 @@ export function useEditorTasten() {
           else schalteScoreboard();
           return;
         }
+      }
+      // Taktiktafel (T): im Clip ein-/ausblenden, sonst Tafel-Editor
+      if (
+        !mod &&
+        !e.repeat &&
+        !e.shiftKey &&
+        e.key.toLowerCase() === 't' &&
+        !useProjekt.getState().projekt?.tagDefinitionen.some((d) => d.hotkey?.toLowerCase() === 't')
+      ) {
+        e.preventDefault();
+        schalteTafel();
+        return;
       }
       const programm = istProgramm();
       // Zeichnen im Clip-Editor: Entf, Strg+C/V, Enter (Zone fertig), Esc

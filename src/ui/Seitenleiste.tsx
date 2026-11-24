@@ -5,6 +5,7 @@ import { ClipListe } from './ClipListe';
 import { SetupPanel } from './SetupPanel';
 import { PlaylistPanel } from './PlaylistPanel';
 import { ExportPanel } from './ExportPanel';
+import { TaktikPanel } from './TaktikPanel';
 import { useUi, type SeitenTab } from '../store/ui';
 import s from './Seitenleiste.module.css';
 
@@ -13,6 +14,7 @@ const TABS = [
   ['tags', t.seite.tags],
   ['clips', t.seite.clips],
   ['playlist', t.seite.playlist],
+  ['taktik', t.seite.taktik],
   ['setup', t.seite.setup],
   ['export', t.seite.export],
 ] as const;
@@ -39,6 +41,7 @@ export function Seitenleiste() {
       {tab === 'tags' && <TagListe />}
       {tab === 'clips' && <ClipListe />}
       {tab === 'playlist' && <PlaylistPanel />}
+      {tab === 'taktik' && <TaktikPanel />}
       {tab === 'setup' && <SetupPanel />}
       {tab === 'export' && <ExportPanel />}
     </>

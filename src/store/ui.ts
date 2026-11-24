@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export type SeitenTab = 'quellen' | 'tags' | 'clips' | 'playlist' | 'setup' | 'export';
+export type SeitenTab = 'quellen' | 'tags' | 'clips' | 'playlist' | 'taktik' | 'setup' | 'export';
 
 interface UiState {
   tab: SeitenTab;

@@ -16,6 +16,7 @@ import { useUi } from '../store/ui';
 import { ProgrammTimeline } from './ProgrammTimeline';
 import { useProgramm } from '../store/programm';
 import { HotkeyHilfe } from './HotkeyHilfe';
+import { TafelEditor } from './TafelEditor';
 import { useEditorTasten } from './tasten';
 import s from './Editor.module.css';
 
@@ -128,6 +129,7 @@ export function Editor({ projektId }: { projektId: string }) {
         )}
       </section>
       <HotkeyHilfe />
+      <TafelEditor />
       {praesi && <PraesentationsLeiste />}
     </div>
   );

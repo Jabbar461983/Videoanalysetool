@@ -199,6 +199,37 @@ export function ProgrammTimeline() {
                 )),
               )}
             </div>
+            {(clip.taktik?.abschnitte.length ?? 0) > 0 && (
+              <div className={s.reihe} style={{ height: 18 }} data-testid="taktik-spur">
+                {clip.taktik!.abschnitte.map((a) => (
+                  <ZeitBalken
+                    key={a.id}
+                    start={a.start}
+                    ende={a.ende}
+                    dauer={plan.dauer}
+                    spurRef={ref}
+                    top={0}
+                    farbe="#1f5f4f"
+                    textfarbe="#fff"
+                    label={t.taktik.spur}
+                    aria={t.taktik.spur}
+                    testid="taktik-balken"
+                    kantenTestid="taktik-zeit"
+                    onCommit={(st, en) =>
+                      useProjekt.getState().aendere('Tafel-Abschnitt', (pr) => {
+                        const x = pr.clips
+                          .find((c) => c.id === clipId)
+                          ?.taktik?.abschnitte.find((y) => y.id === a.id);
+                        if (x) {
+                          x.start = st;
+                          x.ende = en;
+                        }
+                      })
+                    }
+                  />
+                ))}
+              </div>
+            )}
             <div
               className={`${s.reihe} ${s.audioLane}`}
               style={{ height: 26 }}
