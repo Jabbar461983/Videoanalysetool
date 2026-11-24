@@ -1,5 +1,5 @@
 /** Datenmodell nach CLAUDE.md Abschnitt 5. Zeiten in Sekunden der jeweiligen Quelle. */
-export const SCHEMA_VERSION = 7;
+export const SCHEMA_VERSION = 8;
 
 export interface Quelle {
   id: string;
@@ -73,6 +73,8 @@ export interface Clip {
   audio?: ClipAudio;
   /** Gesetzt, wenn der Clip automatisch aus einem Tag entstanden ist. */
   tagId?: string;
+  /** Taktiktafel über dem Video (Anzeigeart und Zeitabschnitte) */
+  taktik?: { anzeige: TafelAnzeige; abschnitte: TaktikAbschnitt[] };
 }
 export type Uebergang = 'schnitt' | 'blende';
 /** `uebergang` gilt beim Wechsel vom vorherigen Eintrag in diesen. */
@@ -232,6 +234,71 @@ export interface ClipAudio {
   spuren: KommentarSpur[];
 }
 
+/** Taktiktafel (Etappe 9). Feldpositionen in Metern (x entlang der Länge, y quer). */
+export interface FeldMasse {
+  laenge: number;
+  breite: number;
+  eckenradius: number;
+  torLinieAbstand: number;
+  torBreite: number;
+  torTiefe: number;
+  torraumBreite: number;
+  torraumTiefe: number;
+  bullyX: number;
+  bullyY: number;
+  mittelkreisRadius: number;
+  /** vom Verein bestätigt? (Standardwerte sind Platzhalter) */
+  geprueft: boolean;
+}
+export type MarkerArt = 'team1' | 'team2' | 'ball';
+export interface TaktikMarker {
+  id: string;
+  art: MarkerArt;
+  x: number;
+  y: number;
+  nummer?: number;
+  name?: string;
+}
+export type TaktikPfeilArt = 'laufweg' | 'pass' | 'schuss';
+export interface TaktikPfeil {
+  id: string;
+  art: TaktikPfeilArt;
+  von: { x: number; y: number };
+  nach: { x: number; y: number };
+}
+export interface Situation {
+  id: string;
+  name: string;
+  marker: TaktikMarker[];
+  pfeile: TaktikPfeil[];
+  erstelltAm: number;
+}
+/** Bild (0–1) → Feld (m): Homographie aus Referenzpunkten, gilt für eine Kameraeinstellung. */
+export interface Kalibrierung {
+  id: string;
+  name: string;
+  quelleId: string;
+  /** Quellzeit des Standbilds, in dem kalibriert wurde */
+  zeit: number;
+  paare: { punktId?: string; bild: { x: number; y: number }; feld: { x: number; y: number } }[];
+  H: [number, number, number, number, number, number, number, number, number];
+  rms: number | null;
+}
+export interface TafelAnzeige {
+  modus: 'pip' | 'geteilt' | 'voll';
+  ecke: 'ol' | 'or' | 'ul' | 'ur';
+  /** Breite der Tafel im Bild-im-Bild als Anteil der Bildbreite (0.2–0.6) */
+  groesse: number;
+}
+/** Zeitspanne (Clip-Zeit), in der die Tafel eingeblendet ist; mit `nachSituationId` gleiten die Marker dorthin. */
+export interface TaktikAbschnitt {
+  id: string;
+  start: number;
+  ende: number;
+  situationId?: string;
+  nachSituationId?: string;
+}
+
 export interface Projekt {
   id: string;
   name: string;
@@ -252,10 +319,11 @@ export interface Projekt {
   spielerObjekte: SpielerObjekt[];
   overlays: { scoreKorrekturen: ScoreKorrektur[] };
   taktik: {
-    feld: Record<string, unknown>;
-    kalibrierungen: unknown[];
-    situationen: unknown[];
-    anzeige: Abschnitt[];
+    feld: FeldMasse;
+    kalibrierungen: Kalibrierung[];
+    situationen: Situation[];
+    /** zuletzt gewählte Kalibrierung je Quelle */
+    aktiveKalibrierung: Record<string, string>;
   };
   einstellungen: {
     trackingModus: 'auto' | 'freeze';

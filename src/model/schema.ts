@@ -1,5 +1,6 @@
 import { SCHEMA_VERSION, type Projekt } from './typen';
 import { neueStandardTags } from '../tagging/standardTags';
+import { STANDARD_FELD } from '../taktik/feld';
 
 export const neueId = (): string => crypto.randomUUID();
 
@@ -23,7 +24,12 @@ export function neuesProjekt(name: string, jetzt = Date.now()): Projekt {
     zeichnungen: [],
     spielerObjekte: [],
     overlays: { scoreKorrekturen: [] },
-    taktik: { feld: {}, kalibrierungen: [], situationen: [], anzeige: [] },
+    taktik: {
+      feld: { ...STANDARD_FELD },
+      kalibrierungen: [],
+      situationen: [],
+      aktiveKalibrierung: {},
+    },
     einstellungen: {
       trackingModus: 'auto',
       exportAufloesung: 1080,
@@ -107,6 +113,16 @@ export const migrationen: Migration[] = [
     ...p,
     spielerObjekte: [],
     einstellungen: { samModell: 'slimsam-77', ...(p.einstellungen as Record<string, unknown>) },
+  }),
+  // 7 → 8: Taktiktafel – Feldmasse, Kalibrierungen, Situationen (alte Platzhalter verworfen)
+  (p) => ({
+    ...p,
+    taktik: {
+      feld: { ...STANDARD_FELD },
+      kalibrierungen: [],
+      situationen: [],
+      aktiveKalibrierung: {},
+    },
   }),
 ];
 
