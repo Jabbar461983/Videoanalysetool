@@ -9,6 +9,10 @@ import { handleAusDrop, speichereHandle, waehleVideos } from '../video/handles';
 import { formatZeit } from '../video/bildmathe';
 import type { Quelle } from '../model/typen';
 import { ProxyDialog } from './ProxyDialog';
+import { LinkImport } from './LinkImport';
+import { raeumeQuelleAuf } from '../video/aufraeumen';
+import { OrdnerImportDialog } from './OrdnerImportDialog';
+import { hatOrdnerAuswahl } from '../video/ordnerImport';
 
 type Eintrag = { datei: File; handle?: FileSystemFileHandle };
 
@@ -19,6 +23,7 @@ export function Quellenpanel() {
   const [meldung, setMeldung] = useState<string | null>(null);
   const [ueber, setUeber] = useState(false);
   const [proxyFuer, setProxyFuer] = useState<Quelle | null>(null);
+  const [ordnerOffen, setOrdnerOffen] = useState(false);
   if (!projekt) return null;
 
   const fuegeHinzu = async (eintraege: Eintrag[]) => {
@@ -81,11 +86,15 @@ export function Quellenpanel() {
   };
 
   const entfernen = (id: string) => {
+    const weg = useProjekt.getState().projekt?.quellen.find((q) => q.id === id);
     useProjekt.getState().aendere('Quelle entfernen', (p) => {
       p.quellen = p.quellen.filter((q) => q.id !== id);
       if (p.aktiveQuelleId === id) p.aktiveQuelleId = p.quellen[0]?.id;
     });
     useDateien.getState().entferne(id);
+    const pr = useProjekt.getState().projekt;
+    // Per Link geladene Videos liegen im Browserspeicher: mit der letzten Quelle wird auch die Datei gelöscht.
+    if (weg && pr) void raeumeQuelleAuf(weg, pr.id, pr.quellen).catch(() => undefined);
   };
 
   return (
@@ -112,6 +121,16 @@ export function Quellenpanel() {
         <button className="primaer" onClick={() => void auswaehlen()} disabled={beschaeftigt}>
           {projekt.quellen.length ? t.import.mehrere : t.import.auswaehlen}
         </button>
+        {hatOrdnerAuswahl() && (
+          <button
+            data-testid="ordner-oeffnen"
+            style={{ marginLeft: 6 }}
+            disabled={beschaeftigt}
+            onClick={() => setOrdnerOffen(true)}
+          >
+            {t.import.ausOrdner}
+          </button>
+        )}
         <input
           type="file"
           accept="video/*,.mkv,.mov"
@@ -124,6 +143,7 @@ export function Quellenpanel() {
           }}
         />
       </div>
+      <LinkImport onDatei={(e) => fuegeHinzu([e])} />
       {beschaeftigt && (
         <p className="hinweis" role="status">
           {t.import.liest}
@@ -184,6 +204,9 @@ export function Quellenpanel() {
           );
         })}
       </ul>
+      {ordnerOffen && (
+        <OrdnerImportDialog onHinzufuegen={fuegeHinzu} onZu={() => setOrdnerOffen(false)} />
+      )}
       {proxyFuer && <ProxyDialog quelle={proxyFuer} onZu={() => setProxyFuer(null)} />}
     </section>
   );

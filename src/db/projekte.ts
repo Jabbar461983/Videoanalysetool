@@ -1,4 +1,5 @@
 import { db } from './db';
+import { loescheOpfsVideo } from '../video/linkImport';
 import { migriere, neueId } from '../model/schema';
 import { neuesProjektMitVorlagen } from './vorlagen';
 import type { Projekt, Quelle } from '../model/typen';
@@ -38,6 +39,7 @@ export async function dupliziere(id: string, suffix: string): Promise<Projekt | 
 }
 export async function loescheProjekt(id: string): Promise<void> {
   const p = await db.projekte.get(id);
+  const opfsDateien: FileSystemFileHandle[] = [];
   await db.transaction(
     'rw',
     [db.projekte, db.wiederherstellung, db.handles, db.thumbs, db.proxys],
@@ -49,6 +51,8 @@ export async function loescheProjekt(id: string): Promise<void> {
         const key = dateiKey(q);
         const geteilt = andere.some((o) => o.quellen.some((x) => dateiKey(x) === key));
         if (!geteilt) {
+          const h = await db.handles.get(key);
+          if (h) opfsDateien.push(h.handle);
           await db.handles.delete(key);
           await db.thumbs.where('quelleKey').equals(key).delete();
         }
@@ -58,4 +62,6 @@ export async function loescheProjekt(id: string): Promise<void> {
       }
     },
   );
+  // Per Link geladene Videos (im Browserspeicher) entfernen, sofern nicht von einem anderen Projekt genutzt
+  for (const h of opfsDateien) await loescheOpfsVideo(h).catch(() => undefined);
 }

@@ -57,6 +57,56 @@ export const t = {
       'Diese Datei passt nicht zur gespeicherten Quelle (Name, Grösse oder Inhalt weichen ab). Trotzdem verwenden?',
     zugriffErneut: 'Zugriff auf die Datei erlauben',
     aktiv: 'Aktive Quelle',
+    ausOrdner: 'Aus Ordner importieren …',
+  },
+  link: {
+    titel: 'Videolink einfügen',
+    feld: 'Link zu einem Video',
+    platzhalter: 'https://… (Link zu einer Videodatei oder YouTube)',
+    laden: 'Link laden',
+    abbrechen: 'Abbrechen',
+    ungueltig: {
+      format: 'Das ist kein gültiger Link.',
+      protokoll: 'Nur Links mit https:// sind möglich.',
+      nurHttps:
+        'Links mit http:// sind von dieser Seite aus gesperrt. Bitte einen https://-Link verwenden.',
+    },
+    fehler: {
+      netz: 'Der Link konnte nicht geladen werden. Entweder ist er nicht erreichbar, oder der Server erlaubt den Abruf aus dem Browser nicht (CORS). Laden Sie die Datei stattdessen herunter und ziehen Sie sie hierher.',
+      http: 'Der Server hat den Link abgelehnt',
+      keinVideo:
+        'Der Link führt nicht zu einer Videodatei (sondern z. B. zu einer Webseite). Es muss ein direkter Link auf die Datei sein.',
+      speicher: 'Im Browser ist nicht genug Speicherplatz frei für dieses Video.',
+      zuGross:
+        'Dieser Browser kann grosse Videos nicht per Link speichern. Laden Sie die Datei herunter und ziehen Sie sie hierher (oder verwenden Sie Chrome/Edge).',
+      abgebrochen: 'Abgebrochen.',
+    },
+    youtubeTitel: 'Das ist ein YouTube-Link',
+    youtubeText:
+      'YouTube lässt das Laden von Videos nur über den Download in YouTube Studio zu. Für Videos des eigenen Kanals geht das so:',
+    youtubeSchritte: [
+      'YouTube Studio öffnen und links «Inhalte» wählen (bei Livestreams den Reiter «Live»).',
+      'Beim Video auf «⋮» und «Herunterladen» klicken.',
+      'Die fertige Datei hier ins Fenster ziehen oder mit «Datei auswählen» hinzufügen.',
+    ],
+    youtubeHinweis:
+      'Bei Livestreams ist der Download erst möglich, wenn die Aufzeichnung fertig verarbeitet ist. Besser als die YouTube-Version ist die Originalaufnahme der Kamera.',
+    studioOeffnen: 'YouTube Studio öffnen',
+  },
+  ordner: {
+    titel: 'Aus Ordner importieren',
+    erklaerung:
+      'Wählen Sie einen Ordner (z. B. «Downloads»). Die Videos darin erscheinen in einer Liste. Der Ordner wird gemerkt; nichts wird hochgeladen.',
+    waehlen: 'Ordner wählen …',
+    anderer: 'Anderen Ordner wählen …',
+    erlauben: (name: string) => `Zugriff auf «${name}» erlauben`,
+    ordner: 'Ordner',
+    keineVideos: 'In diesem Ordner liegen keine Videos (MP4, MOV, M4V, WebM, MKV).',
+    hinzufuegen: (n: number) => `${n} Video${n === 1 ? '' : 's'} hinzufügen`,
+    bereitsDa: 'schon im Projekt',
+    schliessen: 'Schliessen',
+    lesefehler: 'Der Ordner konnte nicht gelesen werden.',
+    zugriffAbgelehnt: 'Der Zugriff auf den Ordner wurde nicht erlaubt.',
   },
   meta: {
     dauer: 'Dauer',
