@@ -13,10 +13,14 @@ import { ladeHerunter } from './exportieren';
 import { holeHauptVideo } from '../layout/bildquelle';
 
 /**
- * Das aktuelle Bild als PNG inkl. aller Overlays (dieselbe `renderFrame()`-Funktion wie Vorschau und Export).
- * Auflösung: Videobreite, höchstens 1920.
+ * Zeichnet das aktuell sichtbare Bild (Video, bei Vergleichen beide Seiten, plus alle Overlays über `renderFrame`) in `ctx`.
+ * Gibt die Programm-/Quellzeit zurück, oder `null`, wenn gerade nichts da ist. Synchron: Spielerbilder müssen geladen sein.
  */
-export async function exportiereAktuellesBild(): Promise<string | null> {
+export function zeichneAktuellesBild(
+  ctx: CanvasRenderingContext2D,
+  breite: number,
+  hoehe: number,
+): number | null {
   const projekt = useProjekt.getState().projekt;
   const g = useProgramm.getState();
   if (!projekt) return null;
@@ -24,15 +28,8 @@ export async function exportiereAktuellesBild(): Promise<string | null> {
     g.art === 'quelle'
       ? (projekt.aktiveQuelleId ?? projekt.quellen[0]?.id)
       : (g.anzeigeQuelleId ?? projekt.quellen[0]?.id);
-  const quelle = projekt.quellen.find((q) => q.id === quelleId);
   const video = g.art === 'quelle' ? holeHauptVideo() : spieler.aktivesElement;
-  if (!quelle || !video) return null;
-  const breite = Math.min(1920, quelle.breite);
-  const hoehe = Math.round((breite * quelle.hoehe) / quelle.breite);
-  const canvas = document.createElement('canvas');
-  canvas.width = breite;
-  canvas.height = hoehe;
-  const ctx = canvas.getContext('2d')!;
+  if (!video) return null;
   ctx.fillStyle = '#000';
   ctx.fillRect(0, 0, breite, hoehe);
   const tVor = g.art === 'quelle' ? 0 : usePlayer.getState().zeit;
@@ -54,7 +51,6 @@ export async function exportiereAktuellesBild(): Promise<string | null> {
         ? { art: 'playlist', playlistId: g.playlistId }
         : { art: 'quelle', quelleId };
   const t = g.art === 'quelle' ? video.currentTime : usePlayer.getState().zeit;
-  await ladeSpielerBilder(projekt, vorschauBilder);
   renderFrame(t, projekt, {
     ctx,
     breite,
@@ -64,6 +60,31 @@ export async function exportiereAktuellesBild(): Promise<string | null> {
     logo: holeLogo(),
     bilder: vorschauBilder,
   });
+  return t;
+}
+
+/**
+ * Das aktuelle Bild als PNG inkl. aller Overlays (dieselbe `renderFrame()`-Funktion wie Vorschau und Export).
+ * Auflösung: Videobreite, höchstens 1920.
+ */
+export async function exportiereAktuellesBild(): Promise<string | null> {
+  const projekt = useProjekt.getState().projekt;
+  const g = useProgramm.getState();
+  if (!projekt) return null;
+  const quelleId =
+    g.art === 'quelle'
+      ? (projekt.aktiveQuelleId ?? projekt.quellen[0]?.id)
+      : (g.anzeigeQuelleId ?? projekt.quellen[0]?.id);
+  const quelle = projekt.quellen.find((q) => q.id === quelleId);
+  if (!quelle) return null;
+  const breite = Math.min(1920, quelle.breite);
+  const hoehe = Math.round((breite * quelle.hoehe) / quelle.breite);
+  const canvas = document.createElement('canvas');
+  canvas.width = breite;
+  canvas.height = hoehe;
+  await ladeSpielerBilder(projekt, vorschauBilder);
+  const t = zeichneAktuellesBild(canvas.getContext('2d')!, breite, hoehe);
+  if (t === null) return null;
   const blob = await new Promise<Blob | null>((r) => canvas.toBlob(r, 'image/png'));
   if (!blob) return null;
   const sek = Math.floor(t);

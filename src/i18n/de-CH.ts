@@ -236,6 +236,19 @@ export const t = {
     stift: 'Live-Stift',
     loeschen: 'Löschen (C)',
     beenden: 'Beenden (Esc)',
+    startenBeamer: 'Präsentation auf zweitem Bildschirm',
+    keinBeamer:
+      'Das Beamer-Fenster konnte nicht geöffnet werden (Pop-ups blockiert?). Die Präsentation läuft in diesem Fenster.',
+    steuerpult: 'Steuerpult',
+    spiegel: 'Vorschau (hier zeichnen, der Beamer zeigt es live)',
+    vollbildHinweis:
+      'Vollbild im Beamer-Fenster: dort doppelklicken oder F11 drücken (oder hier «Beamer-Vollbild»). Esc beendet die Präsentation.',
+    beamerVollbild: 'Beamer-Vollbild',
+    beendenFensterZu: 'Beenden und Beamer-Fenster schliessen',
+    ton: 'Tonausgabe',
+    tonStandard: 'Standardgerät',
+    tonGeraet: (n: number) => `Ausgabegerät ${n}`,
+    liste: 'Playlist',
     hinweis:
       'Pfeile oder Bild auf/ab: vorheriger/nächster Eintrag · Leertaste: Pause · C: Zeichnung löschen · Esc: beenden',
   },

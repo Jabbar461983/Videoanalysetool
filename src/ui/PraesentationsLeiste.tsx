@@ -1,3 +1,5 @@
+import { eintragTitel } from '../praesentation/titel';
+import { AudioAusgabe } from './AudioAusgabe';
 import { aufAllenFenstern } from '../layout/fenster';
 import { useEffect, useRef, useState } from 'react';
 import { t } from '../i18n/de-CH';
@@ -46,13 +48,7 @@ export function PraesentationsLeiste() {
   const plan = baueProgrammPlan(projekt, g.art, g.clipId, g.playlistId);
   const idx = plan ? aktuellerEintragIndex(plan.eintraege, zeit) : 0;
   const e = plan?.eintraege[idx];
-  const titel =
-    e?.eintrag.typ === 'titel'
-      ? e.eintrag.titel
-      : e?.eintrag.typ === 'vergleich'
-        ? `${e.eintrag.links.beschriftung} ⇄ ${e.eintrag.rechts.beschriftung}`
-        : (projekt?.clips.find((c) => e?.eintrag.typ === 'clip' && c.id === e.eintrag.clipId)
-            ?.name ?? '');
+  const titel = eintragTitel(projekt, e?.eintrag);
 
   return (
     <div
@@ -103,6 +99,7 @@ export function PraesentationsLeiste() {
       <button data-testid="live-loeschen" onClick={() => useUi.getState().loescheLive()}>
         {t.praesentation.loeschen}
       </button>
+      <AudioAusgabe />
       <button className="gefahr" data-testid="praesentation-ende" onClick={beendePraesentation}>
         {t.praesentation.beenden}
       </button>

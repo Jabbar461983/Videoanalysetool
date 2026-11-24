@@ -4,6 +4,7 @@ import 'dockview-react/dist/styles/dockview.css';
 import { useLayout } from '../store/layout';
 import { useProgramm } from '../store/programm';
 import { useUi, type SeitenTab } from '../store/ui';
+import { beendePraesentation } from '../praesentation/aktionen';
 import { KopfAktionen } from './KopfAktionen';
 import { aufAllenFenstern, registriereFenster } from './fenster';
 import { merkeWiedergabe } from './fensterwechsel';
@@ -20,7 +21,7 @@ const TAB_MODULE = new Set<string>(SEITEN_MODULE);
  * verschieben, andocken, zu Registern gruppieren und schweben lassen. Das Layout wird pro Gerät gemerkt.
  */
 export function Arbeitsflaeche() {
-  const praesi = useUi((u) => u.praesentation);
+  const praesi = useUi((u) => u.praesentation && !u.praesentationFenster);
   const host = useRef<HTMLDivElement>(null);
 
   const bereit = (e: DockviewReadyEvent) => {
@@ -63,6 +64,9 @@ export function Arbeitsflaeche() {
       abmelden.get(pg.id)?.();
       abmelden.delete(pg.id);
       useLayout.getState().setzeFenster(api.getPopouts().length);
+      // Schliesst der Nutzer das Beamer-Fenster, ist die Präsentation vorbei
+      if (useUi.getState().praesentationFenster && api.getPopouts().length === 0)
+        beendePraesentation();
       const w = wiederherstellen;
       wiederherstellen = null;
       if (w) window.setTimeout(w, 300);

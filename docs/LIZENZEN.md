@@ -35,3 +35,7 @@ Nicht verwendet: YOLOv5/v8/v11 (AGPL-3.0, laut Projektregel ausgeschlossen), DET
 Messung (Chromium headless, nur CPU/WASM, 1 Thread, 640×640-Ausschnitt): ca. **1.6 s pro Erkennung**. Das ist für die Automatik zu langsam (Schwelle 600 ms), deshalb gilt: ohne WebGPU oder bei langsamem Schnelltest fällt die App auf Freeze-Frame zurück. Genauigkeit der Spur auf einem Panorama-Testvideo (Fussballfoto, bekannte Geschwindigkeit, 4 s): mittlere Abweichung 1.1 px (Spieler 215×430 px) bzw. 0.5 px (halbe Grösse), 0 Verluste.
 
 Weitere Bibliotheken: `@techstark/opencv-js` (Apache-2.0, Inpainting, Etappe 7), `mediabunny` (MPL-2.0, Decodieren der Clipspanne im Worker).
+
+## Fensteranordnung (Layout)
+
+- `dockview-react` / `dockview-core` 8.9.1 (MIT): Andocken, Registerkarten, schwebende und ausgelagerte Fenster. Wird mit der App ausgeliefert (kein CDN). Auswahl begründet in `docs/plan/layout.md` (Alternative: `flexlayout-react`, MIT).

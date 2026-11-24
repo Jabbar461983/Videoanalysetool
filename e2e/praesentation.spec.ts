@@ -135,3 +135,56 @@ test('Präsentation: Vollbild-Bühne, Navigation per Tasten, Pause, Live-Stift, 
   await expect(page.getByLabel('Projektname')).toBeVisible();
   await expect(page.locator('[data-praesentation="true"]')).toHaveCount(0);
 });
+
+test('Präsentation auf zweitem Bildschirm: Beamer-Fenster zeigt nur das Bild, Steuerpult im Hauptfenster, Live-Zeichnung erscheint im Beamer', async ({
+  page,
+}) => {
+  test.setTimeout(120_000);
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await playlistVorbereiten(page);
+  const popupP = page.context().waitForEvent('page');
+  await page.getByTestId('praesentation-start-fenster').click();
+  const pop = await popupP;
+  await pop.waitForLoadState();
+
+  // Hauptfenster: Steuerpult mit Spiegelbild und Playlist; Beamer: nur das Video, keine Registerköpfe
+  await expect(page.getByTestId('steuerpult')).toBeVisible();
+  await expect(page.getByTestId('spiegel')).toBeVisible();
+  await expect(pop.getByTestId('video')).toBeVisible();
+  await expect(pop.locator('body.bd-praesi')).toHaveCount(1);
+  await expect(pop.getByRole('tab', { name: 'Video' })).toBeHidden(); // Registerkopf ausgeblendet
+  await expect(pop.getByTestId('play')).toBeHidden(); // normale Player-Leiste ist weg
+  await expect(page.getByTestId('steuerpult-liste').locator('li')).toHaveCount(3);
+
+  // Navigation im Steuerpult wirkt auf das Beamer-Fenster
+  const eintrag = page.getByTestId('praesentation-eintrag');
+  await expect(eintrag).toContainText('1 / 3');
+  await page.getByTestId('praesentation-weiter').click();
+  await expect(eintrag).toContainText('2 / 3');
+  await page.keyboard.press('ArrowLeft'); // Tasten gelten auch im Hauptfenster weiter
+  await expect(eintrag).toContainText('1 / 3');
+
+  // Live zeichnen auf dem Spiegelbild: erscheint im Beamer-Fenster
+  await page.getByTestId('live-stift-schalter').click();
+  const spiegel = page.locator('[data-testid="steuerpult"] [data-testid="live-stift"]');
+  const b = (await spiegel.boundingBox())!;
+  await page.mouse.move(b.x + b.width * 0.3, b.y + b.height * 0.4);
+  await page.mouse.down();
+  await page.mouse.move(b.x + b.width * 0.6, b.y + b.height * 0.5, { steps: 8 });
+  await page.mouse.up();
+  const pixel = () =>
+    pop.getByTestId('live-anzeige').evaluate((c: HTMLCanvasElement) => {
+      const d = c.getContext('2d')!.getImageData(0, 0, c.width, c.height).data;
+      let n = 0;
+      for (let i = 3; i < d.length; i += 4) if (d[i]! > 20) n++;
+      return n;
+    });
+  await expect.poll(pixel).toBeGreaterThan(50);
+  await page.getByTestId('live-loeschen').click();
+  await expect.poll(pixel).toBe(0);
+
+  // Beenden: Steuerpult weg, Beamer-Fenster zeigt wieder die normale Bühne
+  await page.getByTestId('praesentation-ende').click();
+  await expect(page.getByTestId('steuerpult')).toBeHidden();
+  await expect(pop.locator('body.bd-praesi')).toHaveCount(0);
+});

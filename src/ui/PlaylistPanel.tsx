@@ -14,6 +14,7 @@ import {
   verschiebeEintrag,
 } from '../schnitt/schnittLogik';
 import { useAutoPlaylist } from '../store/autoPlaylist';
+import { fensterMoeglich } from '../layout/popout';
 import { VergleichEditor } from './VergleichEditor';
 import { startepraesentation } from '../praesentation/aktionen';
 import { playlistZeitplan } from '../wiedergabe/zeitachse';
@@ -137,6 +138,15 @@ export function PlaylistPanel() {
             >
               {t.praesentation.starten}
             </button>
+            {fensterMoeglich() && (
+              <button
+                data-testid="praesentation-start-fenster"
+                disabled={!plan || plan.dauer === 0}
+                onClick={() => void startepraesentation(pl.id, 'fenster')}
+              >
+                {t.praesentation.startenBeamer}
+              </button>
+            )}
             {programm.art === 'playlist' && (
               <button onClick={() => programm.zurQuelle()}>{t.playlist.stopp}</button>
             )}

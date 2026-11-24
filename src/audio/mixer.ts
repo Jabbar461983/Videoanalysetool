@@ -3,6 +3,25 @@ import { holeBuffer } from './speicher';
 import type { Projekt } from '../model/typen';
 import type { Zeitplan } from '../wiedergabe/zeitachse';
 
+const AUSGABE_KEY = 'bdva-audio-ausgabe';
+function leseAusgabe(): string {
+  try {
+    return localStorage.getItem(AUSGABE_KEY) ?? '';
+  } catch {
+    return '';
+  }
+}
+function merkeAusgabe(id: string): void {
+  try {
+    if (id) localStorage.setItem(AUSGABE_KEY, id);
+    else localStorage.removeItem(AUSGABE_KEY);
+  } catch {
+    /* egal */
+  }
+}
+export const ausgabeWaehlbar = (): boolean =>
+  typeof AudioContext !== 'undefined' && 'setSinkId' in AudioContext.prototype;
+
 /** Abweichung (s), ab der Kommentar-Ton und Video neu synchronisiert werden. */
 export const SYNC_TOLERANZ = 0.12;
 const SYNC_PAUSE_MS = 600;
@@ -33,8 +52,24 @@ export class Mixer {
       this.ctx = new AudioContext({ latencyHint: 'interactive' });
       this.orig = this.ctx.createGain();
       this.orig.connect(this.ctx.destination);
+      const gemerkt = leseAusgabe();
+      if (gemerkt) void this.setzeAusgabe(gemerkt, false);
     }
     return this.ctx;
+  }
+
+  /** Wählbares Ausgabegerät (nur Chrome/Edge). `''` = Standardgerät. */
+  async setzeAusgabe(deviceId: string, merken = true): Promise<boolean> {
+    const ctx = this.ctx ?? this.init();
+    const c = ctx as AudioContext & { setSinkId?: (id: string) => Promise<void> };
+    if (typeof c.setSinkId !== 'function') return false;
+    try {
+      await c.setSinkId(deviceId);
+      if (merken) merkeAusgabe(deviceId);
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   /** Video-Elemente in den Graphen hängen (einmalig; danach läuft ihr Ton immer über den Mixer). */

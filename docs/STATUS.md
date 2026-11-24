@@ -256,3 +256,10 @@ Stand: Ende Etappe 9 (Taktiktafel). Frühere Stände: Ende Etappe 6 «Export, Pr
 - **Behoben (bestand seit Etappe 6):** `renderFrame` löschte im Export und beim PNG zuerst die Fläche und damit das schon gezeichnete Videobild: MP4/PNG zeigten nur Overlays auf Schwarz. Der PSNR-Test sah das nicht, weil Vorschau- und Export-Referenz beide ohne Video waren. Jetzt löscht nur die Vorschau; der Test prüft die Helligkeit der Bildmitte.
 - Schritt 2 erledigt: Ton im Vergleich (laufende Seite/links/rechts/stumm, Vorschau und Export), Anordnung «übereinander» und «überblendet» (Mischung einstellbar).
 - Offen: Zeichnen/Spielermarkierungen pro Seite, Kommentarspuren im Vergleich.
+
+### Nachtrag: Freies Layout, zweites Fenster, Präsentation auf dem Beamer
+- Plan: `docs/plan/layout.md`; Testanleitung: `docs/TESTANLEITUNG-LAYOUT.md`.
+- Dockview (MIT): Module einzeln verschieb-, andock-, schwebend- und in der Grösse änderbar; Layout pro Gerät gemerkt; Menü «Ansicht» mit Modulen und benannten Layouts; feste Ansicht als Rückfall für Tablets/schmale Fenster.
+- Module in eigenes Fenster auslagern (auch direkt auf den zweiten Bildschirm); Tasten gelten in allen Fenstern; Position bleibt beim Zurückholen.
+- Präsentation auf dem zweiten Bildschirm mit Steuerpult (Spiegelbild, Live-Zeichnung, Playlist), Tonausgabegerät wählbar.
+- Grenzen: Verhalten mit zwei echten Bildschirmen und Vollbild dort nicht in der Cloud testbar; Auslagern lädt das Video neu.

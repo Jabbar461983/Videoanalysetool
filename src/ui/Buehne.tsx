@@ -81,6 +81,7 @@ export function Buehne({ quelle }: { quelle: Quelle | undefined }) {
   const [proxyOffen, setProxyOffen] = useState(false);
   const { zeit, spielt, tempo, fehler } = usePlayer();
   const praesi = useUi((u) => u.praesentation);
+  const praesiFenster = useUi((u) => u.praesentationFenster);
   const aufnahmePhase = useAufnahme((a) => a.phase);
   const countdown = useAufnahme((a) => a.countdown);
 
@@ -335,7 +336,7 @@ export function Buehne({ quelle }: { quelle: Quelle | undefined }) {
               style={{ zIndex: 5 }}
             />
           )}
-          {praesi && <LiveStift />}
+          {praesi && <LiveStift interaktiv={!praesiFenster} />}
           {art === 'clip' && anzeige && werkzeugModus === 'spieler' && <SpielerEbene />}
           {art === 'clip' && anzeige && !praesi && <SpielerKreuze />}
           {anzeige && !praesi && <TaktikKlickEbene />}

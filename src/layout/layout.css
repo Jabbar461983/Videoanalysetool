@@ -37,3 +37,11 @@
 .bd-dock-host[data-praesi='true'] .dv-tabs-and-actions-container {
   display: none;
 }
+
+/* Beamer-Fenster (Präsentation auf dem zweiten Bildschirm): nur das Bild, ohne Registerköpfe und Mauszeiger */
+body.bd-praesi .dv-tabs-and-actions-container {
+  display: none;
+}
+body.bd-praesi {
+  cursor: none;
+}

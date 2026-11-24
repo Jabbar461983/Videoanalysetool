@@ -11,6 +11,7 @@ import { Seitenleiste } from './Seitenleiste';
 import { TagLeiste } from './TagLeiste';
 import { QuellenBanner } from './QuellenBanner';
 import { PraesentationsLeiste } from './PraesentationsLeiste';
+import { Steuerpult } from './Steuerpult';
 import { beendePraesentation } from '../praesentation/aktionen';
 import { useUi } from '../store/ui';
 import { ProgrammTimeline } from './ProgrammTimeline';
@@ -55,6 +56,8 @@ export function Editor({ projektId }: { projektId: string }) {
   const status = useProjekt((x) => x.status);
   const art = useProgramm((g) => g.art);
   const praesi = useUi((u) => u.praesentation);
+  const praesiFenster = useUi((u) => u.praesentationFenster);
+  const praesiHier = praesi && !praesiFenster;
   const [fehlt, setFehlt] = useState(false);
   const frei = useFreiesLayout();
   const layoutMeldung = useLayout((l) => l.meldung);
@@ -158,7 +161,8 @@ export function Editor({ projektId }: { projektId: string }) {
         <KalibrierDialog />
         <AutoPlaylistDialog />
         <ErkennungsDialog />
-        {praesi && <PraesentationsLeiste />}
+        {praesiHier && <PraesentationsLeiste />}
+        {praesi && praesiFenster && <Steuerpult />}
       </div>
     );
 

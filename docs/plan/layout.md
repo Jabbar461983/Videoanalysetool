@@ -1,6 +1,6 @@
 # Plan: Frei anpassbares Layout, zweites Fenster, Präsentation auf dem Beamer
 
-Stand: Planung, noch nichts umgesetzt. Offene Entscheide stehen am Ende («Offene Fragen»).
+Stand: **umgesetzt** (Phasen 1–5). Die Entscheide des Nutzers: jedes Register einzeln, benannte Layouts, Steuerpult im Hauptfenster, Tonausgabegerät wählbar.
 
 ## 1. Ziel
 - Alle Module (Bühne mit Video, Tag-Leiste, Zeitleiste, Seitenleisten-Register) in der Grösse anpassbar.
@@ -110,5 +110,15 @@ Neu: Wahl «Präsentieren auf: dieses Fenster | zweites Fenster».
 - Mehr Freiheit = mehr Wege, sich das Layout «kaputt» zu machen: «Layout zurücksetzen» ist immer erreichbar.
 - Der Umbau berührt `Editor.tsx`, `Buehne.tsx`, Hotkeys, Präsentation. Deshalb Phase 2 vor dem ersten Popout.
 
-## 8. Offene Fragen
-Siehe Rückfragen an den Nutzer in der Konversation (Modulzuschnitt, benannte Layouts, Präsentations-Steuerpult, Browser-/Tablet-Umfang, Audioausgabe).
+## 8. Entscheide (beantwortet)
+- Module: jedes Register einzeln (Standard: alle Register in einer Gruppe rechts).
+- Layouts: benannte Layouts speichern, wechseln, umbenennen, löschen; dazu fertige Layouts «Standard» und «Video gross».
+- Präsentation auf dem zweiten Bildschirm: Steuerpult im Hauptfenster (Spiegelbild zum Zeichnen, Playlist, Steuerung), Beamer-Fenster zeigt nur das Bild.
+- Tonausgabe: Ausgabegerät wählbar (nur Chrome/Edge, `AudioContext.setSinkId`).
+
+## 9. Stand der Umsetzung
+- Phase 1: `src/layout/*` (Dockview), `Editor.tsx` (feste Ansicht bleibt unter 901 px Breite).
+- Phase 2: `layout/fenster.ts`, `layout/bildquelle.ts`; Tasten, Video-Register, Takt im Fenster der Bühne.
+- Phase 3: `layout/popout.ts`, `layout/KopfAktionen.tsx`, `layout/fensterwechsel.ts`, `public/popout.html`. Beobachtung: Beim Auslagern wird die Bühne neu aufgebaut und das Video neu geladen; die Position wird danach wiederhergestellt.
+- Phase 4: `layout/Fenstermenue.tsx`, `layout/layouts.ts`.
+- Phase 5: `ui/Steuerpult.tsx`, `store/live.ts`, `praesentation/aktionen.ts`, `ui/AudioAusgabe.tsx`.
