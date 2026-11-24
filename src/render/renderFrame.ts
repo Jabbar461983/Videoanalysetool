@@ -3,6 +3,7 @@ import { baueProgrammPlan } from '../wiedergabe/plan';
 import { blendeAlpha, findeSegmentIndex, type Zeitplan } from '../wiedergabe/zeitachse';
 import { zeichneTitelfolie } from './titelfolie';
 import { zeichneSpielerObjekte, type BilderMap } from './spieler';
+import { zeichneClipTafel } from './tafelOverlay';
 import { zeichneClipZeichnungen, zeichneZeichnung } from './zeichnungen';
 import type { Zeichnung } from '../model/typen';
 import { ausblendenVon, istAusgeblendet } from '../overlay/ausblenden';
@@ -119,6 +120,7 @@ export function renderFrame(t: number, projekt: Projekt | null, ziel: RenderZiel
       for (const z of ziel.zusatz ?? []) zeichneZeichnung(ctx, z, breite, hoehe, clipZeit);
     const clip = projekt.clips.find((c) => c.id === seg.clipId);
     if (clip) {
+      zeichneClipTafel(ctx, projekt, clip, clipZeit, breite, hoehe);
       const pos = clipZeitZuQuellZeit(clip, clipZeit);
       if (!istAusgeblendet(ausblendenVon(clip, 'scoreboard'), clipZeit))
         stand(pos.quelleId, pos.quellZeit);
