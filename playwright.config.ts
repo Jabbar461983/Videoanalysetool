@@ -13,6 +13,7 @@ export default defineConfig({
         '--autoplay-policy=no-user-gesture-required',
         '--use-fake-device-for-media-stream',
         '--use-fake-ui-for-media-stream',
+        ...(process.env.PW_ARGS ? process.env.PW_ARGS.split(' ') : []),
       ],
     },
   },

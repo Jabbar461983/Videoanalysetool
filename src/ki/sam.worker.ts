@@ -1,6 +1,5 @@
 /// <reference lib="webworker" />
-import ortMjs from 'onnxruntime-web/ort-wasm-simd-threaded.jsep.mjs?url';
-import ortWasm from 'onnxruntime-web/ort-wasm-simd-threaded.jsep.wasm?url';
+import { ORT_PFADE } from './ortPfade';
 import type { KiAntwort, KiBefehl } from './typen';
 
 /**
@@ -45,7 +44,6 @@ async function init(b: Extract<KiBefehl, { typ: 'init' }>) {
   tf.env.useBrowserCache = true;
   const wasm = tf.env.backends.onnx.wasm;
   if (wasm) {
-    wasm.wasmPaths = { mjs: ortMjs, wasm: ortWasm };
     wasm.numThreads = self.crossOriginIsolated
       ? Math.max(1, Math.min(4, Math.floor((navigator.hardwareConcurrency || 2) / 2)))
       : 1;
@@ -60,6 +58,8 @@ async function init(b: Extract<KiBefehl, { typ: 'init' }>) {
       hatGpu = false;
     }
   }
+  // WebGPU braucht die «asyncify»-Laufzeit; ohne WebGPU genügt die kleinere CPU-Variante
+  if (wasm) wasm.wasmPaths = hatGpu ? ORT_PFADE.webgpu : ORT_PFADE.cpu;
   const geraete: ('webgpu' | 'wasm')[] = hatGpu ? ['webgpu', 'wasm'] : ['wasm'];
   const progress_callback = (p: {
     status: string;
