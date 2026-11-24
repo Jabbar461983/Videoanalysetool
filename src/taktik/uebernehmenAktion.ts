@@ -66,7 +66,7 @@ export async function uebernimmAlleSpieler(): Promise<void> {
     const fh = bild.frame.height;
     const imFeld: BildBox[] = r.boxen.filter((b) => {
       const m = wendeAn(kal.H, fussPunkt(b, fw, fh));
-      return m ? imFeldBereich(m, projekt.taktik.feld) : false;
+      return m ? imFeldBereich(m, projekt.taktik.feld, projekt.taktik.feld.erkennungsRand) : false;
     });
     // Trikotfarbe: Oberkörper (20–50 % der Boxhöhe, mittlere Hälfte der Breite)
     const ctx = bild.frame.getContext('2d', { willReadFrequently: true })!;

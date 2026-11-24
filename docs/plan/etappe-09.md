@@ -16,3 +16,7 @@
 - Die Tafel kennt keine krummen Pfeile (nur gerade).
 - Feldmasse nicht aus einem Regelwerk geprüft (siehe oben).
 - Spielererkennung auf der CPU ca. 10–20 s je Bild; Trikotfarben bei ähnlichen Farben nicht trennbar (Hinweis, manuell zuordnen).
+
+## Nachtrag (nach erstem Test mit echtem Video)
+- Feld als **Eishockey-Feld** gezeichnet (blaue Linien = Drittelsgrenzen, Bullykreise) statt Unihockey-Skizze.
+- Erkennung: Zuschauer hinter der Bande wurden an den Feldrand geklemmt (Toleranz 1.5 m) → jetzt strenge Randtoleranz (0.3 m, einstellbar) und Auslassen statt Klemmen; Doppelerkennungen: Zusammenfassen auch bei grosser Teil-Überlappung, angeschnittene Boxen an Kachelrändern verworfen, Marker unter 0.7 m Abstand zusammengefasst.

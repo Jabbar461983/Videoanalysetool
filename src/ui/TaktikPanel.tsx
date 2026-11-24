@@ -26,6 +26,9 @@ const FELD_FELDER: [keyof FeldMasse, string][] = [
   ['bullyX', t.taktik.bullyX],
   ['bullyY', t.taktik.bullyY],
   ['mittelkreisRadius', t.taktik.mittelkreis],
+  ['blaueLinieAbstand', t.taktik.blaueLinie],
+  ['bullyKreisRadius', t.taktik.bullyKreis],
+  ['erkennungsRand', t.taktik.erkennungsRand],
 ];
 
 /** Reiter «Taktik»: Situationen, Anzeige im Clip, Kalibrierung, Feldmasse. */

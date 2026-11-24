@@ -101,3 +101,27 @@ describe('Migration auf Version 8', () => {
     expect(m.taktik.aktiveKalibrierung).toEqual({});
   });
 });
+
+describe('Migration auf Version 9', () => {
+  it('ergänzt blaue Linien, Bullykreise und Randtoleranz, behält die bestehenden Masse', () => {
+    const m = migriere({
+      version: 8,
+      taktik: {
+        feld: { laenge: 50, breite: 25, geprueft: true },
+        kalibrierungen: [],
+        situationen: [],
+        aktiveKalibrierung: {},
+      },
+      quellen: [],
+      teams: [],
+      clips: [],
+      einstellungen: {},
+    });
+    expect(m.taktik.feld.laenge).toBe(50);
+    expect(m.taktik.feld.breite).toBe(25);
+    expect(m.taktik.feld.geprueft).toBe(true);
+    expect(m.taktik.feld.blaueLinieAbstand).toBeCloseTo(50 / 6);
+    expect(m.taktik.feld.bullyKreisRadius).toBe(3);
+    expect(m.taktik.feld.erkennungsRand).toBe(0.3);
+  });
+});

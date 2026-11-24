@@ -4,15 +4,16 @@ Stand: Ende Etappe 9 (Taktiktafel). Frühere Stände: Ende Etappe 6 «Export, Pr
 
 ## Erledigt (Etappe 9)
 
-- **Taktiktafel** (Reiter «Taktik», Hotkey **T**): Feldskizze als Vektorgrafik im Bulldozers-Stil (Banden, Mittellinie/-kreis, Tore, Torräume, Bullypunkte). Tafel-Editor: Spieler (Team 1/2) und Ball setzen, verschieben, entfernen, Nummer/Name aus dem Kader, Pfeile (Laufweg, Pass, Schuss), mehrere Situationen benennen/duplizieren/löschen, **PNG-Export** der Tafel, auch **ohne Video** nutzbar.
+- **Taktiktafel** (Reiter «Taktik», Hotkey **T**): Feldskizze als Vektorgrafik im **Eishockey-Stil** (rote Mittellinie, zwei blaue Linien an den Dritteln, rote Torlinien, Mittelkreis, vier Bullykreise mit Markierungen in den Endzonen, vier Bullypunkte in der neutralen Zone, Torräume, Tore). Tafel-Editor: Spieler (Team 1/2) und Ball setzen, verschieben, entfernen, Nummer/Name aus dem Kader, Pfeile (Laufweg, Pass, Schuss), mehrere Situationen benennen/duplizieren/löschen, **PNG-Export** der Tafel, auch **ohne Video** nutzbar.
 - **Im Video:** Tafel als Bild-im-Bild (Ecke und Grösse wählbar), geteilt (rechts) oder Vollbild, für Zeitabschnitte eines Clips (Spur «Taktik» in der Timeline, T setzt/entfernt, ziehbar). Im **Export und PNG** enthalten (gleiche Zeichenfunktion; E2E-Test vergleicht Vorschau und MP4).
 - **Kalibrierung:** Im Standbild 4 oder mehr Feldpunkte anklicken (Bullypunkte, Pfosten, Mittellinie …) → Homographie; gelbe Kontrolllinien im Bild; Fehler in Metern ab 5 Punkten; mehrere Kalibrierungen je Quelle (Kameraeinstellungen).
-- **Situation übernehmen:** «Alle Spieler erkennen» (RT-DETR in Kacheln, Zuschauer ausserhalb des Feldes werden ausgeschlossen, Teams per Trikotfarbe, «Teams tauschen») oder «Per Klick übernehmen» (Füsse/Ball anklicken).
+- **Situation übernehmen:** «Alle Spieler erkennen» (RT-DETR in Kacheln; **Spieler ausserhalb des Feldes werden ausgelassen** (Randtoleranz einstellbar, Standard 0.3 m) statt an den Rand geklemmt; Doppelerkennungen und angeschnittene Personen an Kachelrändern werden entfernt, zwei Marker unter 0.7 m Abstand gelten als eine Person; Teams per Trikotfarbe, «Teams tauschen») oder «Per Klick übernehmen» (Füsse/Ball anklicken).
 - **Animation** zwischen zwei Situationen (Marker gleiten) pro Abschnitt.
-- Datenmodell Version 8 (Feldmasse, Kalibrierungen, Situationen, `clip.taktik`).
+- Datenmodell Version 9 (Feldmasse inkl. blaue Linien/Bullykreise/Randtoleranz, Kalibrierungen, Situationen, `clip.taktik`).
 
 ## Etappe 9: Entscheide und Grenzen
 
+- **Die Erkennung ist so gut wie die Kalibrierung:** Liegt das berechnete Feld (gelbe Linien im Kalibrierdialog) neben den echten Linien, werden Zuschauer als Spieler oder Spieler als Zuschauer gewertet. Dann Punkte neu setzen (am besten 5 oder mehr, weit auseinander) oder die Randtoleranz anpassen.
 - **Feldmasse sind Platzhalter** (40 × 20 m …) und als «nicht bestätigt» markiert. Bitte unter «Taktik → Feldmasse» die echten Masse eures Platzes eintragen (Länge, Breite, Tor, Bullypunkte) und bestätigen: Davon hängt die Genauigkeit der übertragenen Positionen ab. In keinem gefundenen Streethockey-Regelwerk konnte ich Masse belegen.
 - «Geteilt» deckt die rechte Bildhälfte zu (Video wird nicht verkleinert).
 - Pfeile nur gerade. Keine Spielernamen auf der Tafel (nur Nummern).

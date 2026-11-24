@@ -1,5 +1,5 @@
 /** Datenmodell nach CLAUDE.md Abschnitt 5. Zeiten in Sekunden der jeweiligen Quelle. */
-export const SCHEMA_VERSION = 8;
+export const SCHEMA_VERSION = 9;
 
 export interface Quelle {
   id: string;
@@ -247,6 +247,12 @@ export interface FeldMasse {
   bullyX: number;
   bullyY: number;
   mittelkreisRadius: number;
+  /** Abstand der blauen Linien (Drittelslinien) von der roten Mittellinie */
+  blaueLinieAbstand: number;
+  /** Radius der Bullykreise in den Endzonen */
+  bullyKreisRadius: number;
+  /** Wie weit ausserhalb des Feldes (m) ein erkannter Spieler noch zählt; Zuschauer hinter der Bande fallen heraus */
+  erkennungsRand: number;
   /** vom Verein bestätigt? (Standardwerte sind Platzhalter) */
   geprueft: boolean;
 }

@@ -248,9 +248,22 @@ async function erkenneAlle(bild: ImageBitmap, geraet: 'auto' | 'wasm' | 'webgpu'
         { cx: x + seite / 2, cy: y + seite / 2, b: 10, h: 10 },
         seite,
       );
-      for (const d of dets)
-        if (d.score >= 0.35)
-          alle.push({ cx: d.box.cx, cy: d.box.cy, b: d.box.b, h: d.box.h, score: d.score });
+      for (const d of dets) {
+        if (d.score < 0.35) continue;
+        // Angeschnittene Person am Rand einer Kachel (nicht am Bildrand): die Nachbarkachel sieht sie ganz
+        const l = d.box.cx - d.box.b / 2;
+        const r = d.box.cx + d.box.b / 2;
+        const o = d.box.cy - d.box.h / 2;
+        const u = d.box.cy + d.box.h / 2;
+        const rand = 3;
+        const angeschnitten =
+          (l < x + rand && x > 0) ||
+          (r > x + seite - rand && x + seite < W) ||
+          (o < y + rand && y > 0) ||
+          (u > y + seite - rand && y + seite < H);
+        if (angeschnitten) continue;
+        alle.push({ cx: d.box.cx, cy: d.box.cy, b: d.box.b, h: d.box.h, score: d.score });
+      }
     }
   const boxen = unterdrueckeDoppelte(alle).map((d) => ({
     cx: d.cx / faktor,

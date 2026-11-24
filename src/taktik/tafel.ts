@@ -67,8 +67,14 @@ function rundRahmen(ctx: Ctx, x: number, y: number, b: number, h: number, r: num
 
 const GOLD = '#BA990E';
 const LINIE = '#e8e8e8';
+const ROT = '#d9534f';
+const BLAU = '#3d7bea';
 
-/** Spielfeld (Vektor): Fläche, Banden, Mittellinie, Mittelkreis, Tore, Torräume, Bullypunkte. */
+/**
+ * Spielfeld im Eishockey-Stil (Vektor): Eisfläche, Banden mit runden Ecken, rote Mittellinie, zwei blaue Linien
+ * (Drittelsgrenzen), rote Torlinien, Mittelkreis, vier Bullykreise mit Markierungen in den Endzonen,
+ * vier Bullypunkte in der neutralen Zone, Torräume (Halbkreis) und Tore.
+ */
 export function zeichneFeld(ctx: Ctx, f: FeldMasse, r: Rechteck, hintergrund = true): void {
   const m = tafelAbbildung(f, r);
   ctx.save();
@@ -79,67 +85,123 @@ export function zeichneFeld(ctx: Ctx, f: FeldMasse, r: Rechteck, hintergrund = t
     ctx.lineWidth = Math.max(1, m.s * 0.06);
     ctx.strokeRect(r.x + 0.5, r.y + 0.5, r.b - 1, r.h - 1);
   }
+  const L = f.laenge;
+  const B = f.breite;
   const o = m.px(0, 0);
-  const fb = f.laenge * m.s;
-  const fh = f.breite * m.s;
-  const lw = Math.max(1.2, m.s * 0.12);
-  ctx.fillStyle = '#22342b';
-  rundRahmen(ctx, o.x, o.y, fb, fh, f.eckenradius * m.s);
-  ctx.fill();
-  ctx.strokeStyle = LINIE;
-  ctx.lineWidth = lw * 1.4;
-  ctx.stroke();
-  ctx.lineWidth = lw;
-  // Mittellinie und Mittelkreis
-  const a = m.px(f.laenge / 2, 0);
-  const z = m.px(f.laenge / 2, f.breite);
-  ctx.beginPath();
-  ctx.moveTo(a.x, a.y);
-  ctx.lineTo(z.x, z.y);
-  ctx.stroke();
-  const mitte = m.px(f.laenge / 2, f.breite / 2);
-  ctx.beginPath();
-  ctx.arc(mitte.x, mitte.y, f.mittelkreisRadius * m.s, 0, Math.PI * 2);
-  ctx.stroke();
-  // Torlinien, Torräume, Tore
-  for (const seite of [0, 1] as const) {
-    const lx = seite === 0 ? f.torLinieAbstand : f.laenge - f.torLinieAbstand;
-    const dir = seite === 0 ? -1 : 1; // Richtung zur Stirnbande
-    const t1 = m.px(lx, 0);
-    const t2 = m.px(lx, f.breite);
+  const lw = Math.max(1.2, m.s * 0.1);
+  const linie = (x0: number, y0: number, x1: number, y1: number, farbe: string, breite = lw) => {
+    const a = m.px(x0, y0);
+    const z = m.px(x1, y1);
+    ctx.strokeStyle = farbe;
+    ctx.lineWidth = breite;
     ctx.beginPath();
-    ctx.moveTo(t1.x, t1.y);
-    ctx.lineTo(t2.x, t2.y);
+    ctx.moveTo(a.x, a.y);
+    ctx.lineTo(z.x, z.y);
     ctx.stroke();
-    // Torraum (nach innen)
-    const innen = -dir;
-    const r1 = m.px(lx, f.breite / 2 - f.torraumBreite / 2);
-    ctx.fillStyle = 'rgba(186,153,14,0.18)';
-    const rx = innen > 0 ? r1.x : r1.x - f.torraumTiefe * m.s;
-    ctx.fillRect(rx, r1.y, f.torraumTiefe * m.s, f.torraumBreite * m.s);
-    ctx.strokeRect(rx, r1.y, f.torraumTiefe * m.s, f.torraumBreite * m.s);
-    // Tor (nach aussen)
-    const g1 = m.px(lx, f.breite / 2 - f.torBreite / 2);
-    const gx = dir > 0 ? g1.x : g1.x - f.torTiefe * m.s;
+  };
+  const kreis = (cx: number, cy: number, rad: number, farbe: string, fuell?: string) => {
+    const p = m.px(cx, cy);
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, rad * m.s, 0, Math.PI * 2);
+    if (fuell) {
+      ctx.fillStyle = fuell;
+      ctx.fill();
+    }
+    ctx.strokeStyle = farbe;
+    ctx.lineWidth = lw;
+    ctx.stroke();
+  };
+  const punkt = (cx: number, cy: number, farbe: string, rad = 0.28) => {
+    const p = m.px(cx, cy);
+    ctx.fillStyle = farbe;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, Math.max(2, m.s * rad), 0, Math.PI * 2);
+    ctx.fill();
+  };
+
+  // Eisfläche und Bande (Bande innen als Clip, damit Linien nicht über die runden Ecken ragen)
+  ctx.fillStyle = '#1e2a33';
+  rundRahmen(ctx, o.x, o.y, L * m.s, B * m.s, f.eckenradius * m.s);
+  ctx.fill();
+  ctx.save();
+  ctx.clip();
+
+  // Blaue Linien (Drittelsgrenzen) und rote Mittellinie
+  const bl = f.blaueLinieAbstand;
+  linie(L / 2 - bl, 0, L / 2 - bl, B, BLAU, lw * 2.4);
+  linie(L / 2 + bl, 0, L / 2 + bl, B, BLAU, lw * 2.4);
+  linie(L / 2, 0, L / 2, B, ROT, lw * 2.4);
+  // gestrichelte Mitte der roten Linie (wie die Markierung auf dem Eis)
+  ctx.save();
+  ctx.setLineDash([m.s * 0.8, m.s * 0.8]);
+  linie(L / 2, 0, L / 2, B, '#ffffff', lw * 0.7);
+  ctx.restore();
+
+  // Torlinien (rot, dünn)
+  const tl = f.torLinieAbstand;
+  linie(tl, 0, tl, B, ROT, lw);
+  linie(L - tl, 0, L - tl, B, ROT, lw);
+
+  // Mittelkreis und Anstosspunkt
+  kreis(L / 2, B / 2, f.mittelkreisRadius, BLAU);
+  punkt(L / 2, B / 2, BLAU);
+
+  // Bullykreise der Endzonen mit Markierungen (kurze Striche ober-/unterhalb des Kreises)
+  const rk = f.bullyKreisRadius;
+  for (const sx of [-1, 1] as const)
+    for (const sy of [-1, 1] as const) {
+      const cx = L / 2 + sx * f.bullyX;
+      const cy = B / 2 + sy * f.bullyY;
+      kreis(cx, cy, rk, ROT);
+      punkt(cx, cy, ROT);
+      for (const dx of [-0.9, 0.9])
+        for (const dy of [-1, 1]) {
+          linie(cx + dx, cy + dy * rk, cx + dx, cy + dy * (rk + 0.7), ROT, lw * 0.9);
+        }
+      // kleine Winkel am Punkt («+»-Markierung)
+      linie(cx - 0.9, cy, cx - 0.35, cy, ROT, lw * 0.7);
+      linie(cx + 0.35, cy, cx + 0.9, cy, ROT, lw * 0.7);
+    }
+
+  // Bullypunkte der neutralen Zone (1.5 m innerhalb der blauen Linien)
+  for (const sx of [-1, 1] as const)
+    for (const sy of [-1, 1] as const)
+      punkt(L / 2 + sx * (bl - 1.5), B / 2 + sy * f.bullyY, ROT, 0.24);
+  ctx.restore();
+
+  // Bande (Aussenlinie)
+  rundRahmen(ctx, o.x, o.y, L * m.s, B * m.s, f.eckenradius * m.s);
+  ctx.strokeStyle = LINIE;
+  ctx.lineWidth = lw * 1.6;
+  ctx.stroke();
+
+  // Torräume (Halbkreis vor dem Tor) und Tore (hinter der Torlinie)
+  for (const seite of [0, 1] as const) {
+    const lx = seite === 0 ? tl : L - tl;
+    const innen = seite === 0 ? 1 : -1;
+    const mitte = m.px(lx, B / 2);
+    const rad = (f.torraumBreite / 2) * m.s;
+    ctx.beginPath();
+    ctx.arc(
+      mitte.x,
+      mitte.y,
+      rad,
+      innen > 0 ? -Math.PI / 2 : Math.PI / 2,
+      innen > 0 ? Math.PI / 2 : (3 * Math.PI) / 2,
+    );
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(61,123,234,0.28)';
+    ctx.fill();
+    ctx.strokeStyle = ROT;
+    ctx.lineWidth = lw;
+    ctx.stroke();
+    const g1 = m.px(lx, B / 2 - f.torBreite / 2);
+    const gx = innen > 0 ? g1.x - f.torTiefe * m.s : g1.x;
     ctx.fillStyle = 'rgba(232,232,232,0.18)';
     ctx.fillRect(gx, g1.y, f.torTiefe * m.s, f.torBreite * m.s);
     ctx.strokeStyle = GOLD;
+    ctx.lineWidth = lw;
     ctx.strokeRect(gx, g1.y, f.torTiefe * m.s, f.torBreite * m.s);
-    ctx.strokeStyle = LINIE;
-  }
-  // Bullypunkte (Mitte + vier Zonenpunkte)
-  ctx.fillStyle = GOLD;
-  for (const [bx, by] of [
-    [f.laenge / 2, f.breite / 2],
-    [f.laenge / 2 - f.bullyX, f.breite / 2 - f.bullyY],
-    [f.laenge / 2 - f.bullyX, f.breite / 2 + f.bullyY],
-    [f.laenge / 2 + f.bullyX, f.breite / 2 - f.bullyY],
-    [f.laenge / 2 + f.bullyX, f.breite / 2 + f.bullyY],
-  ] as const) {
-    const p = m.px(bx, by);
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, Math.max(2, m.s * 0.28), 0, Math.PI * 2);
-    ctx.fill();
   }
   ctx.restore();
 }

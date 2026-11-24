@@ -71,13 +71,19 @@ describe('Spielersituation übernehmen', () => {
   it('Fusspunkt ist die Mitte der Unterkante, normiert', () => {
     expect(fussPunkt(box(960, 500), 1920, 1080)).toEqual({ x: 0.5, y: 530 / 1080 });
   });
-  it('Feldbereich mit Toleranz', () => {
-    expect(imFeldBereich({ x: -1, y: 10 }, STANDARD_FELD)).toBe(true);
+  it('Feldbereich mit kleiner Randtoleranz: Zuschauer hinter der Bande fallen heraus', () => {
+    expect(imFeldBereich({ x: 20, y: 10 }, STANDARD_FELD)).toBe(true);
+    expect(imFeldBereich({ x: 20, y: 20.2 }, STANDARD_FELD)).toBe(true); // 0.2 m ausserhalb (Standard 0.3 m)
+    expect(imFeldBereich({ x: 20, y: 21.5 }, STANDARD_FELD)).toBe(false); // 1.5 m hinter der Bande
     expect(imFeldBereich({ x: -3, y: 10 }, STANDARD_FELD)).toBe(false);
-    expect(imFeldBereich({ x: 20, y: 25 }, STANDARD_FELD)).toBe(false);
+    expect(imFeldBereich({ x: 20, y: 21.5 }, STANDARD_FELD, 2)).toBe(true); // Toleranz einstellbar
   });
   it('Marker nur für Spieler im Feld (Zuschauer fallen heraus), Teams aus der Zuordnung', () => {
-    const boxen = [box(960, 500), box(480, 400), box(100, 1400) /* Fuss weit unterhalb des Feldes */];
+    const boxen = [
+      box(960, 500),
+      box(480, 400),
+      box(100, 1400) /* Fuss weit unterhalb des Feldes */,
+    ];
     const m = markerAusErkennungen(boxen, [0, 1, 0], H, STANDARD_FELD, 1920, 1080);
     expect(m).toHaveLength(2);
     expect(m[0]).toMatchObject({ art: 'team1' });
@@ -87,6 +93,33 @@ describe('Spielersituation übernehmen', () => {
     expect(markerAusErkennungen([box(960, 500)], null, H, STANDARD_FELD, 1920, 1080)[0]!.art).toBe(
       'team1',
     );
+  });
+  it('Spieler knapp ausserhalb werden nicht an den Feldrand geklemmt, sondern ausgelassen', () => {
+    // Fuss bei y = (cy + 30) / 1080 * 20 m: 25.6 m liegt 5.6 m hinter der Bande
+    const m = markerAusErkennungen(
+      [box(960, 1360), box(960, 500)],
+      null,
+      H,
+      STANDARD_FELD,
+      1920,
+      1080,
+    );
+    expect(m).toHaveLength(1);
+    expect(m[0]!.y).toBeLessThan(20);
+  });
+  it('zwei Treffer auf derselben Stelle ergeben nur einen Marker (der mit dem höheren Score)', () => {
+    const boxen = [box(960, 500, 0.5), box(962, 502, 0.9)];
+    const m = markerAusErkennungen(boxen, [0, 1], H, STANDARD_FELD, 1920, 1080);
+    expect(m).toHaveLength(1);
+    expect(m[0]!.art).toBe('team2'); // Team des sichereren Treffers (Index 1)
+  });
+  it('angeschnittene Doppelerkennung (kleine Box in grosser) wird entfernt', () => {
+    const gross: BildBox = { cx: 500, cy: 500, b: 40, h: 100, score: 0.9 };
+    const abgeschnitten: BildBox = { cx: 505, cy: 530, b: 38, h: 40, score: 0.6 };
+    const anderer: BildBox = { cx: 900, cy: 500, b: 40, h: 100, score: 0.8 };
+    const l = unterdrueckeDoppelte([abgeschnitten, gross, anderer]);
+    expect(l).toHaveLength(2);
+    expect(l.map((x) => x.score).sort()).toEqual([0.8, 0.9]);
   });
   it('doppelte Erkennungen (Kachelränder) werden zusammengefasst', () => {
     const l = unterdrueckeDoppelte([box(100, 100, 0.6), box(102, 101, 0.9), box(500, 100, 0.7)]);

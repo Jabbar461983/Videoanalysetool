@@ -124,6 +124,25 @@ export const migrationen: Migration[] = [
       aktiveKalibrierung: {},
     },
   }),
+  // 8 → 9: Eishockey-Feld (blaue Linien, Bullykreise), Randtoleranz der Spielererkennung; vorhandene Masse bleiben
+  (p) => {
+    const t = (p.taktik ?? {}) as { feld?: Record<string, unknown> } & Record<string, unknown>;
+    const alt = (t.feld ?? {}) as Record<string, number>;
+    const laenge = typeof alt.laenge === 'number' ? alt.laenge : STANDARD_FELD.laenge;
+    return {
+      ...p,
+      taktik: {
+        ...t,
+        feld: {
+          ...STANDARD_FELD,
+          ...alt,
+          blaueLinieAbstand: alt.blaueLinieAbstand ?? laenge / 6,
+          bullyKreisRadius: alt.bullyKreisRadius ?? STANDARD_FELD.bullyKreisRadius,
+          erkennungsRand: alt.erkennungsRand ?? STANDARD_FELD.erkennungsRand,
+        },
+      },
+    };
+  },
 ];
 
 export function migriere(roh: unknown): Projekt {
