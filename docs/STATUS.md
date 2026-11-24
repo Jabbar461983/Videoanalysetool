@@ -1,6 +1,24 @@
 # STATUS
 
-Stand: Ende Etappe 6 «Export, Projektdatei & Präsentationsmodus» (Etappen 0–5 siehe unten, weiterhin gültig). **Ab hier ist das Tool im Verein einsetzbar.**
+Stand: Ende Etappe 9 (Taktiktafel). Frühere Stände: Ende Etappe 6 «Export, Projektdatei & Präsentationsmodus» (Etappen 0–5 siehe unten, weiterhin gültig). **Ab hier ist das Tool im Verein einsetzbar.**
+
+## Erledigt (Etappe 9)
+
+- **Taktiktafel** (Reiter «Taktik», Hotkey **T**): Feldskizze als Vektorgrafik im Bulldozers-Stil (Banden, Mittellinie/-kreis, Tore, Torräume, Bullypunkte). Tafel-Editor: Spieler (Team 1/2) und Ball setzen, verschieben, entfernen, Nummer/Name aus dem Kader, Pfeile (Laufweg, Pass, Schuss), mehrere Situationen benennen/duplizieren/löschen, **PNG-Export** der Tafel, auch **ohne Video** nutzbar.
+- **Im Video:** Tafel als Bild-im-Bild (Ecke und Grösse wählbar), geteilt (rechts) oder Vollbild, für Zeitabschnitte eines Clips (Spur «Taktik» in der Timeline, T setzt/entfernt, ziehbar). Im **Export und PNG** enthalten (gleiche Zeichenfunktion; E2E-Test vergleicht Vorschau und MP4).
+- **Kalibrierung:** Im Standbild 4 oder mehr Feldpunkte anklicken (Bullypunkte, Pfosten, Mittellinie …) → Homographie; gelbe Kontrolllinien im Bild; Fehler in Metern ab 5 Punkten; mehrere Kalibrierungen je Quelle (Kameraeinstellungen).
+- **Situation übernehmen:** «Alle Spieler erkennen» (RT-DETR in Kacheln, Zuschauer ausserhalb des Feldes werden ausgeschlossen, Teams per Trikotfarbe, «Teams tauschen») oder «Per Klick übernehmen» (Füsse/Ball anklicken).
+- **Animation** zwischen zwei Situationen (Marker gleiten) pro Abschnitt.
+- Datenmodell Version 8 (Feldmasse, Kalibrierungen, Situationen, `clip.taktik`).
+
+## Etappe 9: Entscheide und Grenzen
+
+- **Feldmasse sind Platzhalter** (40 × 20 m …) und als «nicht bestätigt» markiert. Bitte unter «Taktik → Feldmasse» die echten Masse eures Platzes eintragen (Länge, Breite, Tor, Bullypunkte) und bestätigen: Davon hängt die Genauigkeit der übertragenen Positionen ab. In keinem gefundenen Streethockey-Regelwerk konnte ich Masse belegen.
+- «Geteilt» deckt die rechte Bildhälfte zu (Video wird nicht verkleinert).
+- Pfeile nur gerade. Keine Spielernamen auf der Tafel (nur Nummern).
+- «Alle Spieler erkennen» braucht das Erkennungsmodell (ca. 21 MB, ca. 81 MB mit WebGPU); auf der CPU dauert es pro Bild ca. 10–20 s. Qualität bei Streethockey (Torhüter, Gedränge, kleine Spieler) nicht geprüft: Fehler im Editor korrigieren.
+- Die Kalibrierung gilt nur für eine feste Kameraeinstellung; schwenkt die Kamera, muss neu kalibriert werden (eine Kalibrierung pro Einstellung).
+- Automatisierte Tests: Homographie, Layout, Animation, Teamfarben, Übernahme-Logik (Unit); Tafel einblenden/Export und Kalibrierung/Klick-Modus (E2E, laufen in CI). «Alle Spieler erkennen» mit echtem Modell nur lokal (`e2e/taktik-erkennung.spec.ts`).
 
 ## Erledigt (Etappe 8)
 
