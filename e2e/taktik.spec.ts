@@ -293,7 +293,9 @@ test('Kalibrierung und «Per Klick übernehmen»: Klick im Video landet am richt
   expect(nachher.taktik.situationen.at(-1)!.marker.map((m) => m.art)).toEqual(['team2', 'team1']);
 });
 
-test('Kalibrierung: vertauschte Punkte werden als unplausibel gemeldet', async ({ page }) => {
+test('Kalibrierung: über Kreuz vertauschte Punkte ergeben keine Abbildung und lassen sich nicht speichern', async ({
+  page,
+}) => {
   test.setTimeout(60_000);
   await clipOeffnen(page);
   await springe(page, 1.0);
@@ -318,10 +320,13 @@ test('Kalibrierung: vertauschte Punkte werden als unplausibel gemeldet', async (
       },
       { x, y },
     );
-  // Reihenfolge der Referenzpunkte: links oben, rechts oben, links unten, rechts unten – hier absichtlich vertauscht
+  // Reihenfolge der Referenzpunkte: links oben, rechts oben, links unten, rechts unten.
+  // Hier werden «rechts oben» und «links unten» über Kreuz im Bild gesetzt: Das Feld erscheint verdreht (Schleife).
   await klickBild(0.3, 0.4);
+  await klickBild(0.75, 0.8);
   await klickBild(0.25, 0.8);
   await klickBild(0.7, 0.4);
-  await klickBild(0.75, 0.8);
-  await expect(page.getByTestId('kalibrier-warnung')).toContainText('verdreht');
+  // Über Kreuz vertauschte Eckpunkte ergeben keine Abbildung: Meldung, Speichern bleibt gesperrt
+  await expect(page.getByTestId('kalibrier-guete')).toContainText('keine eindeutige Abbildung');
+  await expect(page.getByTestId('kalibrierung-speichern')).toBeDisabled();
 });
