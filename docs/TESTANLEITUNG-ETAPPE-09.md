@@ -19,7 +19,7 @@ Unter «Feldmasse (Meter)» die echten Werte eures Platzes eintragen (Länge, Br
 3. «Speichern». Für jede Kameraeinstellung einmal.
 
 ## 5. Situation übernehmen
-- **«Alle Spieler erkennen»**: Im Standbild (kalibrierte Quelle). Beim ersten Mal lädt das Erkennungsmodell. Danach öffnet sich der Editor mit allen Spielern auf dem Feld; Zuschauer fallen weg, Teams sind per Trikotfarbe getrennt. Falsch zugeordnet: **«Teams tauschen»**; Nummern über «Aus Kader …».
+- **«Alle Spieler erkennen»**: Im Standbild (kalibrierte Quelle). Beim ersten Mal lädt das Erkennungsmodell. Danach öffnet sich der **Prüfdialog**: Das Standbild zeigt alle erkannten Personen als Rahmen und das berechnete Feld (gelb = Bande, rot = Mittellinie, blau = blaue Linien; es muss auf den echten Linien liegen). **Klick auf einen Rahmen** schaltet zwischen Team 1, Team 2 und «nicht übernehmen» um. Zuschauer ausserhalb des Feldes, Doppelte und mehr als 12 Spieler sind schon abgewählt (grau gestrichelt). Mit «Teams tauschen» vertauschen Sie die Teams, «… Spieler übernehmen» erzeugt die Situation im Tafel-Editor (Nummern über «Aus Kader …»).
 - **«Per Klick übernehmen»**: Füsse der Spieler anklicken (oben Team 1/Team 2/Ball wählen), «Fertig» öffnet den Editor.
 
 **Abnahme:** Aus einem Standbild mit einem Klick (bzw. «Alle Spieler erkennen») die Spielsituation auf die Tafel übertragen, im Bild-im-Bild einblenden und mit dem Clip exportieren. Bitte die **Feldmasse** prüfen und die Stimmigkeit der übertragenen Positionen (stehen die Marker dort, wo die Spieler stehen?).

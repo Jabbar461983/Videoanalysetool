@@ -36,7 +36,7 @@ function istDoppelt(a: BildBox, c: BildBox, iouSchwelle: number): boolean {
   if (i === 0) return false;
   const iou = i / (flaeche(a) + flaeche(c) - i);
   const klein = Math.min(flaeche(a), flaeche(c));
-  return iou >= iouSchwelle || i / klein >= 0.6;
+  return iou >= iouSchwelle || i / klein >= 0.85;
 }
 
 /** Doppelte Erkennungen (z. B. an Kachelrändern) entfernen: höchster Score gewinnt. */
