@@ -21,6 +21,10 @@ import { KalibrierDialog } from './KalibrierDialog';
 import { AutoPlaylistDialog } from './AutoPlaylistDialog';
 import { ErkennungsDialog } from './ErkennungsDialog';
 import { useEditorTasten } from './tasten';
+import { Arbeitsflaeche } from '../layout/Arbeitsflaeche';
+import { useLayout } from '../store/layout';
+import { baueStandardLayout } from '../layout/standard';
+import { loescheLayout } from '../layout/speicher';
 import s from './Editor.module.css';
 
 const ZEIT_KEY = 'bdva-zeit-hoehe';
@@ -33,12 +37,27 @@ const ladeHoehe = (): number | null => {
   }
 };
 
+/** Freies Layout (Andocken, Auslagern) nur auf breiten Bildschirmen; schmal/Tablet: feste Ansicht wie bisher. */
+function useFreiesLayout(): boolean {
+  const mq = '(min-width: 901px)';
+  const [frei, setFrei] = useState(() => window.matchMedia(mq).matches);
+  useEffect(() => {
+    const m = window.matchMedia(mq);
+    const f = () => setFrei(m.matches);
+    m.addEventListener('change', f);
+    return () => m.removeEventListener('change', f);
+  }, []);
+  return frei;
+}
+
 export function Editor({ projektId }: { projektId: string }) {
   const projekt = useProjekt((x) => x.projekt);
   const status = useProjekt((x) => x.status);
   const art = useProgramm((g) => g.art);
   const praesi = useUi((u) => u.praesentation);
   const [fehlt, setFehlt] = useState(false);
+  const frei = useFreiesLayout();
+  const layoutApi = useLayout((l) => l.api);
   const [zeitHoehe, setZeitHoehe] = useState<number | null>(ladeHoehe);
   const [seitenBreite, setSeitenBreite] = useState<number | null>(leseSeitenBreite);
 
@@ -87,6 +106,64 @@ export function Editor({ projektId }: { projektId: string }) {
   if (!projekt) return null;
   const q = projekt.quellen.find((x) => x.id === projekt.aktiveQuelleId) ?? projekt.quellen[0];
 
+  const kopf = (
+    <header className={s.kopf}>
+      <Streifen hoehe={20} />
+      <a href="#/" style={{ color: 'var(--bd-ink)' }}>
+        {t.editor.zurueck}
+      </a>
+      <input
+        type="text"
+        aria-label={t.editor.projektName}
+        value={projekt.name}
+        onChange={(e) =>
+          useProjekt.getState().aendere('Umbenennen', (p) => {
+            p.name = e.target.value;
+          })
+        }
+      />
+      <UndoRedo />
+      {frei && layoutApi && (
+        <button
+          data-testid="layout-reset"
+          title={t.layout.zuruecksetzenHinweis}
+          onClick={() => {
+            loescheLayout();
+            baueStandardLayout(layoutApi, layoutApi.width, layoutApi.height);
+          }}
+        >
+          {t.layout.zuruecksetzen}
+        </button>
+      )}
+      <span className={s.status} role="status">
+        {status === 'ausstehend'
+          ? t.editor.speichert
+          : status === 'fehler'
+            ? t.editor.saveFehler
+            : t.editor.gespeichert}
+      </span>
+    </header>
+  );
+
+  if (frei)
+    return (
+      <div
+        className={`${s.app} ${s.appFrei} ${praesi ? s.praesi : ''}`}
+        data-praesentation={praesi}
+      >
+        {kopf}
+        <div className={s.arbeit}>
+          <Arbeitsflaeche />
+        </div>
+        <HotkeyHilfe />
+        <TafelEditor />
+        <KalibrierDialog />
+        <AutoPlaylistDialog />
+        <ErkennungsDialog />
+        {praesi && <PraesentationsLeiste />}
+      </div>
+    );
+
   return (
     <div
       className={`${s.app} ${praesi ? s.praesi : ''}`}
@@ -95,30 +172,7 @@ export function Editor({ projektId }: { projektId: string }) {
         seitenBreite ? ({ '--seite-b': `${seitenBreite}px` } as React.CSSProperties) : undefined
       }
     >
-      <header className={s.kopf}>
-        <Streifen hoehe={20} />
-        <a href="#/" style={{ color: 'var(--bd-ink)' }}>
-          {t.editor.zurueck}
-        </a>
-        <input
-          type="text"
-          aria-label={t.editor.projektName}
-          value={projekt.name}
-          onChange={(e) =>
-            useProjekt.getState().aendere('Umbenennen', (p) => {
-              p.name = e.target.value;
-            })
-          }
-        />
-        <UndoRedo />
-        <span className={s.status} role="status">
-          {status === 'ausstehend'
-            ? t.editor.speichert
-            : status === 'fehler'
-              ? t.editor.saveFehler
-              : t.editor.gespeichert}
-        </span>
-      </header>
+      {kopf}
       <section className={s.buehne}>
         {!praesi && <QuellenBanner />}
         <Buehne quelle={q} />

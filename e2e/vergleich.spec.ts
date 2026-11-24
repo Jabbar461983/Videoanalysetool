@@ -174,7 +174,8 @@ test('Vergleich-Export: Ton der laufenden Seite ist drin, «Ohne Ton» ist still
   };
   const mitTon = await lautstaerke();
   await page.getByRole('tab', { name: 'Playlist' }).click();
-  await page.locator('[data-testid="playlist-eintrag"] button[aria-expanded]').click();
+  const aufklapp = page.locator('[data-testid="playlist-eintrag"] button[aria-expanded]');
+  if ((await aufklapp.getAttribute('aria-expanded')) !== 'true') await aufklapp.click();
   await page.getByTestId('vergleich-ton').selectOption('stumm');
   const ohneTon = await lautstaerke();
   expect(mitTon).toBeGreaterThan(-50);

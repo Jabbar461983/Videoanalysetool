@@ -440,6 +440,12 @@ export const t = {
     aktiv: 'Aktive Playlist',
     uebergangErste: 'Übergang gilt vom vorherigen Eintrag',
   },
+  layout: {
+    tagleisteHinweis:
+      'Die Tag-Leiste gibt es in der Quellansicht (nicht im Clip- oder Playlist-Modus).',
+    zuruecksetzen: 'Layout zurücksetzen',
+    zuruecksetzenHinweis: 'Alle Module wieder an ihren Standardplatz',
+  },
   vergleich: {
     kurz: 'Vergleich',
     hinzufuegen: 'Vergleich hinzufügen',

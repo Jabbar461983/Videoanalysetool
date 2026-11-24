@@ -135,3 +135,20 @@
     display: none;
   }
 }
+
+/* Freies Layout: Kopf + Arbeitsfläche (Dockview) */
+.appFrei {
+  grid-template-columns: 1fr;
+  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-areas: 'kopf' 'arbeit';
+}
+.arbeit {
+  grid-area: arbeit;
+  min-height: 0;
+  min-width: 0;
+  position: relative;
+}
+.praesi.appFrei {
+  grid-template-areas: 'arbeit';
+  grid-template-rows: 1fr;
+}

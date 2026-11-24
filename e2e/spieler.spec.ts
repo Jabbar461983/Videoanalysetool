@@ -101,6 +101,8 @@ test('Spieler freistellen, hervorheben, verschieben; Export deckt sich mit der V
   page,
 }) => {
   test.setTimeout(420_000);
+  // Das freie Layout hat Registerköpfe pro Modul: etwas mehr Höhe, damit die Griffe über dem Video nicht unter der Werkzeugleiste liegen
+  await page.setViewportSize({ width: 1440, height: 900 });
   page.on('pageerror', (e) => console.log('PAGEERROR', e.message));
   page.on('console', (m) => m.type() === 'error' && console.log('CONSOLE', m.text()));
   await projektMitClip(page);

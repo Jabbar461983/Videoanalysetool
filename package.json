@@ -17,6 +17,7 @@
     "@huggingface/transformers": "^4.3.2",
     "@techstark/opencv-js": "^5.0.0-release.1",
     "dexie": "^4.4.7",
+    "dockview-react": "8.9.1",
     "fflate": "^0.8.3",
     "immer": "^11.2.10",
     "mediabunny": "^1.66.2",

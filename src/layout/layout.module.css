@@ -1,0 +1,42 @@
+.buehne {
+  height: 100%;
+  background: var(--bd-black);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.tagleiste {
+  height: 100%;
+  overflow: auto;
+  background: var(--bd-surface);
+}
+.zeit {
+  height: 100%;
+  overflow: auto;
+  background: var(--bd-surface-raised);
+}
+.seite {
+  height: 100%;
+  overflow: auto;
+  background: var(--bd-surface-raised);
+  padding: var(--bd-space-3);
+}
+.tab {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  min-height: 30px;
+  padding: 0 10px;
+  white-space: nowrap;
+  font-weight: 700;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--bd-ink-subtle);
+  border-bottom: 3px solid transparent;
+  cursor: grab;
+}
+.tab[data-aktiv='true'] {
+  color: var(--bd-gold);
+  border-bottom-color: var(--bd-gold);
+}

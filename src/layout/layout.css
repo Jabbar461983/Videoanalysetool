@@ -1,0 +1,39 @@
+/* Dockview im Bulldozers-Look: dunkel, eckig, Gold als Akzent (überschreibt das dark-Theme) */
+.bd-dock.dockview-theme-dark {
+  --dv-background-color: var(--bd-black);
+  --dv-group-view-background-color: var(--bd-surface-raised);
+  --dv-tabs-and-actions-container-background-color: var(--bd-surface);
+  --dv-tabs-and-actions-container-height: 32px;
+  --dv-activegroup-visiblepanel-tab-background-color: var(--bd-surface-raised);
+  --dv-activegroup-hiddenpanel-tab-background-color: var(--bd-surface);
+  --dv-inactivegroup-visiblepanel-tab-background-color: var(--bd-surface-raised);
+  --dv-inactivegroup-hiddenpanel-tab-background-color: var(--bd-surface);
+  --dv-tab-divider-color: var(--bd-rule);
+  --dv-activegroup-visiblepanel-tab-color: var(--bd-gold);
+  --dv-activegroup-hiddenpanel-tab-color: var(--bd-ink-subtle);
+  --dv-inactivegroup-visiblepanel-tab-color: var(--bd-ink-subtle);
+  --dv-inactivegroup-hiddenpanel-tab-color: var(--bd-ink-subtle);
+  --dv-separator-border: var(--bd-rule);
+  --dv-paneview-active-outline-color: var(--bd-gold);
+  --dv-sash-color: var(--bd-rule);
+  --dv-active-sash-color: var(--bd-gold);
+  --dv-active-sash-transition-delay: 0s;
+  --dv-drag-over-background-color: rgba(186, 153, 14, 0.25);
+  --dv-drag-over-border-color: var(--bd-gold);
+  --dv-border-radius: 0px;
+  --dv-tab-border-radius: 0px;
+  color-scheme: dark;
+}
+/* Griffe zum Ändern der Grösse deutlicher machen */
+.bd-dock .dv-split-view-container.dv-horizontal > .dv-sash-container > .dv-sash,
+.bd-dock .dv-split-view-container.dv-vertical > .dv-sash-container > .dv-sash {
+  background-color: var(--bd-rule);
+}
+.bd-dock .dv-sash:hover,
+.bd-dock .dv-sash:active {
+  background-color: var(--bd-gold) !important;
+}
+/* Präsentation im selben Fenster: Registerköpfe aus, Video füllt alles */
+.bd-dock-host[data-praesi='true'] .dv-tabs-and-actions-container {
+  display: none;
+}
