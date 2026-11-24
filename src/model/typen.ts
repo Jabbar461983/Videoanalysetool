@@ -330,6 +330,8 @@ export interface Projekt {
     situationen: Situation[];
     /** zuletzt gewählte Kalibrierung je Quelle */
     aktiveKalibrierung: Record<string, string>;
+    /** Vom Nutzer markierte Schiedsrichter-Trikotfarben (RGB): solche Personen werden bei der Erkennung automatisch ausgeschlossen */
+    schiedsrichterFarben?: [number, number, number][];
   };
   einstellungen: {
     trackingModus: 'auto' | 'freeze';

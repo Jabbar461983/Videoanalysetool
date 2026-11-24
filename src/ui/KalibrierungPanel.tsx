@@ -100,6 +100,20 @@ export function KalibrierungPanel() {
           <button onClick={beendeKlickModus}>{t.taktik.klickFertig}</button>
         )}
       </div>
+      {(projekt.taktik.schiedsrichterFarben?.length ?? 0) > 0 && (
+        <p className="hinweis" data-testid="schiedsrichter-gelernt">
+          {t.taktik.schiedsrichterGelernt(projekt.taktik.schiedsrichterFarben!.length)}{' '}
+          <button
+            onClick={() =>
+              useProjekt.getState().aendereStill((p) => {
+                delete p.taktik.schiedsrichterFarben;
+              })
+            }
+          >
+            {t.taktik.schiedsrichterLoeschen}
+          </button>
+        </p>
+      )}
       {meldung && (
         <p
           role="status"

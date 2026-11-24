@@ -292,3 +292,36 @@ test('Kalibrierung und «Per Klick übernehmen»: Klick im Video landet am richt
   );
   expect(nachher.taktik.situationen.at(-1)!.marker.map((m) => m.art)).toEqual(['team2', 'team1']);
 });
+
+test('Kalibrierung: vertauschte Punkte werden als unplausibel gemeldet', async ({ page }) => {
+  test.setTimeout(60_000);
+  await clipOeffnen(page);
+  await springe(page, 1.0);
+  await page.getByRole('tab', { name: 'Taktik' }).click();
+  await page.getByTestId('neu-kalibrieren').click();
+  const klickBild = (x: number, y: number) =>
+    page.getByTestId('kalibrier-bild').evaluate(
+      (el, a) => {
+        const r = el.getBoundingClientRect();
+        el.dispatchEvent(
+          new PointerEvent('pointerdown', {
+            bubbles: true,
+            clientX: r.left + r.width * a.x,
+            clientY: r.top + r.height * a.y,
+            pointerId: 11,
+            pointerType: 'mouse',
+            button: 0,
+            buttons: 1,
+            isPrimary: true,
+          }),
+        );
+      },
+      { x, y },
+    );
+  // Reihenfolge der Referenzpunkte: links oben, rechts oben, links unten, rechts unten – hier absichtlich vertauscht
+  await klickBild(0.3, 0.4);
+  await klickBild(0.25, 0.8);
+  await klickBild(0.7, 0.4);
+  await klickBild(0.75, 0.8);
+  await expect(page.getByTestId('kalibrier-warnung')).toContainText('verdreht');
+});

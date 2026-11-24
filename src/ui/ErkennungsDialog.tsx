@@ -43,10 +43,12 @@ export function ErkennungsDialog() {
       const y = (p.box.cy - p.box.h / 2) * f;
       const w = p.box.b * f;
       const h = p.box.h * f;
-      const farbe = p.an ? (projekt.teams[p.team]?.farbe ?? '#ffffff') : '#9a9a9a';
+      const sr = !p.an && p.schiedsrichter;
+      const farbe = p.an ? (projekt.teams[p.team]?.farbe ?? '#ffffff') : sr ? '#F2994A' : '#9a9a9a';
       ctx.lineWidth = p.an ? 3 : 1.5;
       ctx.strokeStyle = p.an ? '#ffffff' : farbe;
       ctx.setLineDash(p.an ? [] : [4, 3]);
+      ctx.lineWidth = sr ? 3 : ctx.lineWidth;
       ctx.strokeRect(x - 1, y - 1, w + 2, h + 2);
       ctx.setLineDash([]);
       ctx.lineWidth = 1.5;
@@ -60,7 +62,7 @@ export function ErkennungsDialog() {
       }
       ctx.font = 'bold 12px Arial';
       ctx.fillStyle = p.an ? '#ffffff' : '#cfcfcf';
-      ctx.fillText(String(i + 1), x + 2, y - 4);
+      ctx.fillText(sr ? `S${i + 1}` : String(i + 1), x + 2, y - 4);
     });
   }, [e, personen, projekt]);
 
@@ -152,7 +154,20 @@ export function ErkennungsDialog() {
             {t.taktik.uebernehmenN(gesamt)}
           </button>
         </div>
+        {e.warnung && (
+          <p
+            role="alert"
+            data-testid="pruef-warnung"
+            style={{ border: '1px solid #E53935', padding: 8, color: 'var(--bd-ink)' }}
+          >
+            {t.taktik.kalibrierWarnungText(
+              t.taktik.kalibrierWarnungen[e.warnung as keyof typeof t.taktik.kalibrierWarnungen] ??
+                e.warnung,
+            )}
+          </p>
+        )}
         <p className="hinweis" data-testid="pruef-hinweis">
+          {e.kalibrierung ? `Kalibrierung «${e.kalibrierung}». ` : ''}
           {e.hinweis}
         </p>
         <canvas

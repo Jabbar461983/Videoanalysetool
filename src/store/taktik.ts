@@ -11,6 +11,9 @@ export interface ErkennungsAnsicht {
   H: Matrix3;
   personen: Person[];
   hinweis: string;
+  /** Warnung zur Kalibrierung (unplausibel) – wird im Dialog hervorgehoben */
+  warnung?: string;
+  kalibrierung?: string;
 }
 
 export type TafelWerkzeug =

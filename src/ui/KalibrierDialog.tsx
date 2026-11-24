@@ -8,6 +8,7 @@ import { aktuellesBild, type StandbildInfo } from '../taktik/bild';
 import { referenzPunkte } from '../taktik/feld';
 import { berechneKalibrierung, bewerteKalibrierung, type PunktPaar } from '../taktik/homographie';
 import { formatZeit } from '../video/bildmathe';
+import { pruefePlausibilitaet } from '../taktik/homographie';
 import { zeichneFeldAufBild } from '../taktik/bildFeld';
 
 interface Paar extends PunktPaar {
@@ -69,6 +70,7 @@ export function KalibrierDialog() {
   if (!offen || !projekt || !feld) return null;
   const schliesse = () => useTaktik.getState().setze({ kalibrierungOffen: false });
   const naechster = (benutzt: Set<string>) => punkte.find((p) => !benutzt.has(p.id))?.id ?? aktuell;
+  const plaus = ergebnis ? pruefePlausibilitaet(ergebnis.H, feld.laenge, feld.breite) : null;
   const guete = ergebnis
     ? bewerteKalibrierung(ergebnis, Math.hypot(feld.laenge, feld.breite))
     : null;
@@ -223,6 +225,11 @@ export function KalibrierDialog() {
                 )}
                 {paare.length >= 4 && !ergebnis && (
                   <span style={{ color: '#E53935' }}>{t.taktik.entartet}</span>
+                )}
+                {plaus && !plaus.ok && (
+                  <p role="alert" data-testid="kalibrier-warnung" style={{ color: '#E53935' }}>
+                    {t.taktik.kalibrierWarnungText(t.taktik.kalibrierWarnungen[plaus.grund])}
+                  </p>
                 )}
                 {ergebnis && (
                   <span>

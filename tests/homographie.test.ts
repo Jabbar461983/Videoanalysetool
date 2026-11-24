@@ -91,3 +91,33 @@ describe('Feld', () => {
     expect(STANDARD_FELD.geprueft).toBe(false);
   });
 });
+
+describe('Plausibilität der Kalibrierung', () => {
+  it('eine echte Kamera-Abbildung ist plausibel', async () => {
+    const { pruefePlausibilitaet, invertiere: inv } = await import('../src/taktik/homographie');
+    const HBildFeld = inv(HFeldBild)!;
+    expect(pruefePlausibilitaet(HBildFeld, 40, 20)).toEqual({ ok: true });
+  });
+  it('vertauschte Punkte (verdrehtes Viereck) werden erkannt', async () => {
+    const { pruefePlausibilitaet } = await import('../src/taktik/homographie');
+    // Feldpunkte der vier Ecken, aber zwei Bildpunkte vertauscht
+    const p = (f: [number, number], b: [number, number]): PunktPaar => ({
+      feld: { x: f[0], y: f[1] },
+      bild: { x: b[0], y: b[1] },
+    });
+    const gut = [
+      p([0, 0], [0.3, 0.3]),
+      p([40, 0], [0.7, 0.3]),
+      p([40, 20], [0.9, 0.8]),
+      p([0, 20], [0.1, 0.8]),
+    ];
+    const verdreht = [gut[0]!, gut[2]!, gut[1]!, gut[3]!].map((x, i) => ({
+      feld: gut[i]!.feld,
+      bild: x.bild,
+    }));
+    const k1 = berechneKalibrierung(gut)!;
+    const k2 = berechneKalibrierung(verdreht);
+    expect(pruefePlausibilitaet(k1.H, 40, 20)).toEqual({ ok: true });
+    if (k2) expect(pruefePlausibilitaet(k2.H, 40, 20).ok).toBe(false);
+  });
+});

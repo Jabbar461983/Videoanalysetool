@@ -143,3 +143,50 @@ export function bewerteKalibrierung(k: Kalibrierergebnis, feldDiagonale: number)
   const rel = k.rms / feldDiagonale;
   return rel < 0.005 ? 'gut' : rel < 0.015 ? 'mittel' : 'schlecht';
 }
+
+/** Feld → Bild: Bildpunkt samt Nenner `w` (w ≤ 0 heisst: hinter der Kamera bzw. jenseits des Horizonts). */
+function feldNachBild(inv: Matrix3, p: Pt): { x: number; y: number; w: number } {
+  const w = inv[6] * p.x + inv[7] * p.y + inv[8];
+  return {
+    x: (inv[0] * p.x + inv[1] * p.y + inv[2]) / w,
+    y: (inv[3] * p.x + inv[4] * p.y + inv[5]) / w,
+    w,
+  };
+}
+
+export type Plausibel =
+  | { ok: true }
+  | { ok: false; grund: 'nichtInvertierbar' | 'horizont' | 'verdreht' | 'nichtImBild' };
+
+/**
+ * Sieht die Kalibrierung vernünftig aus? Das Feld muss als gewöhnliches Viereck ins Bild fallen: alle Ecken vor der
+ * Kamera, Viereck konvex und nicht verdreht (sonst wurden Punkte vertauscht), Feldmitte im Bild.
+ * Typisches Zeichen einer falschen Kalibrierung: Feldlinien laufen quer durch den Himmel.
+ */
+export function pruefePlausibilitaet(Hbf: Matrix3, laenge: number, breite: number): Plausibel {
+  const inv = invertiere(Hbf);
+  if (!inv) return { ok: false, grund: 'nichtInvertierbar' };
+  const ecken = [
+    { x: 0, y: 0 },
+    { x: laenge, y: 0 },
+    { x: laenge, y: breite },
+    { x: 0, y: breite },
+  ].map((p) => feldNachBild(inv, p));
+  const mitte = feldNachBild(inv, { x: laenge / 2, y: breite / 2 });
+  if (![...ecken, mitte].every((p) => Number.isFinite(p.x) && Number.isFinite(p.y)))
+    return { ok: false, grund: 'horizont' };
+  const vorzeichen = Math.sign(ecken[0]!.w);
+  if (vorzeichen === 0 || [...ecken, mitte].some((p) => Math.sign(p.w) !== vorzeichen))
+    return { ok: false, grund: 'horizont' };
+  // Konvex und nicht verdreht: alle Kreuzprodukte aufeinanderfolgender Kanten haben dasselbe Vorzeichen
+  const kreuz = ecken.map((a, i) => {
+    const b = ecken[(i + 1) % 4]!;
+    const c = ecken[(i + 2) % 4]!;
+    return (b.x - a.x) * (c.y - b.y) - (b.y - a.y) * (c.x - b.x);
+  });
+  if (!(kreuz.every((k) => k > 0) || kreuz.every((k) => k < 0)))
+    return { ok: false, grund: 'verdreht' };
+  if (mitte.x < -0.1 || mitte.x > 1.1 || mitte.y < -0.1 || mitte.y > 1.1)
+    return { ok: false, grund: 'nichtImBild' };
+  return { ok: true };
+}

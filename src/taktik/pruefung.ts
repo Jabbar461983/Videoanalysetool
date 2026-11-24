@@ -1,5 +1,6 @@
 import { neueId } from '../model/schema';
 import type { FeldMasse, TaktikMarker } from '../model/typen';
+import { rgbZuLab, type Rgb } from './farben';
 import type { Pt } from './homographie';
 import { MIN_MARKER_ABSTAND, imFeldBereich, type BildBox } from './uebernehmen';
 
@@ -17,7 +18,11 @@ export interface Person {
   /** Wird in die Situation übernommen? */
   an: boolean;
   /** Warum standardmässig nicht übernommen */
-  grund?: 'ausserhalb' | 'doppelt' | 'zuViele';
+  grund?: 'ausserhalb' | 'doppelt' | 'zuViele' | 'schiedsrichter';
+  /** Mittlere Trikotfarbe (Oberkörper), falls gemessen */
+  farbe?: Rgb;
+  /** Als Schiedsrichter gewertet (automatisch erkannt oder vom Nutzer markiert) */
+  schiedsrichter?: boolean;
 }
 
 /**
@@ -77,11 +82,64 @@ export function baueAuswahl(
   };
 }
 
-/** Klick auf eine Person: Team 1 → Team 2 → nicht übernehmen → Team 1. */
+/**
+ * Klick auf eine Person: Team 1 → Team 2 → Schiedsrichter → nicht übernehmen → Team 1.
+ * «Schiedsrichter» wird nicht übernommen und die Trikotfarbe fürs nächste Mal gemerkt.
+ */
 export function naechsterZustand(p: Person): Person {
-  if (!p.an) return { ...p, an: true, team: 0, grund: undefined };
-  if (p.team === 0) return { ...p, team: 1 };
-  return { ...p, an: false };
+  if (p.an && p.team === 0) return { ...p, team: 1 };
+  if (p.an) return { ...p, an: false, schiedsrichter: true, grund: 'schiedsrichter' };
+  if (p.schiedsrichter) return { ...p, schiedsrichter: false, grund: undefined };
+  return { ...p, an: true, team: 0, grund: undefined, schiedsrichter: false };
+}
+
+/** Lab-Abstand zweier Farben. */
+export function farbAbstand(a: Rgb, b: Rgb): number {
+  const x = rgbZuLab(a);
+  const y = rgbZuLab(b);
+  return Math.hypot(x[0] - y[0], x[1] - y[1], x[2] - y[2]);
+}
+
+/** Ab diesem Lab-Abstand zur gelernten Farbe gilt eine Person als Schiedsrichter. */
+export const SCHIEDSRICHTER_NAEHE = 14;
+/** Gelernte Farben werden nur angewandt, wenn sie mindestens so weit von beiden Teams entfernt sind. */
+export const SCHIEDSRICHTER_ABSTAND_TEAMS = 20;
+
+/**
+ * Wendet die gelernten Schiedsrichterfarben an: Personen mit sehr ähnlicher Trikotfarbe werden abgewählt.
+ * Ist eine gelernte Farbe der Farbe eines Teams zu ähnlich (z. B. beide schwarz), wird sie NICHT angewandt,
+ * damit keine Spieler verloren gehen. `teamFarben` = mittlere Trikotfarben der beiden Teams (falls bekannt).
+ */
+export function wendeSchiedsrichterFarbenAn(
+  personen: Person[],
+  gelernt: Rgb[],
+  teamFarben: [Rgb, Rgb] | null,
+): { personen: Person[]; angewandt: number; uebersprungen: number } {
+  const brauchbar = gelernt.filter(
+    (g) =>
+      !teamFarben || teamFarben.every((t) => farbAbstand(g, t) >= SCHIEDSRICHTER_ABSTAND_TEAMS),
+  );
+  const uebersprungen = gelernt.length - brauchbar.length;
+  let angewandt = 0;
+  const neu = personen.map((p) => {
+    if (!p.an || !p.farbe) return p;
+    if (brauchbar.some((g) => farbAbstand(p.farbe!, g) < SCHIEDSRICHTER_NAEHE)) {
+      angewandt++;
+      return { ...p, an: false, schiedsrichter: true, grund: 'schiedsrichter' as const };
+    }
+    return p;
+  });
+  return { personen: neu, angewandt, uebersprungen };
+}
+
+/** Trikotfarben der als Schiedsrichter markierten Personen, mit den bereits gelernten zusammengeführt (höchstens 6). */
+export function lerneSchiedsrichterFarben(personen: Person[], bisher: Rgb[] = []): Rgb[] {
+  const liste = [...bisher];
+  for (const p of personen) {
+    if (!p.schiedsrichter || !p.farbe) continue;
+    if (liste.every((g) => farbAbstand(g, p.farbe!) >= 8)) liste.push(p.farbe);
+  }
+  return liste.slice(-6);
 }
 
 /** Alle Teams vertauschen (nur übernommene Personen sind betroffen). */
@@ -89,8 +147,14 @@ export const tauscheTeams = (liste: Person[]): Person[] =>
   liste.map((p) => (p.an ? { ...p, team: p.team === 0 ? 1 : 0 } : p));
 
 /** Zählung für die Anzeige. */
-export function zaehle(liste: Person[]): { team1: number; team2: number; aus: number } {
+export function zaehle(liste: Person[]): {
+  team1: number;
+  team2: number;
+  aus: number;
+  schiedsrichter: number;
+} {
   return {
+    schiedsrichter: liste.filter((p) => !p.an && p.schiedsrichter).length,
     team1: liste.filter((p) => p.an && p.team === 0).length,
     team2: liste.filter((p) => p.an && p.team === 1).length,
     aus: liste.filter((p) => !p.an).length,

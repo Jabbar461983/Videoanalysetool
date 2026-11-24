@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { STANDARD_FELD } from '../src/taktik/feld';
 import {
+  lerneSchiedsrichterFarben,
+  wendeSchiedsrichterFarbenAn,
   MAX_SPIELER,
   baueAuswahl,
   markerAusPersonen,
@@ -59,7 +61,7 @@ describe('Auswahl vor der Übernahme', () => {
     expect(r.personen.slice(12).every((p) => !p.an && p.grund === 'zuViele')).toBe(true);
   });
 
-  it('Teams aus der Trikotfarbe; Klick wechselt Team 1 → Team 2 → aus → Team 1', () => {
+  it('Teams aus der Trikotfarbe; Klick wechselt Team 1 → Team 2 → Schiedsrichter → aus → Team 1', () => {
     const r = baueAuswahl(
       [box(0.9), box(0.8)],
       [
@@ -74,7 +76,9 @@ describe('Auswahl vor der Übernahme', () => {
     p = naechsterZustand(p);
     expect([p.an, p.team]).toEqual([true, 1]);
     p = naechsterZustand(p);
-    expect(p.an).toBe(false);
+    expect([p.an, p.schiedsrichter]).toEqual([false, true]);
+    p = naechsterZustand(p);
+    expect([p.an, p.schiedsrichter]).toEqual([false, false]);
     p = naechsterZustand(p);
     expect([p.an, p.team]).toEqual([true, 0]);
   });
@@ -92,7 +96,7 @@ describe('Auswahl vor der Übernahme', () => {
     );
     const t = tauscheTeams(r.personen);
     expect(t.map((p) => p.team)).toEqual([1, 0, 0]); // die dritte ist aus (ausserhalb) und bleibt
-    expect(zaehle(t)).toEqual({ team1: 1, team2: 1, aus: 1 });
+    expect(zaehle(t)).toEqual({ team1: 1, team2: 1, aus: 1, schiedsrichter: 0 });
   });
 
   it('Marker nur aus übernommenen Personen, im Feld begrenzt', () => {
@@ -112,5 +116,56 @@ describe('Auswahl vor der Übernahme', () => {
     expect(m[1]!.y).toBe(feld.breite);
     const nurEine = markerAusPersonen([{ ...r.personen[0]!, an: false }, r.personen[1]!], feld);
     expect(nurEine).toHaveLength(1);
+  });
+});
+
+describe('Schiedsrichter', () => {
+  const person = (farbe: [number, number, number], an = true) => ({
+    box: box(0.9),
+    feld: { x: 10, y: 10 },
+    imFeld: true,
+    team: 0 as const,
+    an,
+    farbe,
+  });
+  it('lernt die Farben der markierten Schiedsrichter (ohne Dopplungen, höchstens 6)', () => {
+    const markiert = { ...person([20, 20, 20], false), schiedsrichter: true };
+    const l = lerneSchiedsrichterFarben([markiert, markiert, person([200, 0, 0])]);
+    expect(l).toEqual([[20, 20, 20]]);
+    const viele = Array.from({ length: 9 }, (_, i) => ({
+      ...person([i * 28, 0, 0], false),
+      schiedsrichter: true,
+    }));
+    expect(lerneSchiedsrichterFarben(viele).length).toBe(6);
+  });
+  it('schliesst Personen mit gelernter Schiedsrichterfarbe aus, wenn sie sich klar von beiden Teams unterscheidet', () => {
+    const gelb: [number, number, number] = [230, 210, 30];
+    const ps = [person([228, 208, 34]), person([30, 110, 90]), person([20, 40, 120])];
+    const r = wendeSchiedsrichterFarbenAn(
+      ps,
+      [gelb],
+      [
+        [30, 110, 90],
+        [20, 40, 120],
+      ],
+    );
+    expect(r.angewandt).toBe(1);
+    expect(r.personen.map((p) => p.an)).toEqual([false, true, true]);
+    expect(r.personen[0]!.grund).toBe('schiedsrichter');
+  });
+  it('wendet eine gelernte Farbe NICHT an, wenn sie einem Team zu ähnlich ist (sonst gingen Spieler verloren)', () => {
+    const schwarz: [number, number, number] = [25, 25, 30];
+    const ps = [person([26, 24, 31]), person([200, 40, 40])];
+    const r = wendeSchiedsrichterFarbenAn(
+      ps,
+      [schwarz],
+      [
+        [28, 26, 32],
+        [200, 40, 40],
+      ],
+    );
+    expect(r.angewandt).toBe(0);
+    expect(r.uebersprungen).toBe(1);
+    expect(r.personen.every((p) => p.an)).toBe(true);
   });
 });

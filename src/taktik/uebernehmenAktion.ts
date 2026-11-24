@@ -6,10 +6,17 @@ import { formatZeit } from '../video/bildmathe';
 import { aktuelleQuellPosition } from '../wiedergabe/transport';
 import { aktuellesBild } from './bild';
 import { mittlereFarbe, trenneTeams, type Rgb } from './farben';
-import { wendeAn } from './homographie';
+import { bewerteKalibrierung, pruefePlausibilitaet, wendeAn } from './homographie';
 import { neueSituation, neuerMarker } from './logik';
 import { fussPunkt, gruppeFuerTeam1, imFeldBereich } from './uebernehmen';
-import { MAX_SPIELER, baueAuswahl, markerAusPersonen, type Person } from './pruefung';
+import {
+  MAX_SPIELER,
+  baueAuswahl,
+  lerneSchiedsrichterFarben,
+  markerAusPersonen,
+  wendeSchiedsrichterFarbenAn,
+  type Person,
+} from './pruefung';
 
 const setze = (p: Parameters<ReturnType<typeof useTaktik.getState>['setze']>[0]) =>
   useTaktik.getState().setze(p);
@@ -80,12 +87,14 @@ export async function uebernimmAlleSpieler(): Promise<void> {
       if (f) farben.set(i, f);
     }
     let teams: number[] | null = null;
+    let teamFarben: [Rgb, Rgb] | null = null;
     let farbHinweis = '';
     const idxMitFarbe = [...farben.keys()];
     if (idxMitFarbe.length >= 2) {
       const t = trenneTeams(idxMitFarbe.map((i) => farben.get(i)!));
       if (t.mitten && t.abstand >= MIN_FARBABSTAND) {
         const gruppe1 = gruppeFuerTeam1(t.mitten, projekt.teams[0].farbe, projekt.teams[1].farbe);
+        teamFarben = [t.mitten[gruppe1], t.mitten[gruppe1 === 0 ? 1 : 0]];
         teams = r.boxen.map(() => 0);
         idxMitFarbe.forEach((idx, k) => {
           teams![idx] = t.zuordnung[k] === gruppe1 ? 0 : 1;
@@ -95,12 +104,32 @@ export async function uebernimmAlleSpieler(): Promise<void> {
           ' Die Trikotfarben liessen sich nicht trennen: bitte die Teams im Dialog per Klick zuordnen.';
       }
     }
-    const auswahl = baueAuswahl(r.boxen, feldPos, teams, projekt.taktik.feld);
+    const auswahl0 = baueAuswahl(r.boxen, feldPos, teams, projekt.taktik.feld);
+    auswahl0.personen.forEach((p, i) => {
+      p.farbe = farben.get(i);
+    });
+    // Gelernte Schiedsrichterfarben anwenden (nur wenn die Teamfarben bekannt und klar verschieden sind)
+    const gelernt = projekt.taktik.schiedsrichterFarben ?? [];
+    const sr = teamFarben
+      ? wendeSchiedsrichterFarbenAn(auswahl0.personen, gelernt, teamFarben)
+      : { personen: auswahl0.personen, angewandt: 0, uebersprungen: gelernt.length };
+    const auswahl = { ...auswahl0, personen: sr.personen };
+    // Kalibrierung prüfen
+    const plaus = pruefePlausibilitaet(
+      kal.H,
+      projekt.taktik.feld.laenge,
+      projekt.taktik.feld.breite,
+    );
+    const guete = bewerteKalibrierung(
+      { H: kal.H, rms: kal.rms, maxFehler: null },
+      Math.hypot(projekt.taktik.feld.laenge, projekt.taktik.feld.breite),
+    );
     const quelle = projekt.quellen.find((q) => q.id === bild.quelleId);
     const teile = [
       `${r.boxen.length} Personen erkannt`,
       auswahl.ausserhalb ? `${auswahl.ausserhalb} ausserhalb des Feldes (Zuschauer, Bank)` : '',
       auswahl.doppelt ? `${auswahl.doppelt} doppelt erkannt` : '',
+      sr.angewandt ? `${sr.angewandt} Schiedsrichter (gelernte Farbe) ausgeschlossen` : '',
       auswahl.gekappt
         ? `${auswahl.gekappt} unsichere abgewählt (mehr als ${MAX_SPIELER} Spieler sind nicht zu erwarten)`
         : '',
@@ -113,7 +142,9 @@ export async function uebernimmAlleSpieler(): Promise<void> {
         fps: quelle?.fps ?? 25,
         H: kal.H,
         personen: auswahl.personen,
-        hinweis: `${teile.join(', ')}.${farbHinweis}`,
+        hinweis: `${teile.join(', ')}.${farbHinweis}${sr.uebersprungen ? ' Eine gelernte Schiedsrichterfarbe ist der Farbe eines Teams zu ähnlich und wurde nicht angewandt.' : ''}`,
+        warnung: plaus.ok ? (guete === 'schlecht' ? 'schlecht' : undefined) : plaus.grund,
+        kalibrierung: kal.name,
       },
       meldung: null,
     });
@@ -194,6 +225,11 @@ export function bestaetigeErkennung(personen: Person[]): void {
   const e = t.erkennung;
   if (!projekt || !e) return;
   const marker = markerAusPersonen(personen, projekt.taktik.feld);
+  const gelernt = lerneSchiedsrichterFarben(personen, projekt.taktik.schiedsrichterFarben ?? []);
+  if (gelernt.length !== (projekt.taktik.schiedsrichterFarben ?? []).length)
+    useProjekt.getState().aendereStill((pr) => {
+      pr.taktik.schiedsrichterFarben = gelernt;
+    });
   const szene = neueSzene(e.quellZeit, e.fps);
   szene.marker = marker;
   useProjekt

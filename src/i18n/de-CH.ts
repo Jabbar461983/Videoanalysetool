@@ -632,8 +632,20 @@ export const t = {
     zuViele: (n: number, max: number) =>
       `${n} Spieler gewählt, erwartet sind höchstens ${max} (5 Feldspieler + Torhüter je Team): Zuschauer oder Schiedsrichter dabei?`,
     zuVieleTeam: 'Ein Team hat mehr als 6 Spieler (5 + Torhüter): Teams prüfen.',
+    schiedsrichter: 'Schiedsrichter',
+    kalibrierWarnungen: {
+      nichtInvertierbar: 'Die Kalibrierung ist nicht berechenbar.',
+      horizont: 'Das Feld liegt zum Teil jenseits des Horizonts (Linien laufen durch den Himmel).',
+      verdreht: 'Das Feld ist verdreht abgebildet: Es wurden wahrscheinlich Punkte vertauscht.',
+      nichtImBild: 'Die Feldmitte liegt ausserhalb des Bildes.',
+      schlecht: 'Die Kalibrierung hat einen grossen Fehler.',
+    },
+    kalibrierWarnungText: (grund: string) =>
+      `Kalibrierung prüfen: ${grund} Bitte neu kalibrieren (Punkte weit auseinander, genau anklicken).`,
+    schiedsrichterGelernt: (n: number) => `Gelernte Schiedsrichterfarben: ${n}`,
+    schiedsrichterLoeschen: 'Gelernte Schiedsrichterfarben löschen',
     pruefHilfe:
-      'Klick auf einen Rahmen: Team 1 → Team 2 → nicht übernehmen. Gelb = berechnetes Feld (muss auf den echten Linien liegen), rot = Mittellinie, blau = blaue Linien. Grau gestrichelt = nicht übernommen (ausserhalb des Feldes, doppelt oder zu viele).',
+      'Klick auf einen Rahmen: Team 1 → Team 2 → Schiedsrichter (orange, die Trikotfarbe wird fürs nächste Mal gemerkt) → nicht übernehmen. Gelb = berechnetes Feld (muss auf den echten Linien liegen), rot = Mittellinie, blau = blaue Linien. Grau gestrichelt = nicht übernommen (ausserhalb des Feldes, doppelt oder zu viele).',
   },
   spieler: {
     werkzeug: 'Spieler',
