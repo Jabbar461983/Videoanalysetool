@@ -7,7 +7,10 @@ import path from 'node:path';
 const VIDEO = path.resolve('tests/fixtures/spieler-vp9.webm');
 
 async function projektMitClip(page: Page) {
-  await page.addInitScript(() => localStorage.setItem('bdva-test', '1'));
+  await page.addInitScript(() => {
+    localStorage.setItem('bdva-test', '1');
+    localStorage.setItem('bdva-ki-geraet', 'wasm'); // CI: keine (Software-)Grafikkarte für die KI nutzen
+  });
   await page.goto('./');
   const ok = page.getByRole('button', { name: 'Verstanden' });
   if (await ok.isVisible().catch(() => false)) await ok.click();

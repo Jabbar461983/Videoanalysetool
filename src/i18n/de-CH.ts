@@ -518,6 +518,11 @@ export const t = {
       'Verfolgung ungenau? Auf den Spieler klicken, wo er verloren ging: Das Verfolgen setzt dort neu an.',
     nurFreeze: 'Kontur, Lupe und Verschieben gehen nur im Freeze-Frame.',
     schnelltest: 'Geschwindigkeit des Geräts prüfen',
+    kiGeraet: 'KI-Rechner',
+    geraetAuto: 'Automatisch (Grafikkarte, wenn möglich)',
+    geraetCpu: 'Nur Prozessor',
+    geraetHinweis:
+      'Bei Grafikproblemen auf «Nur Prozessor» stellen: Das Freistellen geht dann, aber langsamer, und das automatische Mitführen ist aus.',
     automatikErzwingen:
       'Automatisches Mitführen immer versuchen (auch wenn der Geschwindigkeitstest «zu langsam» meldet)',
     trackingStellen: 'Unsichere Stellen:',

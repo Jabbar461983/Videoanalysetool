@@ -3,6 +3,7 @@ import { TagDefEditor } from './TagDefEditor';
 import { OverlayEinstellungen } from './OverlayEinstellungen';
 import { useProjekt } from '../store/projektStore';
 import { useState } from 'react';
+import { leseKiGeraet, setzeKiGeraet, type KiGeraet } from '../ki/geraet';
 import { t } from '../i18n/de-CH';
 import {
   automatikErzwungen,
@@ -15,6 +16,7 @@ export function SetupPanel() {
   const [erzwungen, setErzwungen] = useState(automatikErzwungen());
   const [pruefung, setPruefung] = useState<string | null>(null);
   const [laeuft, setLaeuft] = useState(false);
+  const [geraet, setGeraet] = useState<KiGeraet>(leseKiGeraet());
   if (!projekt) return null;
   return (
     <>
@@ -37,6 +39,21 @@ export function SetupPanel() {
         </select>
       </label>
       <p className="hinweis">{t.spieler.freeze}</p>
+      <label>
+        {t.spieler.kiGeraet}{' '}
+        <select
+          value={geraet}
+          data-testid="ki-geraet"
+          onChange={(e) => {
+            setzeKiGeraet(e.target.value as KiGeraet);
+            setGeraet(e.target.value as KiGeraet);
+          }}
+        >
+          <option value="auto">{t.spieler.geraetAuto}</option>
+          <option value="wasm">{t.spieler.geraetCpu}</option>
+        </select>
+      </label>
+      <p className="hinweis">{t.spieler.geraetHinweis}</p>
       <p>
         <button
           type="button"

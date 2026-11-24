@@ -32,6 +32,7 @@ test('Spotlight folgt dem Spieler automatisch', async ({ page }) => {
   test.skip(!process.env.BM_VIDEO, 'BM_VIDEO nicht gesetzt');
   await page.addInitScript(() => {
     localStorage.setItem('bdva-test', '1');
+    localStorage.setItem('bdva-ki-geraet', 'wasm');
     localStorage.setItem('bdva-tracking-erzwingen', '1');
   });
   page.on('pageerror', (e) => console.log('PAGEERROR', e.message));

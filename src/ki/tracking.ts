@@ -1,3 +1,4 @@
+import { leseKiGeraet } from './geraet';
 import type { Box } from './tracker';
 import type { SpurPunkt, TrackingAntwort, TrackingBefehl } from './trackingTypen';
 
@@ -56,7 +57,7 @@ export class TrackingLauf {
   }
 
   /** Misst die Erkennungszeit auf diesem Gerät (nach dem Laden des Modells). */
-  async schnelltest(geraet: 'auto' | 'wasm' | 'webgpu' = 'auto') {
+  async schnelltest(geraet: 'auto' | 'wasm' | 'webgpu' = leseKiGeraet()) {
     try {
       const a = await this.warte({ typ: 'schnelltest', geraet }, 'schnelltest');
       return { medianMs: a.medianMs, geraet: a.geraet, gpuFehler: a.gpuFehler };
@@ -84,7 +85,7 @@ export class TrackingLauf {
           von: p.von,
           bis: p.bis,
           schritt: p.schritt ?? 1 / 12,
-          geraet: p.geraet ?? 'auto',
+          geraet: p.geraet ?? leseKiGeraet(),
         },
         'fertig',
       );

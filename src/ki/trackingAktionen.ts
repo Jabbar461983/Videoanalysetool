@@ -7,6 +7,7 @@ import { useProjekt } from '../store/projektStore';
 import { useSpielerKi } from '../store/spielerKi';
 import { clipPlan } from '../wiedergabe/zeitachse';
 import { fuegeStandbildHinzu } from '../schnitt/schnittLogik';
+import { leseKiGeraet } from './geraet';
 import { fuegeSpurenZusammen, glaette, normalisiere, spurBei, verlorenAnteil } from './spur';
 import { TrackingLauf } from './tracking';
 import type { Box } from './tracker';
@@ -70,6 +71,7 @@ export async function wiederholeSchnelltest(): Promise<{ ok: boolean; info: stri
 }
 
 async function hatGpuAdapter(): Promise<boolean> {
+  if (leseKiGeraet() === 'wasm') return false;
   try {
     const gpu = (navigator as unknown as { gpu?: { requestAdapter(): Promise<unknown> } }).gpu;
     return !!(await gpu?.requestAdapter());

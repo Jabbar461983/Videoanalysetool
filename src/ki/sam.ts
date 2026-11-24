@@ -1,3 +1,4 @@
+import { leseKiGeraet } from './geraet';
 import { holeModell, STANDARD_SAM, type SamModellInfo } from './modelle';
 import type { KiAntwort, KiBefehl, KlickPunkt } from './typen';
 
@@ -90,7 +91,7 @@ export class SamClient {
   /** Lädt das Modell (einmalig je Modell). */
   async lade(
     modellId: string = STANDARD_SAM,
-    geraet: 'auto' | 'wasm' | 'webgpu' = 'auto',
+    geraet: 'auto' | 'wasm' | 'webgpu' = leseKiGeraet(),
   ): Promise<Ladestand> {
     try {
       return await this.ladeEinmal(modellId, geraet);
