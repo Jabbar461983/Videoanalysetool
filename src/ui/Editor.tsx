@@ -18,6 +18,7 @@ import { useProgramm } from '../store/programm';
 import { HotkeyHilfe } from './HotkeyHilfe';
 import { TafelEditor } from './TafelEditor';
 import { KalibrierDialog } from './KalibrierDialog';
+import { AutoPlaylistDialog } from './AutoPlaylistDialog';
 import { ErkennungsDialog } from './ErkennungsDialog';
 import { useEditorTasten } from './tasten';
 import s from './Editor.module.css';
@@ -141,6 +142,7 @@ export function Editor({ projektId }: { projektId: string }) {
       <HotkeyHilfe />
       <TafelEditor />
       <KalibrierDialog />
+      <AutoPlaylistDialog />
       <ErkennungsDialog />
       {praesi && <PraesentationsLeiste />}
     </div>

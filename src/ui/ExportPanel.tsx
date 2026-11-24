@@ -36,7 +36,10 @@ export function ExportPanel() {
   const [meldung, setMeldung] = useState<{ art: 'ok' | 'fehler'; text: string } | null>(null);
   const abbruch = useRef<AbortController | null>(null);
 
-  const pl = projekt ? aktivePlaylist(projekt) : undefined;
+  const [plId, setPlId] = useState<string>('');
+  const [stapel, setStapel] = useState<{ nr: number; von: number; name: string } | null>(null);
+  const aktiv = projekt ? aktivePlaylist(projekt) : undefined;
+  const pl = projekt?.playlisten.find((x) => x.id === plId) ?? aktiv;
   const effClip = clipId || programmClip || gewaehlt || projekt?.clips[0]?.id || '';
   const zielId = art === 'clip' ? effClip : (pl?.id ?? '');
   const aufloesung: ExportAufloesung = projekt?.einstellungen.exportAufloesung ?? 1080;
@@ -96,6 +99,71 @@ export function ExportPanel() {
     }
   };
 
+  /** Jede nicht leere Playlist als eigenes MP4: in einen gewählten Ordner (wo möglich), sonst als Downloads. */
+  const starteAlle = async () => {
+    if (laeuft) return;
+    const liste = projekt.playlisten.filter((x) => x.eintraege.some((e) => e.typ === 'clip'));
+    if (liste.length === 0) return;
+    setMeldung(null);
+    let ordner: FileSystemDirectoryHandle | null = null;
+    const w = window as unknown as {
+      showDirectoryPicker?: (o?: unknown) => Promise<FileSystemDirectoryHandle>;
+    };
+    if (w.showDirectoryPicker) {
+      try {
+        ordner = await w.showDirectoryPicker({ mode: 'readwrite' });
+      } catch (e) {
+        if ((e as DOMException).name === 'AbortError') return;
+      }
+    }
+    const ac = new AbortController();
+    abbruch.current = ac;
+    setLaeuft(true);
+    const ok: string[] = [];
+    const fehler: string[] = [];
+    try {
+      for (let i = 0; i < liste.length; i++) {
+        const x = liste[i]!;
+        setStapel({ nr: i + 1, von: liste.length, name: x.name });
+        try {
+          const vorab = await pruefeExport({ art: 'playlist', id: x.id }, aufloesung);
+          if (!vorab || vorab.fehlendeQuellen.length > 0 || !vorab.codecs.video) {
+            fehler.push(`${x.name}: ${t.export.stapelUebersprungen}`);
+            continue;
+          }
+          const datei = ordner
+            ? await ordner.getFileHandle(`${vorab.name}.mp4`, { create: true })
+            : null;
+          setPhase({ phase: 'vorbereitung', bild: 0, gesamt: 0, verstrichenSek: 0, restSek: null });
+          const r = await exportiereVideo({
+            ziel: { art: 'playlist', id: x.id },
+            aufloesung,
+            onPhase: setPhase,
+            signal: ac.signal,
+            datei,
+          });
+          ok.push(r.dateiname);
+        } catch (e) {
+          const m = e instanceof ExportFehler ? e.message : t.export.fehlerAllgemein;
+          if (m === 'abgebrochen') {
+            fehler.push(t.export.abgebrochen);
+            break;
+          }
+          fehler.push(`${x.name}: ${m}`);
+        }
+      }
+    } finally {
+      setLaeuft(false);
+      setPhase(null);
+      setStapel(null);
+      abbruch.current = null;
+    }
+    setMeldung({
+      art: fehler.length ? 'fehler' : 'ok',
+      text: `${t.export.stapelFertig(ok.length)}${fehler.length ? ` ${fehler.join(' · ')}` : ''}`,
+    });
+  };
+
   const langsam =
     phase?.phase === 'video' && pruefung && phase.verstrichenSek > 4 && phase.bild > 0
       ? phase.bild / phase.verstrichenSek < pruefung.fps * 0.5
@@ -144,9 +212,28 @@ export function ExportPanel() {
           ))}
         </select>
       ) : (
-        <p className="hinweis" style={{ margin: '4px 0' }}>
-          {pl ? `${t.playlist.aktiv}: ${pl.name}` : t.export.keinePlaylist}
-        </p>
+        <>
+          {projekt.playlisten.length > 0 ? (
+            <select
+              aria-label={t.export.welchePlaylist}
+              data-testid="export-playlist-wahl"
+              value={pl?.id ?? ''}
+              onChange={(e) => setPlId(e.target.value)}
+              disabled={laeuft}
+              style={{ width: '100%' }}
+            >
+              {projekt.playlisten.map((x) => (
+                <option key={x.id} value={x.id}>
+                  {x.name}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <p className="hinweis" style={{ margin: '4px 0' }}>
+              {t.export.keinePlaylist}
+            </p>
+          )}
+        </>
       )}
       <div className={s.reihe}>
         <label className="hinweis">
@@ -215,9 +302,19 @@ export function ExportPanel() {
             {t.export.starten}
           </button>
         )}
+        {!laeuft && art === 'playlist' && projekt.playlisten.length > 1 && (
+          <button data-testid="export-alle" onClick={() => void starteAlle()}>
+            {t.export.alleEinzeln}
+          </button>
+        )}
       </div>
       {phase && (
         <div role="status" data-testid="export-fortschritt">
+          {stapel && (
+            <p className="kicker" style={{ margin: 0 }}>
+              {t.export.stapelNr(stapel.nr, stapel.von, stapel.name)}
+            </p>
+          )}
           <progress
             value={phase.phase === 'video' ? anteil : undefined}
             max={1}

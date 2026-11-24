@@ -245,3 +245,8 @@ Stand: Ende Etappe 9 (Taktiktafel). Frühere Stände: Ende Etappe 6 «Export, Pr
 - `src/taktik/feldVorschlag.ts`: Boden über Farbe finden, Ecken schätzen, 9 Referenzpunkte vorschlagen (Unit-Tests in `tests/feldVorschlag.test.ts`).
 - Kalibrierdialog: «Punkte vorschlagen», Ausrichtungs-Schalter, Vorschläge ziehbar (orange = Vorschlag, rot = bestätigt).
 - Grenze: bei angeschnittenem Feld / verdeckten Banden ungenau; Korrektur von Hand nötig.
+
+### Nachtrag: Playlists automatisch füllen
+- `src/schnitt/autoPlaylist.ts` (Filter Tag/Team/Spieler/Video, Gruppierung mit Titelfolien, Anhängen ohne Dubletten), Dialog `AutoPlaylistDialog`, Knopf im Kader.
+- Export: Playlist wählbar, «Alle Playlists einzeln exportieren» (Ordnerwahl via File System Access, sonst Downloads).
+- Tests: `tests/autoPlaylist.test.ts`, `e2e/auto-playlist.spec.ts`. Der Stapelexport selbst ist nur über die UI-Logik abgedeckt, nicht per E2E.

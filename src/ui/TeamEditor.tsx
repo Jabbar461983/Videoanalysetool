@@ -1,3 +1,4 @@
+import { useAutoPlaylist } from '../store/autoPlaylist';
 import { useRef, useState } from 'react';
 import { t } from '../i18n/de-CH';
 import { useProjekt } from '../store/projektStore';
@@ -127,6 +128,15 @@ export function TeamEditor({ index }: { index: 0 | 1 }) {
             <strong style={{ color: 'var(--bd-ink)', minWidth: 32 }}>#{sp.nummer}</strong>
             <span style={{ flex: 1 }}>{sp.name}</span>
             <span className="hinweis">{t.setup.pos[sp.position]}</span>
+            <button
+              className={s.mini}
+              aria-label={`${t.autoPlaylist.alleSzenen}: ${sp.name}`}
+              onClick={() =>
+                useAutoPlaylist.getState().oeffne({ spielerId: sp.id, teamId: team.id })
+              }
+            >
+              {t.autoPlaylist.alleSzenen}
+            </button>
             <button
               className={s.mini}
               aria-label={`${t.setup.entfernen}: ${sp.name}`}

@@ -11,6 +11,7 @@ import {
   sichereAktivePlaylist,
   verschiebeEintrag,
 } from '../schnitt/schnittLogik';
+import { useAutoPlaylist } from '../store/autoPlaylist';
 import { startepraesentation } from '../praesentation/aktionen';
 import { playlistZeitplan } from '../wiedergabe/zeitachse';
 import { formatZeit } from '../video/bildmathe';
@@ -359,6 +360,9 @@ export function PlaylistPanel() {
           }}
         >
           {t.playlist.titelfolie}
+        </button>
+        <button data-testid="auto-fuellen" onClick={() => useAutoPlaylist.getState().oeffne()}>
+          {t.autoPlaylist.knopf}
         </button>
       </div>
     </section>
