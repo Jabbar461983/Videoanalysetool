@@ -54,14 +54,12 @@ test('Alle Spieler erkennen und auf die Tafel übertragen', async ({ page }) => 
   await klick(0.95, 0.95);
   await page.getByTestId('kalibrierung-speichern').click();
   await page.getByTestId('uebernehmen-auto').click();
-  await expect(page.getByTestId('tafel-editor')).toBeVisible({ timeout: 540_000 });
-  console.log(
-    'MELDUNG ' +
-      (await page
-        .getByTestId('taktik-meldung')
-        .innerText()
-        .catch(() => '')),
-  );
+  await expect(page.getByTestId('erkennungs-dialog')).toBeVisible({ timeout: 540_000 });
+  console.log('HINWEIS ' + (await page.getByTestId('pruef-hinweis').innerText()));
+  console.log('ZAEHLUNG ' + (await page.getByTestId('pruef-zaehlung').innerText()));
+  await page.getByTestId('erkennungs-dialog').screenshot({ path: '/tmp/claude-0/pruefdialog.png' });
+  await page.getByTestId('pruef-uebernehmen').click();
+  await expect(page.getByTestId('tafel-editor')).toBeVisible();
   const p = await page.evaluate(() =>
     (
       window as unknown as {
