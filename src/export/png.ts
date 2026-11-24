@@ -1,7 +1,7 @@
 import { holeLogo } from '../render/logo';
 import { ladeSpielerBilder, vorschauBilder } from '../render/spielerBilder';
 import { renderFrame, type RenderKontext } from '../render/renderFrame';
-import { passeEin, vergleichHaelften } from '../render/vergleich';
+import { zeichneVergleichBilder } from '../render/vergleich';
 import { baueProgrammPlan } from '../wiedergabe/plan';
 import { findeSegmentIndex } from '../wiedergabe/zeitachse';
 import { usePlayer } from '../store/player';
@@ -39,23 +39,12 @@ export async function exportiereAktuellesBild(): Promise<string | null> {
   const seg = plan?.segmente[findeSegmentIndex(plan.segmente, tVor)];
   const beide = spieler.elemente;
   if (seg?.art === 'vergleich' && seg.vergleich && beide) {
-    // Vergleich: beide Hälften aus den beiden Videoelementen
-    const h = vergleichHaelften(breite, hoehe);
-    (
-      [
-        ['links', beide[0]],
-        ['rechts', beide[1]],
-      ] as const
-    ).forEach(([name, el]) => {
-      if (el.readyState < 2 || !el.videoWidth) return;
-      const f = passeEin(
-        el.videoWidth,
-        el.videoHeight,
-        h[name],
-        seg.vergleich!.eintrag.darstellung,
-      );
-      ctx.drawImage(el, f.sx, f.sy, f.sb, f.sh, f.dx, f.dy, f.db, f.dh);
-    });
+    // Vergleich: beide Seiten aus den beiden Videoelementen
+    const mk = (el: HTMLVideoElement) =>
+      el.readyState >= 2 && el.videoWidth
+        ? { bild: el, breite: el.videoWidth, hoehe: el.videoHeight }
+        : null;
+    zeichneVergleichBilder(ctx, breite, hoehe, seg.vergleich, mk(beide[0]), mk(beide[1]));
   } else if (video.readyState >= 2) ctx.drawImage(video, 0, 0, breite, hoehe);
   const kontext: RenderKontext =
     g.art === 'clip' && g.clipId

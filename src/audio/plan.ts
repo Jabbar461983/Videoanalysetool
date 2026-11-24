@@ -59,6 +59,13 @@ export function audioPlan(plan: Zeitplan, projekt: Pick<Projekt, 'clips'>): Audi
 
   for (const e of plan.eintraege) {
     const eintrag = e.eintrag;
+    if (eintrag.typ === 'vergleich') {
+      // Originalton der laufenden Seite(n); Kommentare gibt es im Vergleich nicht
+      const g = eintrag.ton === 'stumm' ? 0 : 1;
+      push(e.start, g);
+      push(e.start + e.dauer, g);
+      continue;
+    }
     if (eintrag.typ !== 'clip') {
       push(e.start, 0);
       push(e.start + e.dauer, 0);

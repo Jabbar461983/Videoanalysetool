@@ -3,7 +3,10 @@ import { migriere } from '../src/model/schema';
 import { SCHEMA_VERSION, type Clip, type PlaylistEintrag } from '../src/model/typen';
 import { entferneClip, neuerVergleich } from '../src/schnitt/schnittLogik';
 import { neuesProjekt } from '../src/model/schema';
+import { audioPlan } from '../src/audio/plan';
+import { vergleichHaelften } from '../src/render/vergleich';
 import {
+  originalStuecke,
   playlistZeitplan,
   segmenteDauer,
   vergleichSeitenZeit,
@@ -124,5 +127,60 @@ describe('Vergleich: Zeitplan', () => {
     const p = neuesProjekt('T');
     const alt = { ...p, version: 9 };
     expect(migriere(alt).version).toBe(SCHEMA_VERSION);
+  });
+});
+
+describe('Vergleich: Anordnung, Überblendung, Ton', () => {
+  const A = clip('A', 'q1', 10, 14);
+  const B = clip('B', 'q2', 100, 106);
+
+  it('Geometrie: übereinander und überblendet', () => {
+    const u = vergleichHaelften(1920, 1080, 'uebereinander');
+    expect(u.links).toMatchObject({ x: 0, y: 0, b: 1920 });
+    expect(u.rechts.y).toBeGreaterThan(u.links.h);
+    expect(u.rechts.y + u.rechts.h).toBe(1080);
+    const g = vergleichHaelften(1920, 1080, 'ueberblendet');
+    expect(g.links).toEqual({ x: 0, y: 0, b: 1920, h: 1080 });
+    expect(g.rechts).toEqual(g.links);
+    const n = vergleichHaelften(1920, 1080);
+    expect(n.links.x + n.links.b).toBeLessThan(n.rechts.x);
+  });
+
+  it('überblendet läuft immer gleichzeitig, ohne Abdunklung', () => {
+    const segs = vergleichSegmente(vergleich({ anordnung: 'ueberblendet', zugabe: true }), A, B);
+    expect(segs[0]!.vergleich!.aktiv).toBe('beide');
+    expect(segs.every((s) => s.vergleich!.links.dim === 0 && s.vergleich!.rechts.dim === 0)).toBe(
+      true,
+    );
+    expect(segmenteDauer(segs)).toBeCloseTo(6);
+  });
+
+  it('Ton: nur die laufende Seite ist hörbar; Pause und Standbild sind still', () => {
+    const e = vergleich({ zugabe: false });
+    const segs = vergleichSegmente(e, A, B);
+    expect(originalStuecke(segs[0]!)).toEqual([{ quelleId: 'q1', von: 10, bis: 14, tempo: 1 }]);
+    expect(originalStuecke(segs[1]!)).toEqual([]); // Pause
+    expect(originalStuecke(segs[2]!)).toEqual([{ quelleId: 'q2', von: 100, bis: 106, tempo: 1 }]);
+  });
+
+  it('Ton-Modus «nur rechts» / «stumm»', () => {
+    const nurRechts = vergleichSegmente(vergleich({ ton: 'rechts', zugabe: false }), A, B);
+    expect(originalStuecke(nurRechts[0]!)).toEqual([]); // links läuft, aber nur rechts ist erlaubt
+    expect(originalStuecke(nurRechts[2]!)).toHaveLength(1);
+    const stumm = vergleichSegmente(vergleich({ ton: 'stumm', zugabe: false }), A, B);
+    expect(stumm.flatMap(originalStuecke)).toEqual([]);
+  });
+
+  it('Ton: beide Seiten laufen → beide hörbar (gleichzeitig)', () => {
+    const segs = vergleichSegmente(vergleich({ ablauf: 'gleichzeitig' }), A, B);
+    expect(originalStuecke(segs[0]!)).toHaveLength(2);
+  });
+
+  it('Hörplan: Originalton im Vergleich an, bei «stumm» aus', () => {
+    const projekt = { clips: [A, B] };
+    const an = playlistZeitplan({ eintraege: [vergleich({ zugabe: false })] }, [A, B]);
+    expect(audioPlan(an, projekt).original.every((p) => p.gain === 1)).toBe(true);
+    const aus = playlistZeitplan({ eintraege: [vergleich({ ton: 'stumm' })] }, [A, B]);
+    expect(audioPlan(aus, projekt).original.every((p) => p.gain === 0)).toBe(true);
   });
 });

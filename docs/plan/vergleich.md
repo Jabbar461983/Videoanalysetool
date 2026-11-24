@@ -7,4 +7,5 @@
 - **Rendering (`render/vergleich.ts`):** gemeinsame Geometrie der Hälften (Vorschau per CSS, Export per Canvas), Abdunklung, Beschriftung, goldener Rahmen um die laufende Seite.
 - **Vorschau (`programmspieler.ts`):** beide Videoelemente nebeneinander; nur die laufende Seite spielt und ist die Uhr.
 - **Export (`exportWorker.ts`):** je Seite ein eigener Decoder-Strom bzw. ein Standbild; danach `renderFrame`.
-- **Grenzen Schritt 1:** kein Originalton im Vergleich; Scoreboard im Vergleich aus; Zeichnen/Spieler-Markierungen pro Seite sowie «übereinander» und Ghost-Überblendung folgen in Schritt 2.
+- **Schritt 2:** `ton` (aktiv | links | rechts | stumm; Vorschau über `muted` je Element und Gain-Kurve, Export über `originalStuecke()` im Mixdown), `anordnung` (nebeneinander | uebereinander | ueberblendet) mit `mischung`; Überblendet erzwingt gleichzeitigen Ablauf.
+- **Grenzen:** keine Kommentarspuren im Vergleich; Scoreboard im Vergleich aus; Zeichnen/Spieler-Markierungen pro Seite offen.

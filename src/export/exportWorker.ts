@@ -15,7 +15,7 @@ import {
 import { renderFrame, type RenderKontext } from '../render/renderFrame';
 import { ladeSpielerBilder } from '../render/spielerBilder';
 import type { BilderMap } from '../render/spieler';
-import { passeEin, vergleichHaelften } from '../render/vergleich';
+import { zeichneVergleichBilder } from '../render/vergleich';
 import { baueProgrammPlan } from '../wiedergabe/plan';
 import type { Segment, SeitenZustand } from '../wiedergabe/zeitachse';
 import { frameAnzahl, quellZeitFuerFrame } from './format';
@@ -228,17 +228,11 @@ async function laufe(a: ExportAuftrag): Promise<void> {
         if (!r.done && r.value) letztes = r.value.canvas;
         if (letztes) ctx.drawImage(letztes, 0, 0, a.breite, a.hoehe);
       } else if (seg.art === 'vergleich' && seg.vergleich) {
-        const h = vergleichHaelften(a.breite, a.hoehe);
-        const paare: ['links' | 'rechts', SeitenZustand][] = [
-          ['links', seg.vergleich.links],
-          ['rechts', seg.vergleich.rechts],
-        ];
-        for (const [name, sz] of paare) {
-          const bild = await seitenBild(name, si, seg, sz, i);
-          if (!bild) continue;
-          const f = passeEin(a.breite, a.hoehe, h[name], seg.vergleich.eintrag.darstellung);
-          ctx.drawImage(bild, f.sx, f.sy, f.sb, f.sh, f.dx, f.dy, f.db, f.dh);
-        }
+        const bl = await seitenBild('links', si, seg, seg.vergleich.links, i);
+        const br = await seitenBild('rechts', si, seg, seg.vergleich.rechts, i);
+        const mk = (b: CanvasImageSource | null) =>
+          b ? { bild: b, breite: a.breite, hoehe: a.hoehe } : null;
+        zeichneVergleichBilder(ctx, a.breite, a.hoehe, seg.vergleich, mk(bl), mk(br));
       } else if (seg.art === 'freeze') {
         if (standbildSeg !== si) {
           const senke = await holeSenke(seg.quelleId!);

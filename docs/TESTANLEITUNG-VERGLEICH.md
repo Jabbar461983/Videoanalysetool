@@ -8,4 +8,7 @@
 6. «Playlist abspielen» bzw. «Ab hier abspielen» zeigt den Vergleich. Der Export (Reiter «Export») enthält beide Hälften, die Abdunklung und die Beschriftungen.
 7. Darstellung: «Ganzes Bild (mit Rand)» oder «Hälfte füllen (zugeschnitten)».
 
-Hinweise: Im Vergleich läuft kein Originalton, das Scoreboard ist ausgeblendet.
+8. **Anordnung:** «Nebeneinander», «Übereinander» oder «Überblendet» (beide Szenen halbtransparent im selben Bild; läuft immer gleichzeitig, Anker setzen, damit z. B. der Ball in beiden Szenen im selben Moment fällt; der Regler «Mischung» bestimmt den Anteil der rechten Szene).
+9. **Ton:** «Laufende Seite(n)» (Standard: man hört, was gerade läuft), «Nur links», «Nur rechts» oder «Ohne Ton». Gilt in Vorschau und Export gleich.
+
+Hinweise: Im Vergleich gibt es keine Kommentarspuren, das Scoreboard ist ausgeblendet.

@@ -161,9 +161,9 @@ export async function exportiereVideo(
     const mix = await mixdownRender(v.plan, projekt, {
       sampleRate: 48000,
       ladeBuffer: holeBuffer,
-      original: async (seg) => {
-        const datei = seg.quelleId ? dateien[seg.quelleId] : undefined;
-        return datei ? decodiereOriginalton(datei, seg.von!, seg.bis!) : null;
+      original: async (st) => {
+        const datei = dateien[st.quelleId];
+        return datei ? decodiereOriginalton(datei, st.von, st.bis) : null;
       },
     });
     audio = {

@@ -85,6 +85,10 @@ export interface VergleichSeite {
   anker: number;
 }
 export type VergleichAblauf = 'nacheinander' | 'gleichzeitig';
+/** nebeneinander | übereinander | überblendet (beide Szenen halbtransparent aufeinander, läuft immer gleichzeitig) */
+export type VergleichAnordnung = 'nebeneinander' | 'uebereinander' | 'ueberblendet';
+/** Welcher Originalton gilt: die laufende(n) Seite(n), nur links, nur rechts oder keiner */
+export type VergleichTon = 'aktiv' | 'links' | 'rechts' | 'stumm';
 /** `uebergang` gilt beim Wechsel vom vorherigen Eintrag in diesen. */
 export type PlaylistEintrag =
   | { id: string; typ: 'clip'; clipId: string; uebergang: Uebergang }
@@ -114,6 +118,12 @@ export type PlaylistEintrag =
       abdunklung: number;
       /** einpassen = ganzes Bild mit Rand; fuellen = Hälfte füllen, seitlich abschneiden */
       darstellung: 'einpassen' | 'fuellen';
+      /** fehlt = nebeneinander */
+      anordnung?: VergleichAnordnung;
+      /** Überblendet: Anteil der rechten Szene 0–1 (fehlt = 0.5) */
+      mischung?: number;
+      /** fehlt = aktiv */
+      ton?: VergleichTon;
       uebergang: Uebergang;
     };
 export interface Playlist {

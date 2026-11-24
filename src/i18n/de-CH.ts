@@ -462,8 +462,19 @@ export const t = {
     ankerSetzen: 'Aus Player übernehmen',
     ankerHinweis:
       'Playlist abspielen oder anhalten, auf das gewünschte Bild dieser Seite springen und hier klicken. Die Anker beider Seiten laufen beim gleichzeitigen Abspielen zusammen.',
-    hinweisTon:
-      'Im Vergleich läuft kein Originalton. Kommentare des Clips sind hier nicht enthalten.',
+    anordnung: 'Anordnung',
+    nebeneinander: 'Nebeneinander',
+    uebereinander: 'Übereinander',
+    ueberblendet: 'Überblendet (beide Szenen im selben Bild)',
+    mischung: 'Mischung',
+    mischungRechts: 'rechte Szene',
+    ton: 'Ton',
+    tonAktiv: 'Laufende Seite(n)',
+    tonLinks: 'Nur links',
+    tonRechts: 'Nur rechts',
+    tonStumm: 'Ohne Ton',
+    hinweisGhost:
+      'Überblendet läuft immer gleichzeitig. Setze Anker, damit z. B. der Ball in beiden Szenen im selben Moment fällt.',
   },
   autoPlaylist: {
     knopf: 'Automatisch füllen …',

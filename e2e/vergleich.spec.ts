@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -105,4 +105,78 @@ test('Vergleich-Export: beide Hälften, ruhende Seite abgedunkelt', async ({ pag
   const dunkel = luma('rechts');
   expect(hell).toBeGreaterThan(20);
   expect(dunkel).toBeLessThan(hell * 0.5);
+});
+
+test('Vergleich: übereinander und überblendet in der Vorschau', async ({ page }) => {
+  test.setTimeout(120_000);
+  await projektMitZweiClips(page);
+  await page.getByRole('tab', { name: 'Playlist' }).click();
+  await page.getByTestId('vergleich-neu').click();
+  const links = page.getByTestId('video');
+  const rechts = page.getByTestId('video-b');
+
+  await page.getByTestId('vergleich-anordnung').selectOption('uebereinander');
+  await page.getByTestId('playlist-abspielen').click();
+  await expect
+    .poll(async () => {
+      const [a, b] = await Promise.all([links.boundingBox(), rechts.boundingBox()]);
+      return !!a && !!b && b.y > a.y + a.height - 2 && Math.abs(a.x - b.x) < 2;
+    })
+    .toBe(true);
+
+  await page.getByTestId('vergleich-anordnung').selectOption('ueberblendet');
+  await page.getByTestId('play').click(); // der geänderte Plan hat die Wiedergabe angehalten
+  await expect
+    .poll(async () => {
+      const [a, b] = await Promise.all([links.boundingBox(), rechts.boundingBox()]);
+      const op = await rechts.evaluate((v: HTMLVideoElement) => Number(v.style.opacity));
+      return (
+        !!a &&
+        !!b &&
+        Math.abs(a.width - b.width) < 2 &&
+        Math.abs(a.y - b.y) < 2 &&
+        op > 0.4 &&
+        op < 0.6
+      );
+    })
+    .toBe(true);
+  // Überblendet läuft immer gleichzeitig: beide spielen
+  await expect
+    .poll(() =>
+      Promise.all([links, rechts].map((v) => v.evaluate((e: HTMLVideoElement) => !e.paused))),
+    )
+    .toEqual([true, true]);
+});
+
+test('Vergleich-Export: Ton der laufenden Seite ist drin, «Ohne Ton» ist still', async ({
+  page,
+}) => {
+  test.setTimeout(240_000);
+  await projektMitZweiClips(page);
+  await page.getByRole('tab', { name: 'Playlist' }).click();
+  await page.getByTestId('vergleich-neu').click();
+  const lautstaerke = async (): Promise<number> => {
+    await page.getByRole('tab', { name: 'Export' }).click();
+    await expect(page.getByTestId('export-info')).toBeVisible();
+    const [download] = await Promise.all([
+      page.waitForEvent('download'),
+      page.getByTestId('export-start').click(),
+    ]);
+    const mp4 = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'bdva-ton-')), 'v.mp4');
+    await download.saveAs(mp4);
+    const r = spawnSync(
+      'ffmpeg',
+      ['-hide_banner', '-i', mp4, '-af', 'volumedetect', '-vn', '-f', 'null', '-'],
+      { encoding: 'utf8' },
+    );
+    const m = /mean_volume: (-?[\d.]+|-inf) dB/.exec(r.stderr);
+    return m ? (m[1] === '-inf' ? -120 : Number(m[1])) : -120;
+  };
+  const mitTon = await lautstaerke();
+  await page.getByRole('tab', { name: 'Playlist' }).click();
+  await page.locator('[data-testid="playlist-eintrag"] button[aria-expanded]').click();
+  await page.getByTestId('vergleich-ton').selectOption('stumm');
+  const ohneTon = await lautstaerke();
+  expect(mitTon).toBeGreaterThan(-50);
+  expect(ohneTon).toBeLessThan(-70);
 });

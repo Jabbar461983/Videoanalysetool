@@ -254,4 +254,5 @@ Stand: Ende Etappe 9 (Taktiktafel). Frühere Stände: Ende Etappe 6 «Export, Pr
 ### Nachtrag: Vergleich (Schritt 1) und Export-Fehler behoben
 - Neu: Playlist-Eintrag «Vergleich» (zwei Clips nebeneinander, nacheinander mit Abdunklung oder gleichzeitig mit Ankern, Zugabe, Beschriftung). Siehe `docs/plan/vergleich.md`, `docs/TESTANLEITUNG-VERGLEICH.md`. Schema v10.
 - **Behoben (bestand seit Etappe 6):** `renderFrame` löschte im Export und beim PNG zuerst die Fläche und damit das schon gezeichnete Videobild: MP4/PNG zeigten nur Overlays auf Schwarz. Der PSNR-Test sah das nicht, weil Vorschau- und Export-Referenz beide ohne Video waren. Jetzt löscht nur die Vorschau; der Test prüft die Helligkeit der Bildmitte.
-- Offen (Schritt 2): Zeichnen/Spieler pro Seite, «übereinander», Ghost-Überblendung, Ton im Vergleich.
+- Schritt 2 erledigt: Ton im Vergleich (laufende Seite/links/rechts/stumm, Vorschau und Export), Anordnung «übereinander» und «überblendet» (Mischung einstellbar).
+- Offen: Zeichnen/Spielermarkierungen pro Seite, Kommentarspuren im Vergleich.

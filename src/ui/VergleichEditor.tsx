@@ -2,7 +2,9 @@ import { t } from '../i18n/de-CH';
 import type { PlaylistEintrag, Projekt } from '../model/typen';
 import { usePlayer } from '../store/player';
 import {
+  anordnungVon,
   findeSegmentIndex,
+  mischungVon,
   quellZeitZuClipZeit,
   vergleichSeitenZeit,
   type Zeitplan,
@@ -52,6 +54,7 @@ export function VergleichEditor({
     aendere((v) => void (v[seite].anker = ct));
   };
 
+  const ghost = anordnungVon(e) === 'ueberblendet';
   const seite = (name: 'links' | 'rechts', titel: string) => (
     <fieldset style={{ border: '1px solid var(--bd-rule)', margin: 0, padding: 8, minWidth: 0 }}>
       <legend className="kicker">{titel}</legend>
@@ -93,7 +96,7 @@ export function VergleichEditor({
           onChange={(ev) => aendere((v) => void (v[name].farbe = ev.target.value))}
         />
       </label>
-      {(e.ablauf === 'gleichzeitig' || e.zugabe) && (
+      {(e.ablauf === 'gleichzeitig' || e.zugabe || ghost) && (
         <div className={s.reihe}>
           <label>
             {t.vergleich.anker}
@@ -132,18 +135,34 @@ export function VergleichEditor({
           ⇄ {t.vergleich.tauschen}
         </button>
         <label className="hinweis">
-          {t.vergleich.ablauf}{' '}
+          {t.vergleich.anordnung}{' '}
           <select
-            value={e.ablauf}
-            data-testid="vergleich-ablauf"
+            value={anordnungVon(e)}
+            data-testid="vergleich-anordnung"
             onChange={(ev) =>
-              aendere((v) => void (v.ablauf = ev.target.value as Vergleich['ablauf']))
+              aendere((v) => void (v.anordnung = ev.target.value as Vergleich['anordnung']))
             }
           >
-            <option value="nacheinander">{t.vergleich.nacheinander}</option>
-            <option value="gleichzeitig">{t.vergleich.gleichzeitig}</option>
+            <option value="nebeneinander">{t.vergleich.nebeneinander}</option>
+            <option value="uebereinander">{t.vergleich.uebereinander}</option>
+            <option value="ueberblendet">{t.vergleich.ueberblendet}</option>
           </select>
         </label>
+        {!ghost && (
+          <label className="hinweis">
+            {t.vergleich.ablauf}{' '}
+            <select
+              value={e.ablauf}
+              data-testid="vergleich-ablauf"
+              onChange={(ev) =>
+                aendere((v) => void (v.ablauf = ev.target.value as Vergleich['ablauf']))
+              }
+            >
+              <option value="nacheinander">{t.vergleich.nacheinander}</option>
+              <option value="gleichzeitig">{t.vergleich.gleichzeitig}</option>
+            </select>
+          </label>
+        )}
         <label className="hinweis">
           {t.vergleich.darstellung}{' '}
           <select
@@ -157,7 +176,34 @@ export function VergleichEditor({
           </select>
         </label>
       </div>
-      {e.ablauf === 'nacheinander' && (
+      {ghost && (
+        <label>
+          {t.vergleich.mischung}: {Math.round(mischungVon(e) * 100)} % {t.vergleich.mischungRechts}
+          <input
+            type="range"
+            min={10}
+            max={90}
+            step={5}
+            value={Math.round(mischungVon(e) * 100)}
+            data-testid="vergleich-mischung"
+            onChange={(ev) => aendere((v) => void (v.mischung = Number(ev.target.value) / 100))}
+          />
+        </label>
+      )}
+      <label className="hinweis">
+        {t.vergleich.ton}{' '}
+        <select
+          value={e.ton ?? 'aktiv'}
+          data-testid="vergleich-ton"
+          onChange={(ev) => aendere((v) => void (v.ton = ev.target.value as Vergleich['ton']))}
+        >
+          <option value="aktiv">{t.vergleich.tonAktiv}</option>
+          <option value="links">{t.vergleich.tonLinks}</option>
+          <option value="rechts">{t.vergleich.tonRechts}</option>
+          <option value="stumm">{t.vergleich.tonStumm}</option>
+        </select>
+      </label>
+      {!ghost && e.ablauf === 'nacheinander' && (
         <>
           <label style={{ flexDirection: 'row', alignItems: 'center' }}>
             <input
@@ -190,7 +236,7 @@ export function VergleichEditor({
           </div>
         </>
       )}
-      <p className="hinweis">{t.vergleich.hinweisTon}</p>
+      {ghost && <p className="hinweis">{t.vergleich.hinweisGhost}</p>}
     </div>
   );
 }

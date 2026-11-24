@@ -1,13 +1,13 @@
 import type { Projekt } from '../model/typen';
-import type { Segment, Zeitplan } from '../wiedergabe/zeitachse';
+import { originalStuecke, type Zeitplan } from '../wiedergabe/zeitachse';
 import { audioPlan } from './plan';
 
 export interface MixdownOptionen {
   sampleRate?: number;
   /** Dekodierter Kommentar-Puffer zu einer Blob-Id */
   ladeBuffer: (blobId: string) => Promise<AudioBuffer | null>;
-  /** Originalton eines Video-Segments (Quellzeit `von…bis`); der Export (Etappe 6) liefert ihn aus der Quelldatei. */
-  original?: (seg: Segment) => Promise<AudioBuffer | null>;
+  /** Originalton eines Abschnitts (Quellzeit `von…bis`); der Export liefert ihn aus der Quelldatei. */
+  original?: (a: { quelleId: string; von: number; bis: number }) => Promise<AudioBuffer | null>;
 }
 
 /**
@@ -35,15 +35,16 @@ export async function mixdownRender(
   }
   if (opt.original) {
     for (const seg of plan.segmente) {
-      if (seg.art !== 'video') continue;
-      const buf = await opt.original(seg);
-      if (!buf) continue;
-      const src = ctx.createBufferSource();
-      src.buffer = buf;
-      src.playbackRate.value = seg.tempo ?? 1;
-      src.connect(orig);
-      src.start(seg.start);
-      src.stop(seg.start + seg.dauer);
+      for (const st of originalStuecke(seg)) {
+        const buf = await opt.original(st);
+        if (!buf) continue;
+        const src = ctx.createBufferSource();
+        src.buffer = buf;
+        src.playbackRate.value = st.tempo;
+        src.connect(orig);
+        src.start(seg.start);
+        src.stop(seg.start + seg.dauer);
+      }
     }
   }
   for (const e of ap.ereignisse) {

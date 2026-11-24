@@ -1,6 +1,17 @@
 import { usePlayer } from '../store/player';
 import { vergleichHaelften } from '../render/vergleich';
-import { findeSegmentIndex, type Segment, type SeitenZustand, type Zeitplan } from './zeitachse';
+import type { PlaylistEintrag } from '../model/typen';
+import {
+  anordnungVon,
+  findeSegmentIndex,
+  mischungVon,
+  seiteHoerbar,
+  type Segment,
+  type SeitenZustand,
+  type Zeitplan,
+} from './zeitachse';
+
+type VergleichEintrag = Extract<PlaylistEintrag, { typ: 'vergleich' }>;
 
 type Slot = 0 | 1;
 
@@ -102,24 +113,32 @@ export class Programmspieler {
       v.style.opacity = i === slot ? '1' : '0';
       v.style.zIndex = i === slot ? '1' : '0';
       v.style.left = '';
+      v.style.top = '';
       v.style.right = '';
+      v.style.bottom = '';
       v.style.width = '';
+      v.style.height = '';
       v.style.objectFit = '';
+      v.muted = false;
     });
   }
 
-  /** Vergleich: beide Elemente sichtbar, links und rechts (gleiche Geometrie wie im Export). */
-  private zeigeVergleich(darstellung: 'einpassen' | 'fuellen'): void {
+  /** Vergleich: beide Elemente sichtbar, nebeneinander/übereinander/überblendet (gleiche Geometrie wie im Export). */
+  private zeigeVergleich(e: VergleichEintrag): void {
     if (!this.els) return;
-    const g = vergleichHaelften(10000, 10000);
+    const an = anordnungVon(e);
+    const g = vergleichHaelften(10000, 10000, an);
     [g.links, g.rechts].forEach((r, i) => {
       const v = this.els![i]!;
-      v.style.opacity = '1';
-      v.style.zIndex = '1';
+      v.style.opacity = i === 1 && an === 'ueberblendet' ? String(mischungVon(e)) : '1';
+      v.style.zIndex = String(i + 1);
       v.style.left = `${r.x / 100}%`;
+      v.style.top = `${r.y / 100}%`;
       v.style.right = 'auto';
+      v.style.bottom = 'auto';
       v.style.width = `${r.b / 100}%`;
-      v.style.objectFit = darstellung === 'fuellen' ? 'cover' : 'contain';
+      v.style.height = `${r.h / 100}%`;
+      v.style.objectFit = e.darstellung === 'fuellen' ? 'cover' : 'contain';
     });
   }
 
@@ -295,10 +314,11 @@ export class Programmspieler {
     if (tok !== this.token) return false;
     if (ok.includes(false)) this.beiFehler('Das Video konnte nicht geladen werden.');
     this.aktiv = 0;
-    this.zeigeVergleich(z.eintrag.darstellung);
+    this.zeigeVergleich(z.eintrag);
     seiten.forEach((sz, i) => {
       const v = els[i]!;
       v.playbackRate = sz.laeuft ? sz.tempo : 1;
+      v.muted = !seiteHoerbar(z.eintrag, i === 0 ? 'links' : 'rechts', sz);
       if (this.spielt && sz.laeuft) void v.play().catch(() => {});
       else v.pause();
     });

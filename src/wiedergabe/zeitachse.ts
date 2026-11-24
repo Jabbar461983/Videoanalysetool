@@ -118,6 +118,33 @@ export function clipSegmente(clip: Clip, eintragIndex = 0, offset = 0): Segment[
 
 // ---------- Vergleich ----------
 
+export const anordnungVon = (e: VergleichEintrag) => e.anordnung ?? 'nebeneinander';
+export const mischungVon = (e: VergleichEintrag) => Math.min(1, Math.max(0, e.mischung ?? 0.5));
+
+/** Hört man die Seite? Nur wenn sie läuft und der Ton-Modus sie erlaubt. */
+export function seiteHoerbar(
+  e: VergleichEintrag,
+  seite: 'links' | 'rechts',
+  sz: SeitenZustand,
+): boolean {
+  if (!sz.laeuft) return false;
+  const ton = e.ton ?? 'aktiv';
+  return ton === 'aktiv' || ton === seite;
+}
+
+/** Abschnitte des Originaltons (Quellzeit) für den Mixdown: ein Video-Abschnitt oder die hörbaren Seiten eines Vergleichs. */
+export function originalStuecke(
+  seg: Segment,
+): { quelleId: string; von: number; bis: number; tempo: number }[] {
+  if (seg.art === 'video' && seg.quelleId)
+    return [{ quelleId: seg.quelleId, von: seg.von!, bis: seg.bis!, tempo: seg.tempo! }];
+  const z = seg.vergleich;
+  if (seg.art !== 'vergleich' || !z) return [];
+  return (['links', 'rechts'] as const)
+    .filter((n) => seiteHoerbar(z.eintrag, n, z[n]))
+    .map((n) => ({ quelleId: z[n].quelleId, von: z[n].von, bis: z[n].bis, tempo: z[n].tempo }));
+}
+
 const stehtBei = (clip: Clip, zeit: number, dim: number): SeitenZustand => ({
   clipId: clip.id,
   quelleId: clip.quelleId,
@@ -239,7 +266,7 @@ export function vergleichSegmente(
       push(links, rechts, aktiv, y - x);
     }
   };
-  if (e.ablauf === 'gleichzeitig') {
+  if (e.ablauf === 'gleichzeitig' || anordnungVon(e) === 'ueberblendet') {
     gleichzeitig();
     return out;
   }

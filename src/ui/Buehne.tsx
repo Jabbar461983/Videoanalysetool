@@ -151,9 +151,13 @@ export function Buehne({ quelle }: { quelle: Quelle | undefined }) {
     for (const el of [v, vb]) {
       if (!el) continue;
       el.style.left = '';
+      el.style.top = '';
       el.style.right = '';
+      el.style.bottom = '';
       el.style.width = '';
+      el.style.height = '';
       el.style.objectFit = '';
+      el.muted = false;
     }
     v.style.opacity = '1';
     v.style.zIndex = '1';
